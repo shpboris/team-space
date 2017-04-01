@@ -10,6 +10,40 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>com.github.kongchen</groupId>
+        <artifactId>swagger-maven-plugin</artifactId>
+        <version>${swagger-maven-plugin.version}</version>
+        <executions>
+          <execution>
+            <phase>compile</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <apiSources>
+            <apiSource>
+              <locations>
+                <location>org.teamspace.users.resources</location>
+                <location>org.teamspace.auth.resources</location>
+              </locations>
+              <info>
+                <title>Team Space Rest API Document</title>
+                <version>v1</version>
+              </info>
+              <securityDefinitions>
+                <securityDefinition>
+                  <json>/securityDefinition.json</json>
+                </securityDefinition>
+              </securityDefinitions>
+              <basePath>/rest</basePath>
+              <swaggerDirectory>${project.build.outputDirectory}</swaggerDirectory>
+            </apiSource>
+          </apiSources>
+        </configuration>
+      </plugin>
+      <plugin>
         <artifactId>maven-shade-plugin</artifactId>
         <version>2.3</version>
         <executions>

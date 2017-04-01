@@ -21,14 +21,38 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
+                <groupId>com.github.kongchen</groupId>
+                <artifactId>swagger-maven-plugin</artifactId>
+                <version>${swagger-maven-plugin.version}</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                    <encoding>UTF-8</encoding>
+                    <apiSources>
+                        <apiSource>
+                            <locations>
+                                <location>org.teamspace.users.resources</location>
+                                <location>org.teamspace.auth.resources</location>
+                            </locations>
+                            <info>
+                                <title>Team Space Rest API Document</title>
+                                <version>v1</version>
+                            </info>
+                            <securityDefinitions>
+                                <securityDefinition>
+                                    <json>/securityDefinition.json</json>
+                                </securityDefinition>
+                            </securityDefinitions>
+                            <basePath>/rest</basePath>
+                            <swaggerDirectory>${project.build.outputDirectory}</swaggerDirectory>
+                        </apiSource>
+                    </apiSources>
                 </configuration>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

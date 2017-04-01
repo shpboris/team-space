@@ -11,7 +11,7 @@ import javax.ws.rs.core.MediaType;
  * Created by shpilb on 21/01/2017.
  */
 @Api(value = "User",
-        authorizations = {@Authorization("cloud_dr_auth")})
+        authorizations = {@Authorization("team_space_auth")})
 @Path("/users")
 @Produces(MediaType.APPLICATION_JSON)
 @PermitAll

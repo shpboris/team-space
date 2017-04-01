@@ -39,8 +39,7 @@ public class TokenProviderResource {
 	public Map<String, String> postForToken(
 			@FormParam("grant_type") String grantType,
 			@FormParam("username") String username,
-			@FormParam("password") String password,
-			@FormParam("client_id") String clientId)
+			@FormParam("password") String password)
 	{
 
 		

@@ -11,5 +11,13 @@
 
     <artifactId>client-main</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.team-space</groupId>
+            <artifactId>java-sdk</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
 
 </project>
