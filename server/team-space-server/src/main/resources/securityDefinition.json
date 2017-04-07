@@ -1,0 +1,7 @@
+{
+  "team_space_auth": {
+    "type": "oauth2",
+    "tokenUrl": "rest/oauth2/token",
+    "flow": "password"
+  }
+}

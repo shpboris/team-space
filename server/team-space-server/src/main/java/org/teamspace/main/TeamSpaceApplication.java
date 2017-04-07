@@ -59,25 +59,30 @@ public class TeamSpaceApplication extends Application<Configuration> {
         redirectApiDocToSwaggerUiWithSwaggerDoc(environment);
     }
 
+    //allows to access team-space UI under "/api-doc" path instead of "/?url=swagger.json"
     private void redirectApiDocToSwaggerUiWithSwaggerDoc(Environment environment) {
         RewriteHandler handler = new RewriteHandler();
         RedirectPatternRule redirectPatternRule = new RedirectPatternRule();
         redirectPatternRule.setPattern(API_DOC_PATH);
-        redirectPatternRule.setLocation(SWAGGER_UI_PATH + "index.html?url=" + SWAGGER_JSON_PATH);
+        redirectPatternRule.setLocation(SWAGGER_UI_PATH + "?url=" + SWAGGER_JSON_PATH);
         handler.addRule(redirectPatternRule);
         environment.getApplicationContext().insertHandler(handler);
     }
 
+    //allows to server team-space specific swagger.json under "/swagger.json" path
+    //so now making call like "/?url=swagger.json" serves custom team-space UI !
     private void serveSwaggerJson(Environment environment) {
         AssetServlet swaggerJsonServlet = new AssetServlet(SWAGGER_JSON_PATH, SWAGGER_JSON_PATH, null, StandardCharsets.UTF_8);
         environment.servlets().addServlet(SWAGGER_JSON_FILE, swaggerJsonServlet).addMapping(SWAGGER_JSON_PATH);
     }
 
+    //allows to serve default swagger webjar UI (petstore) under "/" path
     private void serveSwaggerUiStaticContent(Environment environment) {
         AssetsBundle swaggerUiBundle = new AssetsBundle(getSwaggerUiResourcePath(), SWAGGER_UI_PATH, "index.html", "swaggerUiAssets");
         swaggerUiBundle.run(environment);
     }
 
+    //location of swagger UI webjar
     private String getSwaggerUiResourcePath() {
         return "/META-INF/resources/webjars/swagger-ui/" + SWAGGER_UI_VERSION + "/";
     }

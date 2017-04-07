@@ -1,0 +1,18 @@
+server:
+  rootPath: /rest
+  applicationConnectors:
+  - type: http
+    port: 8888
+  - type: https
+    port: 443
+    keyStorePath: ./server/team-space-server/target/classes/keys/keystore.jks
+    keyStorePassword: ts3passx!
+    validateCerts: false
+    validatePeers: false
+  adminConnectors:
+  - type: http
+    port: 8889
+
+logging:
+  level: INFO
+
