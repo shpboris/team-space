@@ -35,6 +35,9 @@
         <slf4j-log4j12.version>1.7.22</slf4j-log4j12.version>
         <junit.version>4.12</junit.version>
         <maven.clean.plugin.version>3.0.0</maven.clean.plugin.version>
+        <fest-assert.version>1.4</fest-assert.version>
+        <lombok.version>1.14.6</lombok.version>
+        <commons-lang3.version>3.4</commons-lang3.version>
     </properties>
 
     <build>

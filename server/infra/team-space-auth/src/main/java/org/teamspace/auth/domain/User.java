@@ -4,10 +4,8 @@ import lombok.*;
 
 import java.security.Principal;
 
-@Getter
+@Data
 @AllArgsConstructor
-@ToString
-@EqualsAndHashCode
 public class User implements Principal {
 	private Integer id;
 	private String username;

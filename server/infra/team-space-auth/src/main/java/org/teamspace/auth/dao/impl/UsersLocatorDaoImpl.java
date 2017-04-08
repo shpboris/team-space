@@ -1,17 +1,21 @@
-package org.teamspace.auth.dao;
+package org.teamspace.auth.dao.impl;
 
 import com.google.common.base.Optional;
+import org.springframework.stereotype.Repository;
+import org.teamspace.auth.dao.UsersLocatorDao;
 import org.teamspace.auth.domain.User;
 
+import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
 
-
-public class UserDAO {
+@Repository
+public class UsersLocatorDaoImpl implements UsersLocatorDao{
 	
-	final static Map<Integer, User> usersMap = new HashMap<>();
+	final Map<Integer, User> usersMap = new HashMap<>();
 
-	static {
+	@PostConstruct
+	private void init(){
 		usersMap.put(1, new User(1, "user1", "pass1"));
 		usersMap.put(2, new User(2, "user2", "pass2"));
 	}

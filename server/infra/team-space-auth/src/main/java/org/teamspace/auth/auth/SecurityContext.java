@@ -1,4 +1,4 @@
-package org.teamspace.auth.dao;
+package org.teamspace.auth.auth;
 
 
 import org.teamspace.auth.domain.AccessToken;
@@ -8,11 +8,9 @@ import org.teamspace.auth.domain.AccessToken;
  */
 public class SecurityContext {
     private static final ThreadLocal<AccessToken> context = new ThreadLocal<AccessToken>();
-
     public static AccessToken getContext() {
         return context.get();
     }
-
     public static void setContext(AccessToken accessToken) {
         context.set(accessToken);
     }

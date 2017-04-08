@@ -4,8 +4,10 @@ import com.google.common.base.Optional;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.joda.time.DateTime;
-import org.teamspace.auth.dao.TokenProviderDAO;
-import org.teamspace.auth.dao.UserDAO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.teamspace.auth.dao.TokenProviderDao;
+import org.teamspace.auth.dao.UsersLocatorDao;
 import org.teamspace.auth.domain.AccessToken;
 import org.teamspace.auth.domain.User;
 
@@ -19,17 +21,13 @@ import java.util.Map;
 @Path("/oauth2/token")
 @Produces(MediaType.APPLICATION_JSON)
 @Api("Authentication")
+@Component
 public class TokenProviderResource {
-	
 
-	private UserDAO userDAO;
-	private TokenProviderDAO accessTokenDAO;
-	
-
-	public TokenProviderResource() {
-		userDAO = new UserDAO();
-		accessTokenDAO = new TokenProviderDAO();
-	}
+	@Autowired
+	private UsersLocatorDao userDAO;
+	@Autowired
+	private TokenProviderDao accessTokenDAO;
 
 
 	@POST

@@ -56,7 +56,7 @@
               <transformers>
                 <transformer />
                 <transformer>
-                  <mainClass>com.emc.cloud_dr.infra.auth.OAuth2Application</mainClass>
+                  <mainClass>org.teamspace.main.TeamSpaceApplication</mainClass>
                 </transformer>
               </transformers>
             </configuration>

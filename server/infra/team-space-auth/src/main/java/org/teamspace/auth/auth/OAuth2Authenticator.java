@@ -5,8 +5,9 @@ import io.dropwizard.auth.Authenticator;
 import lombok.AllArgsConstructor;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
-import org.teamspace.auth.dao.SecurityContext;
-import org.teamspace.auth.dao.TokenProviderDAO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.teamspace.auth.dao.TokenProviderDao;
 import org.teamspace.auth.domain.AccessToken;
 import org.teamspace.auth.domain.User;
 
@@ -14,15 +15,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 @AllArgsConstructor
-public class SimpleAuthenticator implements Authenticator<String, User> {
-	
+@Component
+public class OAuth2Authenticator implements Authenticator<String, User> {
+
+	@Autowired
+	private TokenProviderDao accessTokenDAO;
+
 	public static final int ACCESS_TOKEN_EXPIRE_TIME_MIN = 30;
-	private TokenProviderDAO accessTokenDAO;
-	
-	
-	public SimpleAuthenticator() {
-		super();
-	}
 	
 
 	@Override

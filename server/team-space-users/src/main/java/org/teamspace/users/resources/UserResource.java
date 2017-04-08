@@ -1,6 +1,8 @@
 package org.teamspace.users.resources;
 
+import io.dropwizard.auth.Auth;
 import io.swagger.annotations.*;
+import org.springframework.stereotype.Component;
 import org.teamspace.auth.domain.User;
 
 import javax.annotation.security.PermitAll;
@@ -15,6 +17,7 @@ import javax.ws.rs.core.MediaType;
 @Path("/users")
 @Produces(MediaType.APPLICATION_JSON)
 @PermitAll
+@Component
 public class UserResource {
 
 
@@ -23,19 +26,8 @@ public class UserResource {
     @PermitAll
     @ApiOperation(value = "get current user",
             response = User.class)
-    public User getCurrentUser() {
-        int x = 0;
-        return new User(1, "user1", "pass1");
-    }
-
-
-    @GET
-    @Path("/another")
-    @PermitAll
-    @ApiOperation(value = "get another user", response = User.class)
-    public User getAnotherUser() {
-        int x = 0;
-        return new User(2, "user2", "pass2");
+    public User getCurrentUser(@Auth User user) {
+        return user;
     }
 
 }

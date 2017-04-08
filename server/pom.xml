@@ -37,13 +37,13 @@
         <dependency>
             <groupId>org.easytesting</groupId>
             <artifactId>fest-assert</artifactId>
-            <version>1.4</version>
+            <version>${fest-assert.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.14.6</version>
+            <version>${lombok.version}</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -59,17 +59,17 @@
         <dependency>
             <groupId>io.dropwizard-bundles</groupId>
             <artifactId>dropwizard-configurable-assets-bundle</artifactId>
-            <version>1.0.5</version>
+            <version>${dropwizard.version}</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard-bundles</groupId>
             <artifactId>dropwizard-configurable-assets-bundle</artifactId>
-            <version>1.0.5</version>
+            <version>${dropwizard.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.4</version>
+            <version>${commons-lang3.version}</version>
         </dependency>
         <dependency>
             <groupId>org.webjars</groupId>
