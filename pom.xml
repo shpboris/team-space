@@ -38,6 +38,7 @@
         <fest-assert.version>1.4</fest-assert.version>
         <lombok.version>1.14.6</lombok.version>
         <commons-lang3.version>3.4</commons-lang3.version>
+        <slf4j-api.version>1.7.22</slf4j-api.version>
     </properties>
 
     <build>
