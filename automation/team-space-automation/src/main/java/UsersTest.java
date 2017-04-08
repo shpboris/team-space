@@ -1,7 +1,9 @@
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.teamspace.client.ApiClient;
 import org.teamspace.client.ApiException;
 import org.teamspace.client.api.AuthenticationApi;
 import org.teamspace.client.api.UserApi;
+import org.teamspace.client.api.users.UsersClient;
 import org.teamspace.client.model.User;
 import org.testng.annotations.Test;
 
@@ -13,6 +15,10 @@ import static org.testng.AssertJUnit.assertEquals;
  * Created by shpilb on 07/04/2017.
  */
 public class UsersTest {
+
+    private static AnnotationConfigApplicationContext annotationConfigApplicationContext;
+    public static final String TEAM_SPACE_CLIENT_BASE_PACKAGE = "org.teamspace.client";
+
     @Test()
     public void testUsers(){
         ApiClient apiClient = new ApiClient();
@@ -41,4 +47,18 @@ public class UsersTest {
         }
         assertEquals("user1", currUser.getUsername());
     }
+
+    @Test()
+    public void testUsersClient() throws Exception{
+
+        annotationConfigApplicationContext =
+                new AnnotationConfigApplicationContext(TEAM_SPACE_CLIENT_BASE_PACKAGE);
+
+        UsersClient usersClient = annotationConfigApplicationContext.getBean(UsersClient.class);
+        User currentUser = usersClient.getCurrentUser();
+        assertEquals(currentUser.getUsername(), "user1");
+
+    }
+
+
 }
