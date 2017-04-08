@@ -9,6 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>org.team-space.clients</groupId>
     <artifactId>clients</artifactId>
     <packaging>pom</packaging>
     <modules>

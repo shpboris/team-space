@@ -9,12 +9,13 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>org.team-space.server</groupId>
     <artifactId>server</artifactId>
     <packaging>pom</packaging>
     <modules>
         <module>team-space-server</module>
         <module>infra</module>
-        <module>users</module>
+        <module>team-space-users</module>
     </modules>
     <dependencies>
         <dependency>
