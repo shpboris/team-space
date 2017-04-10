@@ -15,16 +15,16 @@ public class BaseClient {
 
     private ApiClient apiClient;
 
-    @Value("${user}")
+    @Value("${server.user}")
     private String user;
 
-    @Value("${password}")
+    @Value("${server.password}")
     private String password;
 
-    @Value("${host}")
+    @Value("${server.host}")
     private String host;
 
-    @Value("${grant-type}")
+    @Value("${server.grantType}")
     private String grantType;
 
 
