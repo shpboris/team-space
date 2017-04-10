@@ -1,0 +1,12 @@
+1.
+In client - read connection details from yml
+2.
+In client add scheduled requests to UserResource
+3.
+In all projects - configure sl4j
+4.
+Add regular Junits(with mocks\partial context?)
+5.
+TestNG - add suits
+6.
+Test running the apps standalone

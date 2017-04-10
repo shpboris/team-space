@@ -1,5 +1,6 @@
 package org.teamspace.client.common;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.teamspace.client.ApiClient;
 import org.teamspace.client.ApiException;
 import org.teamspace.client.api.AuthenticationApi;
@@ -13,14 +14,22 @@ import java.util.Map;
 public class BaseClient {
 
     private ApiClient apiClient;
-    private static final String USER = "user1";
-    private static final String PASS = "pass1";
-    private static final String HOST = "localhost";
-    private static final String GRANT_TYPE = "password";
+
+    @Value("${user}")
+    private String user;
+
+    @Value("${password}")
+    private String password;
+
+    @Value("${host}")
+    private String host;
+
+    @Value("${grant-type}")
+    private String grantType;
+
 
     public BaseClient(){
         this.apiClient = new ApiClient();
-        apiClient.setBasePath(AuthHelperUtil.getHostBasePath(HOST));
     }
 
     public ApiClient getApiClient(){
@@ -29,8 +38,9 @@ public class BaseClient {
     }
 
     public void acquireToken() throws ApiException {
+        apiClient.setBasePath(AuthHelperUtil.getHostBasePath(host));
         AuthenticationApi authenticationApi = new AuthenticationApi(apiClient);
-        Map<String, Object> respMap = authenticationApi.postForToken(GRANT_TYPE, USER, PASS);
+        Map<String, Object> respMap = authenticationApi.postForToken(grantType, user, password);
         String token = (String) respMap.get("access_token");
         apiClient.setAccessToken(token);
     }
