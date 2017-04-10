@@ -1,5 +1,6 @@
 package org.teamspace.client.api.users;
 
+import lombok.extern.slf4j.Slf4j;
 import org.teamspace.client.ApiException;
 import org.teamspace.client.api.UserApi;
 import org.teamspace.client.common.BaseClient;
@@ -9,6 +10,7 @@ import org.teamspace.client.model.User;
 /**
  * Created by shpilb on 18/02/2017.
  */
+@Slf4j
 public class UsersClientImpl extends BaseClient implements UsersClient{
 
     private UserApi userApi;

@@ -22,7 +22,7 @@ public class TeamSpaceClient {
         UsersClient usersClient = annotationConfigApplicationContext.getBean(UsersClient.class);
         try {
             User currentUser = usersClient.getCurrentUser();
-            log.info("user name is - " + currentUser.getUsername());
+            log.info("user name is " + currentUser.getUsername());
         } catch (ApiException e) {
             log.error(e.getMessage(), e);
         }
