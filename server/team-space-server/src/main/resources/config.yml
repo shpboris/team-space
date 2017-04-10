@@ -14,5 +14,20 @@ server:
     port: 8889
 
 logging:
-  level: INFO
+  loggers:
+    "org.teamspace": DEBUG
+  appenders:
+    - type: console
+      threshold: DEBUG
+      target: stdout
+    - type: file
+      currentLogFilename: ./logs/ts/teamspace.log
+      archivedLogFilenamePattern: ./logs/ts/teamspace-%d{yyyy-MM-dd-HH}-%i.log.gz
+      maxFileSize: 100MB
+      threshold: DEBUG
+    - type: file
+      currentLogFilename: ./logs/ts/errors.log
+      archivedLogFilenamePattern: ./logs/ts/errors-%d{yyyy-MM-dd-HH}-%i.log.gz
+      maxFileSize: 100MB
+      threshold: ERROR
 

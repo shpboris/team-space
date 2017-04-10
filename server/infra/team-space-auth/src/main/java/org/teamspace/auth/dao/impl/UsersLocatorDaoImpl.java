@@ -1,6 +1,7 @@
 package org.teamspace.auth.dao.impl;
 
 import com.google.common.base.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import org.teamspace.auth.dao.UsersLocatorDao;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Repository
+@Slf4j
 public class UsersLocatorDaoImpl implements UsersLocatorDao{
 	
 	final Map<Integer, User> usersMap = new HashMap<>();
@@ -28,6 +30,7 @@ public class UsersLocatorDaoImpl implements UsersLocatorDao{
 	}
 
 	public Optional<User> findUserByUsernameAndPassword(final String username, final String password) {
+		log.info("login attempt with user " + username);
 		for (Map.Entry<Integer, User> entry : usersMap.entrySet()) {
 			User user = entry.getValue();
 			if (user.getPassword().equals(password) && user.getUsername().equals(username)) {
