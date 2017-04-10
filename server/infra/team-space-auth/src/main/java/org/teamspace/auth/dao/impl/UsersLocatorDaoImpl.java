@@ -1,6 +1,7 @@
 package org.teamspace.auth.dao.impl;
 
 import com.google.common.base.Optional;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import org.teamspace.auth.dao.UsersLocatorDao;
 import org.teamspace.auth.domain.User;
@@ -14,10 +15,16 @@ public class UsersLocatorDaoImpl implements UsersLocatorDao{
 	
 	final Map<Integer, User> usersMap = new HashMap<>();
 
+	@Value("${adminCredentials.user}")
+	private String adminUser;
+
+	@Value("${adminCredentials.password}")
+	private String adminPassword;
+
+
 	@PostConstruct
 	private void init(){
-		usersMap.put(1, new User(1, "user1", "pass1"));
-		usersMap.put(2, new User(2, "user2", "pass2"));
+		usersMap.put(1, new User(1, adminUser, adminPassword));
 	}
 
 	public Optional<User> findUserByUsernameAndPassword(final String username, final String password) {
