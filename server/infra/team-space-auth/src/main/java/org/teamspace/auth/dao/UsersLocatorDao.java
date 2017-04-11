@@ -1,9 +1,17 @@
 package org.teamspace.auth.dao;
 
-import com.google.common.base.Optional;
+import org.apache.ibatis.annotations.*;
 import org.teamspace.auth.domain.User;
+import org.teamspace.persistence.common.CustomMapper;
 
-
+@CustomMapper
 public interface UsersLocatorDao {
-	public Optional<User> findUserByUsernameAndPassword(final String username, final String password);
+
+	@Select("SELECT * FROM USERS WHERE USERNAME = #{username} AND PASSWORD = #{password}")
+	@Results({
+			@Result(property = "id", column = "ID"),
+			@Result(property = "username", column = "USERNAME"),
+			@Result(property = "password", column = "PASSWORD")
+	})
+	User findUserByUsernameAndPassword(@Param("username") String username, @Param("password") String password);
 }

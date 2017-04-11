@@ -1,6 +1,5 @@
 package org.teamspace.auth.resources;
 
-import com.google.common.base.Optional;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.joda.time.DateTime;
@@ -27,7 +26,7 @@ public class TokenProviderResource {
 	@Autowired
 	private UsersLocatorDao userDAO;
 	@Autowired
-	private TokenProviderDao accessTokenDAO;
+	private TokenProviderDao tokenProviderDao;
 
 
 	@POST
@@ -40,13 +39,12 @@ public class TokenProviderResource {
 			@FormParam("password") String password)
 	{
 
-		
-		Optional<User> user = userDAO.findUserByUsernameAndPassword(username, password);
-		if (user == null || !user.isPresent()) {
+		User user = userDAO.findUserByUsernameAndPassword(username, password);
+		if (user == null) {
 			throw new WebApplicationException(Response.status(Response.Status.UNAUTHORIZED).build());
 		}
 
-		AccessToken accessToken = accessTokenDAO.generateNewAccessToken(user.get(), new DateTime());
+		AccessToken accessToken = tokenProviderDao.generateNewAccessToken(user, new DateTime());
 		Map<String, String> response = new HashMap<String, String>();
 		response.put("token_type", "Bearer");
 		response.put("access_token", accessToken.getAccessTokenId().toString());

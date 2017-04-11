@@ -17,6 +17,11 @@
             <artifactId>team-space-auth</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.team-space.server.infra</groupId>
+            <artifactId>team-space-persistence</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
 
