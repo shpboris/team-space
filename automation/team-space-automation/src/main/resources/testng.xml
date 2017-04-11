@@ -1,0 +1,13 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+<suite name="TestAll">
+    <test name="users">
+        <classes>
+            <class name="org.teamspace.client.api.UsersTest"/>
+        </classes>
+    </test>
+    <test name="authentication">
+        <classes>
+            <class name="org.teamspace.client.api.AuthenticationTest"/>
+        </classes>
+    </test>
+</suite>
