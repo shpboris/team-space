@@ -7,15 +7,17 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
-import org.teamspace.persistence.common.CustomMapper;
+import org.teamspace.persistence.common.Dao;
 
 import javax.sql.DataSource;
+
+import static org.teamspace.persistence.common.CommonConstants.BASE_PACKAGE;
 
 /**
  * Created by shpilb on 11/04/2017.
  */
 @Configuration
-@MapperScan(basePackages = {"org.teamspace"}, annotationClass = CustomMapper.class)
+@MapperScan(basePackages = {BASE_PACKAGE}, annotationClass = Dao.class)
 public class PersistenceConfig {
     @Bean
     public DataSource getDataSource() {

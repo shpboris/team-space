@@ -48,6 +48,7 @@
         <mybatis-typehandlers-jsr310.version>1.0.0</mybatis-typehandlers-jsr310.version>
         <spring.jdbc.version>4.3.5.RELEASE</spring.jdbc.version>
         <commons-dbcp.version>1.4</commons-dbcp.version>
+        <reflections.version>0.9.10</reflections.version>
 
     </properties>
 

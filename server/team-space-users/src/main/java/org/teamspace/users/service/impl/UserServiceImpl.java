@@ -7,8 +7,6 @@ import org.teamspace.auth.domain.User;
 import org.teamspace.users.dao.UsersDao;
 import org.teamspace.users.service.UsersService;
 
-import javax.annotation.PostConstruct;
-
 /**
  * Created by shpilb on 11/04/2017.
  */
@@ -24,9 +22,8 @@ public class UserServiceImpl implements UsersService {
     @Value("${adminCredentials.password}")
     private String adminPassword;
 
-    @PostConstruct
-    private void init(){
-        usersDao.createTable();
+
+    public void init(){
         User admin = usersDao.findUserById(1);
         if(admin == null){
             admin = getAdminUser();

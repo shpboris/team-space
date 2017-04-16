@@ -2,9 +2,9 @@ package org.teamspace.auth.dao;
 
 import org.apache.ibatis.annotations.*;
 import org.teamspace.auth.domain.User;
-import org.teamspace.persistence.common.CustomMapper;
+import org.teamspace.persistence.common.Dao;
 
-@CustomMapper
+@Dao
 public interface UsersLocatorDao {
 
 	@Select("SELECT * FROM USERS WHERE USERNAME = #{username} AND PASSWORD = #{password}")

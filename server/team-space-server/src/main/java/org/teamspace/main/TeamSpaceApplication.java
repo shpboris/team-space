@@ -15,6 +15,8 @@ import org.teamspace.auth.auth.GenericAuthorizer;
 import org.teamspace.auth.auth.OAuth2Authenticator;
 import org.teamspace.auth.domain.User;
 import org.teamspace.bundler.Bundler;
+import org.teamspace.persistence.common.schema.SchemaCreator;
+import org.teamspace.users.service.UsersService;
 
 import java.nio.charset.StandardCharsets;
 
@@ -45,6 +47,15 @@ public class TeamSpaceApplication extends Application<Configuration> {
         registerRestResources(bundler, environment);
         registerSecurityAssets(environment);
         addSwaggerUi(environment);
+        createDbSchema();
+
+    }
+
+    private void createDbSchema(){
+        SchemaCreator schemaCreator = annotationConfigApplicationContext.getBean(SchemaCreator.class);
+        UsersService usersService = annotationConfigApplicationContext.getBean(UsersService.class);
+        schemaCreator.createSchema();
+        usersService.init();
     }
 
     private void registerSecurityAssets(Environment environment){
