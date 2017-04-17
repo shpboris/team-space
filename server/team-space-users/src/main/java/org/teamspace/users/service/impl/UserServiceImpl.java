@@ -8,6 +8,7 @@ import org.teamspace.users.dao.UsersDao;
 import org.teamspace.users.service.UsersService;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by shpilb on 11/04/2017.
@@ -25,6 +26,7 @@ public class UserServiceImpl implements UsersService {
     private String adminPassword;
 
     public static final String ADMIN_ROLE = "ADMIN";
+    public static final String USER_ROLE = "USERS";
 
 
     public void init(){
@@ -61,6 +63,12 @@ public class UserServiceImpl implements UsersService {
     @Override
     public void delete(User user) {
         usersDao.delete(user);
+    }
+
+
+    @Override
+    public List<User> findNonPrivilegedUsers() {
+        return usersDao.findAll().stream().filter(u -> u.getRole().equals(USER_ROLE)).collect(Collectors.toList());
     }
 
     private User getAdminUser(){

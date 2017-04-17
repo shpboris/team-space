@@ -14,4 +14,5 @@ public interface UsersService {
     public User update(User user);
     public void delete(User user);
     public void init();
+    public List<User> findNonPrivilegedUsers();
 }

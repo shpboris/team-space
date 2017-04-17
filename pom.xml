@@ -49,6 +49,8 @@
         <spring.jdbc.version>4.3.5.RELEASE</spring.jdbc.version>
         <commons-dbcp.version>1.4</commons-dbcp.version>
         <reflections.version>0.9.10</reflections.version>
+        <mockito-core.version>1.10.19</mockito-core.version>
+        <mockito-all.version>1.10.19</mockito-all.version>
 
     </properties>
 
