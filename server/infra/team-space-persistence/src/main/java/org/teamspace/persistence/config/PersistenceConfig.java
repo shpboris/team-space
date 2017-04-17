@@ -19,13 +19,19 @@ import static org.teamspace.persistence.common.CommonConstants.BASE_PACKAGE;
 @Configuration
 @MapperScan(basePackages = {BASE_PACKAGE}, annotationClass = Dao.class)
 public class PersistenceConfig {
+
+    public static String DRIVER;
+    public static String URL;
+    public static String USER;
+    public static String PASSWORD;
+
     @Bean
     public DataSource getDataSource() {
         BasicDataSource dataSource = new BasicDataSource();
-        dataSource.setDriverClassName("org.h2.Driver");
-        dataSource.setUrl("jdbc:h2:~/teamspace;");
-        dataSource.setUsername("");
-        dataSource.setPassword("");
+        dataSource.setDriverClassName(DRIVER);
+        dataSource.setUrl(URL);
+        dataSource.setUsername(USER);
+        dataSource.setPassword(PASSWORD);
         return dataSource;
     }
     @Bean

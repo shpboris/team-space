@@ -16,6 +16,7 @@ import org.teamspace.auth.auth.OAuth2Authenticator;
 import org.teamspace.auth.domain.User;
 import org.teamspace.bundler.Bundler;
 import org.teamspace.persistence.common.schema.SchemaCreator;
+import org.teamspace.persistence.config.PersistenceConfig;
 import org.teamspace.users.service.UsersService;
 
 import java.nio.charset.StandardCharsets;
@@ -41,6 +42,7 @@ public class TeamSpaceApplication extends Application<Configuration> {
 
     @Override
     public void run(Configuration configuration, Environment environment) throws Exception {
+        initPersistenceConfig();
         annotationConfigApplicationContext =
                 new AnnotationConfigApplicationContext(TEAM_SPACE_BASE_PACKAGE);
         Bundler bundler = annotationConfigApplicationContext.getBean(Bundler.class);
@@ -56,6 +58,13 @@ public class TeamSpaceApplication extends Application<Configuration> {
         UsersService usersService = annotationConfigApplicationContext.getBean(UsersService.class);
         schemaCreator.createSchema();
         usersService.init();
+    }
+
+    private void initPersistenceConfig(){
+        PersistenceConfig.DRIVER = "org.h2.Driver";
+        PersistenceConfig.URL = "jdbc:h2:~/teamspace;";
+        PersistenceConfig.USER = "";
+        PersistenceConfig.PASSWORD = "";
     }
 
     private void registerSecurityAssets(Environment environment){

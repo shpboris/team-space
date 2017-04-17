@@ -3,7 +3,6 @@ package org.teamspace.users.dao;
 import org.apache.ibatis.annotations.*;
 import org.teamspace.auth.domain.User;
 import org.teamspace.persistence.common.Dao;
-import org.teamspace.persistence.common.TableCreator;
 
 import java.util.List;
 
@@ -55,7 +54,6 @@ public interface UsersDao {
     @Delete("DELETE FROM USERS WHERE ID = #{id}")
     int delete(User user);
 
-    @TableCreator
     @Update("CREATE TABLE IF NOT EXISTS USERS(ID INT AUTO_INCREMENT PRIMARY KEY NOT NULL, " +
             "USERNAME VARCHAR(50) NOT NULL, PASSWORD VARCHAR(50) NOT NULL, FIRST_NAME VARCHAR(50) NOT NULL, " +
             "LAST_NAME VARCHAR(50) NOT NULL, ROLE VARCHAR(50) NOT NULL)")
