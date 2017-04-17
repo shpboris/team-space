@@ -1,6 +1,6 @@
 package org.teamspace.persistence.config;
 
-import org.apache.commons.dbcp.BasicDataSource;
+import org.apache.ibatis.datasource.pooled.PooledDataSource;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.annotation.MapperScan;
@@ -24,14 +24,18 @@ public class PersistenceConfig {
     public static String URL;
     public static String USER;
     public static String PASSWORD;
+    public static final int MAXIMUM_ACTIVE_CONNECTIONS = 10;
+    public static final int MAXIMUM_IDLE_CONNECTIONS = 5;
 
     @Bean
     public DataSource getDataSource() {
-        BasicDataSource dataSource = new BasicDataSource();
-        dataSource.setDriverClassName(DRIVER);
+        PooledDataSource dataSource = new PooledDataSource();
+        dataSource.setDriver(DRIVER);
         dataSource.setUrl(URL);
         dataSource.setUsername(USER);
         dataSource.setPassword(PASSWORD);
+        dataSource.setPoolMaximumActiveConnections(MAXIMUM_ACTIVE_CONNECTIONS);
+        dataSource.setPoolMaximumIdleConnections(MAXIMUM_IDLE_CONNECTIONS);
         return dataSource;
     }
     @Bean
