@@ -39,7 +39,7 @@ public class TokenProviderResource {
 			@FormParam("password") String password)
 	{
 
-		User user = userDAO.findUserByUsernameAndPassword(username, password);
+		User user = userDAO.findByUsernameAndPassword(username, password);
 		if (user == null) {
 			throw new WebApplicationException(Response.status(Response.Status.UNAUTHORIZED).build());
 		}

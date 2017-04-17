@@ -11,7 +11,10 @@ public interface UsersLocatorDao {
 	@Results({
 			@Result(property = "id", column = "ID"),
 			@Result(property = "username", column = "USERNAME"),
-			@Result(property = "password", column = "PASSWORD")
+			@Result(property = "password", column = "PASSWORD"),
+			@Result(property = "firstName", column = "FIRST_NAME"),
+			@Result(property = "lastName", column = "LAST_NAME"),
+			@Result(property = "role", column = "ROLE")
 	})
-	User findUserByUsernameAndPassword(@Param("username") String username, @Param("password") String password);
+	User findByUsernameAndPassword(@Param("username") String username, @Param("password") String password);
 }

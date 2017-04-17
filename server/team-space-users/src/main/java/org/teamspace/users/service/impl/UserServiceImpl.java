@@ -7,6 +7,8 @@ import org.teamspace.auth.domain.User;
 import org.teamspace.users.dao.UsersDao;
 import org.teamspace.users.service.UsersService;
 
+import java.util.List;
+
 /**
  * Created by shpilb on 11/04/2017.
  */
@@ -22,23 +24,45 @@ public class UserServiceImpl implements UsersService {
     @Value("${adminCredentials.password}")
     private String adminPassword;
 
+    public static final String ADMIN_ROLE = "ADMIN";
+
 
     public void init(){
-        User admin = usersDao.findUserById(1);
+        User admin = usersDao.findOneByUsername(adminUser);
         if(admin == null){
             admin = getAdminUser();
-            usersDao.insertUser(admin);
+            usersDao.create(admin);
         }
 
     }
 
     @Override
-    public void insertUser(User user) {
-        usersDao.insertUser(user);
+    public List<User> findAll() {
+        return usersDao.findAll();
+    }
+
+    @Override
+    public User findOne(Integer id) {
+        return usersDao.findOne(id);
+    }
+
+    @Override
+    public void create(User user) {
+        usersDao.create(user);
+    }
+
+    @Override
+    public void update(User user) {
+        usersDao.update(user);
+    }
+
+    @Override
+    public void delete(User user) {
+        usersDao.delete(user);
     }
 
     private User getAdminUser(){
-        User admin = new User(1, adminUser, adminPassword);
+        User admin = new User(adminUser, adminPassword, adminUser, adminUser, ADMIN_ROLE);
         return admin;
     }
 }
