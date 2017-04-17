@@ -10,8 +10,8 @@ import java.util.List;
 public interface UsersService {
     public List<User> findAll();
     public User findOne(Integer id);
-    public void create(User user);
-    public void update(User user);
+    public User create(User user);
+    public User update(User user);
     public void delete(User user);
     public void init();
 }

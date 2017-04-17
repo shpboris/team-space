@@ -47,13 +47,15 @@ public class UserServiceImpl implements UsersService {
     }
 
     @Override
-    public void create(User user) {
+    public User create(User user) {
         usersDao.create(user);
+        return usersDao.findOneByUsername(user.getUsername());
     }
 
     @Override
-    public void update(User user) {
+    public User update(User user) {
         usersDao.update(user);
+        return usersDao.findOneByUsername(user.getUsername());
     }
 
     @Override

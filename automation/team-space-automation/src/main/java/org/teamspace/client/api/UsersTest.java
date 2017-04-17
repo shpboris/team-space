@@ -9,7 +9,11 @@ import org.teamspace.client.common.Constants;
 import org.teamspace.client.model.User;
 import org.testng.annotations.Test;
 
+import java.util.List;
+
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Created by shpilb on 07/04/2017.
@@ -19,6 +23,36 @@ public class UsersTest extends BaseTest{
 
     private static AnnotationConfigApplicationContext annotationConfigApplicationContext;
     public static final String TEAM_SPACE_CLIENT_BASE_PACKAGE = "org.teamspace.client";
+
+    @Test()
+    public void testE2eScenario() throws ApiException{
+        UserApi userApi = new UserApi(getApiClient());
+
+        //create two users
+        List<User> origUsers = userApi.findAll();
+        User user1 = getUser("u1", "p1", "f1", "l1");
+        User user2 = getUser("u2", "p2", "f2", "l2");
+        user1 = userApi.create(user1);
+        user2 = userApi.create(user2);
+        List<User> currUsers = userApi.findAll();
+        assertEquals(origUsers.size() + 2, currUsers.size());
+        assertTrue(currUsers.stream().filter(u -> u.getUsername().equals("u1")).findAny().isPresent());
+
+        //update user2
+        user2.setFirstName("f1-new");
+        userApi.update(user2.getId(), user2);
+        User user2Updated = userApi.findOne(user2.getId());
+        assertEquals(user2Updated.getFirstName(), "f1-new");
+
+        //delete user1 and user2 and return to original state
+        userApi.delete(user1.getId());
+        userApi.delete(user2.getId());
+        currUsers = userApi.findAll();
+        assertEquals(origUsers.size(), currUsers.size());
+        assertFalse(currUsers.stream().filter(u -> u.getUsername().equals("u1")).findAny().isPresent());
+        assertFalse(currUsers.stream().filter(u -> u.getUsername().equals("u2")).findAny().isPresent());
+
+    }
 
     @Test()
     public void testGetCurrentUser() throws ApiException{
@@ -40,6 +74,16 @@ public class UsersTest extends BaseTest{
         User currentUser = usersClient.getCurrentUser();
         assertEquals(currentUser.getUsername(), Constants.USER);
 
+    }
+
+    private User getUser(String username, String password, String firstName, String lastName){
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(password);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setRole("USER");
+        return user;
     }
 
 

@@ -13,7 +13,7 @@ import java.util.List;
 @Dao
 public interface UsersDao {
     @Insert("INSERT INTO USERS (ID,USERNAME,PASSWORD, FIRST_NAME, LAST_NAME, ROLE) VALUES(#{id}, #{username}, #{password}, #{firstName}, #{lastName}, #{role})")
-    void create(User user);
+    int create(User user);
 
     @Select("SELECT * FROM USERS")
     @Results({

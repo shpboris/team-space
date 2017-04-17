@@ -49,21 +49,22 @@ public class UserResource {
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "create user", response = Response.class)
+    @ApiOperation(value = "create user", response = User.class)
     public Response create(@ApiParam(name = "user", required = true) User user) {
-        usersService.create(user);
-        return status(Response.Status.CREATED).build();
+        User createdUser = usersService.create(user);
+        return Response.status(Response.Status.CREATED).entity(createdUser).build();
     }
 
     @PUT
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "update user", response = Response.class)
+    @ApiOperation(value = "update user", response = User.class)
     public Response update(@NotNull @ApiParam(name="id", required = true)
                                @PathParam("id") Integer id, @ApiParam(name = "user", required = true) User user) {
-        User existingUser = findUserById(id);
-        usersService.update(user);
-        return status(Response.Status.OK).build();
+        findUserById(id);
+        user.setId(id);
+        User updatedUser = usersService.update(user);
+        return Response.status(Response.Status.OK).entity(updatedUser).build();
     }
 
     @DELETE
