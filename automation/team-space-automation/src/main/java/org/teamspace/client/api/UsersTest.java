@@ -6,12 +6,13 @@ import org.teamspace.client.ApiException;
 import org.teamspace.client.api.users.UsersClient;
 import org.teamspace.client.common.BaseTest;
 import org.teamspace.client.model.User;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import java.util.Arrays;
 import java.util.List;
 
 import static org.teamspace.client.common.Constants.USER;
+import static org.teamspace.client.common.Constants.USER_ROLE;
 import static org.testng.AssertJUnit.*;
 
 /**
@@ -23,18 +24,22 @@ public class UsersTest extends BaseTest{
     private static AnnotationConfigApplicationContext annotationConfigApplicationContext;
     public static final String TEAM_SPACE_CLIENT_BASE_PACKAGE = "org.teamspace.client";
 
-    @Test()
-    public void testCleanAllNonPrivilegedUsers() throws ApiException{
+    @BeforeMethod
+    public void setUp() throws ApiException{
         UserApi userApi = new UserApi(getApiClient());
         List<User> allUsers = userApi.findAll();
         for(User user : allUsers){
-           if(!user.getUsername().equals(USER)){
-               userApi.delete(user.getId());
-           }
+            if(user.getRole().equals(USER_ROLE)){
+                userApi.delete(user.getId());
+            }
         }
-        assertEquals(userApi.findAll().size(), 1);
     }
 
+    @AfterMethod
+    public void tearDown() {
+
+    }
+    
     @Test()
     public void testE2eScenario() throws ApiException{
         UserApi userApi = new UserApi(getApiClient());
@@ -102,12 +107,6 @@ public class UsersTest extends BaseTest{
         assertEquals(exceptionThrown, true);
         int afterFailedImportUsersCount = userApi.findAll().size();
         assertEquals(afterImportUsersCount, afterFailedImportUsersCount);
-
-        //delete user1 and user2 and return to original state
-        userApi.delete(user1Imported.getId());
-        userApi.delete(user2Imported.getId());
-        List<User> currUsers = userApi.findAll();
-        assertEquals(initialUsersCount, currUsers.size());
     }
 
     @Test()
@@ -128,7 +127,7 @@ public class UsersTest extends BaseTest{
         user.setPassword(password);
         user.setFirstName(firstName);
         user.setLastName(lastName);
-        user.setRole("USER");
+        user.setRole(USER_ROLE);
         return user;
     }
 

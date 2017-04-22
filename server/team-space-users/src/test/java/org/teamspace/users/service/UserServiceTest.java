@@ -47,7 +47,7 @@ public class UserServiceTest {
     }
 
     private List<User> getUsersList(){
-        User user1 = new User("u1", "p1", "f1", "l1", "USERS");
+        User user1 = new User("u1", "p1", "f1", "l1", "USER");
         User user2 = new User("u2", "p2", "f2", "l2", "ADMIN");
         return Arrays.asList(user1, user2);
     }

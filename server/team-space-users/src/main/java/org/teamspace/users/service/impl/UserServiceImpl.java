@@ -30,7 +30,7 @@ public class UserServiceImpl implements UsersService {
     private String adminPassword;
 
     public static final String ADMIN_ROLE = "ADMIN";
-    public static final String USER_ROLE = "USERS";
+    public static final String USER_ROLE = "USER";
 
 
     public void init(){

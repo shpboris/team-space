@@ -9,4 +9,6 @@ public class Constants {
     public static String USER = "user1";
     public static String PASSWORD = "pass1";
     public static int TIMEOUT_SEC = 60;
+    public static final String ADMIN_ROLE = "ADMIN";
+    public static final String USER_ROLE = "USER";
 }
