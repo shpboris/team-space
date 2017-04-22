@@ -4,6 +4,7 @@ import org.apache.commons.dbcp.BasicDataSource;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -19,13 +20,34 @@ import static org.teamspace.persistence.common.CommonConstants.BASE_PACKAGE;
 @Configuration
 @MapperScan(basePackages = {BASE_PACKAGE}, annotationClass = Dao.class)
 public class PersistenceConfig {
+
+    @Value("${database.driver}")
+    private String driver;
+
+    @Value("${database.url}")
+    private String url;
+
+    @Value("${database.user}")
+    private String user;
+
+    @Value("${database.password}")
+    private String password;
+
+    @Value("${database.maxActive}")
+    private Integer maxActive;
+
+    @Value("${database.maxIdle}")
+    private Integer maxIdle;
+
     @Bean
     public DataSource getDataSource() {
         BasicDataSource dataSource = new BasicDataSource();
-        dataSource.setDriverClassName("org.h2.Driver");
-        dataSource.setUrl("jdbc:h2:~/teamspace;");
-        dataSource.setUsername("");
-        dataSource.setPassword("");
+        dataSource.setDriverClassName(driver);
+        dataSource.setUrl(url);
+        dataSource.setUsername(user);
+        dataSource.setPassword(password);
+        dataSource.setMaxActive(maxActive);
+        dataSource.setMaxIdle(maxIdle);
         return dataSource;
     }
     @Bean
