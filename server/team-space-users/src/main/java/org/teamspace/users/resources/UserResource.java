@@ -87,6 +87,15 @@ public class UserResource {
         return user;
     }
 
+    @POST
+    @Path("/import")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "create users", response = User.class, responseContainer = "list")
+    public Response importUsers(@ApiParam(name = "user", required = true) List<User> users) {
+        List<User> createdUsersList = usersService.importUsers(users);
+        return Response.status(Response.Status.CREATED).entity(createdUsersList).build();
+    }
+
 
     private User findUserById(Integer id){
         User user = usersService.findOne(id);

@@ -8,4 +8,5 @@ public class Constants {
     public static String GRANT_TYPE = "password";
     public static String USER = "user1";
     public static String PASSWORD = "pass1";
+    public static int TIMEOUT_SEC = 60;
 }

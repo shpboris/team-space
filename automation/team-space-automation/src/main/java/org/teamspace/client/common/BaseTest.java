@@ -7,6 +7,8 @@ import org.teamspace.client.api.AuthenticationApi;
 
 import java.util.Map;
 
+import static org.teamspace.client.common.Constants.TIMEOUT_SEC;
+
 /**
  * Created by shpilb on 11/04/2017.
  */
@@ -17,6 +19,7 @@ public class BaseTest {
         ApiClient apiClient = new ApiClient();
         apiClient.setVerifyingSsl(false);
         apiClient.setBasePath(Constants.BASE_PATH);
+        apiClient.setConnectTimeout(TIMEOUT_SEC * 1000);
 
         AuthenticationApi authenticationApi = new AuthenticationApi(apiClient);
         try {

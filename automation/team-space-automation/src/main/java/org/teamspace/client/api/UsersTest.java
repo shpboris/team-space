@@ -5,15 +5,14 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.teamspace.client.ApiException;
 import org.teamspace.client.api.users.UsersClient;
 import org.teamspace.client.common.BaseTest;
-import org.teamspace.client.common.Constants;
 import org.teamspace.client.model.User;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.List;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.teamspace.client.common.Constants.USER;
+import static org.testng.AssertJUnit.*;
 
 /**
  * Created by shpilb on 07/04/2017.
@@ -23,6 +22,18 @@ public class UsersTest extends BaseTest{
 
     private static AnnotationConfigApplicationContext annotationConfigApplicationContext;
     public static final String TEAM_SPACE_CLIENT_BASE_PACKAGE = "org.teamspace.client";
+
+    @Test()
+    public void testCleanAllNonPrivilegedUsers() throws ApiException{
+        UserApi userApi = new UserApi(getApiClient());
+        List<User> allUsers = userApi.findAll();
+        for(User user : allUsers){
+           if(!user.getUsername().equals(USER)){
+               userApi.delete(user.getId());
+           }
+        }
+        assertEquals(userApi.findAll().size(), 1);
+    }
 
     @Test()
     public void testE2eScenario() throws ApiException{
@@ -61,7 +72,42 @@ public class UsersTest extends BaseTest{
         currUser = userApi.getCurrentUser();
         log.info("current user " + currUser.getUsername());
         log.trace("current user trace" + currUser.getUsername());
-        assertEquals(currUser.getUsername(), Constants.USER);
+        assertEquals(currUser.getUsername(), USER);
+    }
+
+    @Test()
+    public void testImportUsers() throws ApiException{
+        UserApi userApi = new UserApi(getApiClient());
+
+        //successful import
+        int initialUsersCount = userApi.findAll().size();
+        User user1 = getUser("u1", "p1", "f1", "l1");
+        User user2 = getUser("u2", "p2", "f2", "l2");
+        List<User> res = userApi.importUsers(Arrays.asList(user1, user2));
+        User user1Imported = res.get(0);
+        User user2Imported = res.get(1);
+        assertEquals(res.size(), 2);
+        assertEquals(user1Imported.getUsername(), "u1");
+        int afterImportUsersCount = userApi.findAll().size();
+        assertEquals(initialUsersCount + 2, afterImportUsersCount );
+
+        //failure due to attempt to import existing user "user2"
+        User user3 = getUser("u3", "p3", "f3", "l3");
+        boolean exceptionThrown = false;
+        try {
+            userApi.importUsers(Arrays.asList(user3, user2));
+        } catch (Exception e){
+            exceptionThrown = true;
+        }
+        assertEquals(exceptionThrown, true);
+        int afterFailedImportUsersCount = userApi.findAll().size();
+        assertEquals(afterImportUsersCount, afterFailedImportUsersCount);
+
+        //delete user1 and user2 and return to original state
+        userApi.delete(user1Imported.getId());
+        userApi.delete(user2Imported.getId());
+        List<User> currUsers = userApi.findAll();
+        assertEquals(initialUsersCount, currUsers.size());
     }
 
     @Test()
@@ -72,7 +118,7 @@ public class UsersTest extends BaseTest{
 
         UsersClient usersClient = annotationConfigApplicationContext.getBean(UsersClient.class);
         User currentUser = usersClient.getCurrentUser();
-        assertEquals(currentUser.getUsername(), Constants.USER);
+        assertEquals(currentUser.getUsername(), USER);
 
     }
 
