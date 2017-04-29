@@ -1,0 +1,38 @@
+1.
+Teamspace application
+
+1.1)
+Run Teamspace application from command line:
+java -Ddw.server.applicationConnectors[1].keyStorePath=./keys/keystore.jks -jar team-space-server-1.0-SNAPSHOT.jar server config.yml
+
+1.2)
+FS layout:
+--any-root-folder
+    --tss-start.bat (this file includes the single command above to run the application)
+    --team-space-automation-1.0-SNAPSHOT.jar
+    --config.yml
+    --keys
+      --keystore.jks
+
+1.3)
+To run on Windows use:
+server\team-space-server\src\main\resources\scripts\tss-start.bat
+
+
+2.
+Automation
+
+2.1)
+Run TestNG automation against Teamspace application:
+java -cp team-space-automation-1.0-SNAPSHOT.jar org.testng.TestNG testng.xml
+
+2.2)
+FS layout:
+
+--any-root-folder
+    --tsa-start.bat (this file includes the single command above to run the application)
+    --team-space-automation-1.0-SNAPSHOT.jar
+
+2.3)
+To run on Windows use:
+automation\team-space-automation\src\main\resources\scripts\tsa-start.bat
