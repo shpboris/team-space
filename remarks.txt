@@ -5,6 +5,9 @@ Teamspace application
 Run Teamspace application from command line:
 java -Ddw.server.applicationConnectors[1].keyStorePath=./keys/keystore.jks -jar team-space-server-1.0-SNAPSHOT.jar server config.yml
 
+I remote debug option is needed, use this:
+java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005 -Ddw.server.applicationConnectors[1].keyStorePath=./keys/keystore.jks -jar team-space-server-1.0-SNAPSHOT.jar server config.yml
+
 1.2)
 FS layout:
 --any-root-folder

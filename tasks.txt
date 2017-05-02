@@ -1,6 +1,12 @@
+1.
+Add module test with Spring runner
+2.
+Make a full commit flow with Jenkins, Git and integration tests
+3.
+Infra for different databases on top of Mybatis
 4.
-Add regular Junits(with mocks\partial context?)
-5.
-TestNG - add suits
-6.
-Test running the apps standalone
+Add groups module and implement some join logic between users and groups
+7.
+Add performance tests vs MySql DB
+8.
+Add Spring Profiles

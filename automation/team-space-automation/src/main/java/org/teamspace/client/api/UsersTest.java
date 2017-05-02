@@ -5,14 +5,14 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.teamspace.client.ApiException;
 import org.teamspace.client.api.users.UsersClient;
 import org.teamspace.client.common.BaseTest;
+import org.teamspace.client.common.config.ConfigurationManager;
+import org.teamspace.client.config.CommonConfig;
 import org.teamspace.client.model.User;
 import org.testng.annotations.*;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static org.teamspace.client.common.Constants.USER;
-import static org.teamspace.client.common.Constants.USER_ROLE;
 import static org.testng.AssertJUnit.*;
 
 /**
@@ -23,13 +23,14 @@ public class UsersTest extends BaseTest{
 
     private static AnnotationConfigApplicationContext annotationConfigApplicationContext;
     public static final String TEAM_SPACE_CLIENT_BASE_PACKAGE = "org.teamspace.client";
+    public CommonConfig commonConfig = ConfigurationManager.getInstance().getConfiguration(CommonConfig.class);
 
     @BeforeMethod
     public void setUp() throws ApiException{
         UserApi userApi = new UserApi(getApiClient());
         List<User> allUsers = userApi.findAll();
         for(User user : allUsers){
-            if(user.getRole().equals(USER_ROLE)){
+            if(user.getRole().equals(commonConfig.getUserRole())){
                 userApi.delete(user.getId());
             }
         }
@@ -77,7 +78,7 @@ public class UsersTest extends BaseTest{
         currUser = userApi.getCurrentUser();
         log.info("current user " + currUser.getUsername());
         log.trace("current user trace" + currUser.getUsername());
-        assertEquals(currUser.getUsername(), USER);
+        assertEquals(currUser.getUsername(), commonConfig.getUser());
     }
 
     @Test()
@@ -117,7 +118,7 @@ public class UsersTest extends BaseTest{
 
         UsersClient usersClient = annotationConfigApplicationContext.getBean(UsersClient.class);
         User currentUser = usersClient.getCurrentUser();
-        assertEquals(currentUser.getUsername(), USER);
+        assertEquals(currentUser.getUsername(), commonConfig.getUser());
 
     }
 
@@ -127,7 +128,7 @@ public class UsersTest extends BaseTest{
         user.setPassword(password);
         user.setFirstName(firstName);
         user.setLastName(lastName);
-        user.setRole(USER_ROLE);
+        user.setRole(commonConfig.getUserRole());
         return user;
     }
 
