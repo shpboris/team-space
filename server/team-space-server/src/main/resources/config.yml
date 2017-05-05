@@ -9,6 +9,14 @@ server:
     keyStorePassword: ts3passx!
     validateCerts: false
     validatePeers: false
+  - type: https
+    port: 8443
+    keyStorePath: ./server/team-space-server/target/classes/keys/keystore.p12
+    keyStorePassword: ts3passx!
+    keyStoreType: PKCS12
+    trustStoreType: PKCS12
+    validateCerts: false
+    validatePeers: false
   adminConnectors:
   - type: http
     port: 8889
