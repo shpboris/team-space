@@ -52,6 +52,7 @@
         <reflections.version>0.9.10</reflections.version>
         <mockito-core.version>1.10.19</mockito-core.version>
         <mockito-all.version>1.10.19</mockito-all.version>
+        <aws.version>1.11.93</aws.version>
 
     </properties>
 
