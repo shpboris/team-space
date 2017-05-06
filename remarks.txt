@@ -39,3 +39,10 @@ FS layout:
 2.3)
 To run on Windows use:
 automation\team-space-automation\src\main\resources\scripts\tsa-start.bat
+
+3.
+Deploy
+
+3.1
+To run deploy application:
+java -jar team-space-deploy-server-1.5.2.RELEASE.jar

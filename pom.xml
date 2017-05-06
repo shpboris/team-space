@@ -11,6 +11,7 @@
         <module>server</module>
         <module>clients</module>
         <module>automation</module>
+        <module>deploy</module>
     </modules>
     <packaging>pom</packaging>
 
