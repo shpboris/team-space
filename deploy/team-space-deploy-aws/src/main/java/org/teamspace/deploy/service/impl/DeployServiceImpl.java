@@ -1,9 +1,19 @@
 package org.teamspace.deploy.service.impl;
 
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.*;
+import com.amazonaws.services.ec2.model.Filter;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.*;
+import com.amazonaws.services.s3.model.Region;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.teamspace.aws.client.AwsClientFactory;
 import org.teamspace.deploy.domain.DeployRequest;
@@ -11,7 +21,7 @@ import org.teamspace.deploy.domain.DeployResponse;
 import org.teamspace.deploy.service.DeployService;
 
 import javax.annotation.PostConstruct;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -36,14 +46,30 @@ public class DeployServiceImpl implements DeployService{
     public static final String INSTANCE_TYPE = "t2.micro";
     public static final int MAX_RETRIES = 12;
     public static final int WAIT_TIME_MILLISEC = 10000;
+    public static final String DEPLOYER_BUCKET_NAME = "deployer-target";
+
+    public static final String TAR_FILE_NAME = "$tarFileName$";
+    public static final String REGION_NAME = "$regionName$";
+    public static final String BUCKET_NAME = "$bucketName$";
 
     @Autowired
     private AwsClientFactory awsClientFactory;
+
+    @Autowired
+    private ResourceLoader resourceLoader;
+
+    @Value("${artifactsDir}")
+    private String artifactsDir;
+
     private AmazonEC2 ec2Client;
+
+    private AmazonS3 s3Client;
+
 
     @PostConstruct
     private void initClients(){
         ec2Client = awsClientFactory.getEc2Client();
+        s3Client = awsClientFactory.getS3Client();
     }
 
 
@@ -52,6 +78,7 @@ public class DeployServiceImpl implements DeployService{
     //connect to instance like that - ssh -i KeyPair.pem centos@54.149.13.100
     //KeyPair location is C:\Users\shpilb\Desktop\ts-key-pair\KeyPair.pem
     public DeployResponse deploy(DeployRequest deployRequest) {
+        uploadArtifact(deployRequest.getArtifactName());
         Vpc vpc = createVpc("10.0.0.0/16");
         Subnet publicSubnet = createSubnet(vpc, "10.0.0.0/24");
         Subnet privateSubnet = createSubnet(vpc, "10.0.1.0/24");
@@ -68,8 +95,19 @@ public class DeployServiceImpl implements DeployService{
         authorizeSecurityGroupIngress(securityGroupId, "tcp", 22, "0.0.0.0/0");
         authorizeSecurityGroupIngress(securityGroupId, "tcp", 80, "0.0.0.0/0");
         String amiId = getAmiId(IMAGE_FILTER_PRODUCT_CODE, CENTOS7_PRODUCT_CODE);
-        String publicDns = runInstance(amiId, INSTANCE_TYPE, keyPair, securityGroupId, publicSubnet);
+        String publicDns = runInstance(amiId, INSTANCE_TYPE, keyPair, securityGroupId, publicSubnet,
+                Regions.DEFAULT_REGION.toString(), DEPLOYER_BUCKET_NAME, deployRequest.getArtifactName());
         return new DeployResponse(publicDns);
+    }
+
+    public void uploadArtifact(String artifactName){
+        if(!s3Client.doesBucketExist(DEPLOYER_BUCKET_NAME)) {
+            CreateBucketRequest createBucketRequest = new CreateBucketRequest(DEPLOYER_BUCKET_NAME, Region.US_West_2);
+            s3Client.createBucket(createBucketRequest);
+        }
+        File file = new File(artifactsDir + "/" + artifactName);
+        s3Client.putObject(new PutObjectRequest(
+                DEPLOYER_BUCKET_NAME, artifactName, file));
     }
 
     public Vpc createVpc(String cidrBlock){
@@ -182,12 +220,15 @@ public class DeployServiceImpl implements DeployService{
         return images.get(0).getImageId();
     }
 
-    public String runInstance(String amiId, String instanceType, KeyPair keyPair, String securityGroupId, Subnet subnet){
+    public String runInstance(String amiId, String instanceType,
+                              KeyPair keyPair, String securityGroupId, Subnet subnet, String regionName,
+                                    String bucketName, String tarName){
         RunInstancesRequest runInstancesRequest = new RunInstancesRequest();
         runInstancesRequest.withImageId(amiId).withInstanceType(instanceType)
                 .withKeyName(keyPair.getKeyName())
                 .withSecurityGroupIds(securityGroupId)
                 .withSubnetId(subnet.getSubnetId())
+                .withUserData(getUserDataScript(tarName, regionName, bucketName))
                 .withMinCount(1)
                 .withMaxCount(1);
         RunInstancesResult runInstancesResult = ec2Client.runInstances(runInstancesRequest);
@@ -246,5 +287,24 @@ public class DeployServiceImpl implements DeployService{
 
     private String getTagValue(String tagValue){
         return TAG_VALUE_PREFIX + tagValue;
+    }
+
+    private String getUserDataScript(String tarFileName, String regionName, String bucketName){
+        String userDataScript = null;
+        InputStream inputStream = null;
+        try {
+            Resource resource = resourceLoader.getResource("classpath:user_data.sh");
+            inputStream = resource.getInputStream();
+            userDataScript = IOUtils.toString(inputStream, "UTF-8");
+            userDataScript = userDataScript.replace(TAR_FILE_NAME, tarFileName);
+            userDataScript = userDataScript.replace(REGION_NAME, regionName);
+            userDataScript = userDataScript.replace(BUCKET_NAME, bucketName);
+        } catch (Exception e){
+            throw new RuntimeException("Unable to read user data");
+        } finally {
+            IOUtils.closeQuietly(inputStream);
+        }
+        userDataScript = new String(Base64.encodeBase64(userDataScript.getBytes()));
+        return userDataScript;
     }
 }
