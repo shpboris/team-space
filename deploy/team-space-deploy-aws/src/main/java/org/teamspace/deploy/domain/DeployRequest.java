@@ -7,5 +7,6 @@ import lombok.Data;
  */
 @Data
 public class DeployRequest {
+    private String envTag;
     private String artifactName;
 }
