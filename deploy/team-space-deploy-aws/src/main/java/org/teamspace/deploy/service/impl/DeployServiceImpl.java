@@ -1,9 +1,16 @@
 package org.teamspace.deploy.service.impl;
 
+import com.amazonaws.auth.policy.Policy;
+import com.amazonaws.auth.policy.*;
+import com.amazonaws.auth.policy.Statement;
+import com.amazonaws.auth.policy.actions.EC2Actions;
+import com.amazonaws.auth.policy.actions.S3Actions;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.*;
 import com.amazonaws.services.ec2.model.Filter;
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagement;
+import com.amazonaws.services.identitymanagement.model.*;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.amazonaws.services.s3.model.Region;
@@ -47,6 +54,7 @@ public class DeployServiceImpl implements DeployService{
     public static final int MAX_RETRIES = 12;
     public static final int WAIT_TIME_MILLISEC = 10000;
     public static final String DEPLOYER_BUCKET_NAME = "deployer-target";
+    public static final String DEPLOYER_IAM_NAME = "deployer-iam";
 
     public static final String TAR_FILE_NAME = "$tarFileName$";
     public static final String REGION_NAME = "$regionName$";
@@ -65,11 +73,14 @@ public class DeployServiceImpl implements DeployService{
 
     private AmazonS3 s3Client;
 
+    private AmazonIdentityManagement iamClient;
+
 
     @PostConstruct
     private void initClients(){
         ec2Client = awsClientFactory.getEc2Client();
         s3Client = awsClientFactory.getS3Client();
+        iamClient = awsClientFactory.getIAMClient();
     }
 
 
@@ -78,7 +89,7 @@ public class DeployServiceImpl implements DeployService{
     //connect to instance like that - ssh -i KeyPair.pem centos@54.149.13.100
     //KeyPair location is C:\Users\shpilb\Desktop\ts-key-pair\KeyPair.pem
     public DeployResponse deploy(DeployRequest deployRequest) {
-        uploadArtifact(deployRequest.getArtifactName());
+        //uploadArtifact(deployRequest.getArtifactName());
         Vpc vpc = createVpc("10.0.0.0/16");
         Subnet publicSubnet = createSubnet(vpc, "10.0.0.0/24");
         Subnet privateSubnet = createSubnet(vpc, "10.0.1.0/24");
@@ -93,9 +104,10 @@ public class DeployServiceImpl implements DeployService{
         KeyPair keyPair = createKeyPair("deployerKey");
         String securityGroupId = createSecurityGroup("SSH-SG", vpc);
         authorizeSecurityGroupIngress(securityGroupId, "tcp", 22, "0.0.0.0/0");
-        authorizeSecurityGroupIngress(securityGroupId, "tcp", 80, "0.0.0.0/0");
+        authorizeSecurityGroupIngress(securityGroupId, "tcp", 8888, "0.0.0.0/0");
+        createInstanceProfile(DEPLOYER_IAM_NAME);
         String amiId = getAmiId(IMAGE_FILTER_PRODUCT_CODE, CENTOS7_PRODUCT_CODE);
-        String publicDns = runInstance(amiId, INSTANCE_TYPE, keyPair, securityGroupId, publicSubnet,
+        String publicDns = runInstance(amiId, INSTANCE_TYPE, keyPair, DEPLOYER_IAM_NAME, securityGroupId, publicSubnet,
                 Regions.DEFAULT_REGION.toString(), DEPLOYER_BUCKET_NAME, deployRequest.getArtifactName());
         return new DeployResponse(publicDns);
     }
@@ -221,7 +233,7 @@ public class DeployServiceImpl implements DeployService{
     }
 
     public String runInstance(String amiId, String instanceType,
-                              KeyPair keyPair, String securityGroupId, Subnet subnet, String regionName,
+                              KeyPair keyPair, String instanceProfileName, String securityGroupId, Subnet subnet, String regionName,
                                     String bucketName, String tarName){
         RunInstancesRequest runInstancesRequest = new RunInstancesRequest();
         runInstancesRequest.withImageId(amiId).withInstanceType(instanceType)
@@ -229,6 +241,7 @@ public class DeployServiceImpl implements DeployService{
                 .withSecurityGroupIds(securityGroupId)
                 .withSubnetId(subnet.getSubnetId())
                 .withUserData(getUserDataScript(tarName, regionName, bucketName))
+                .withIamInstanceProfile(new IamInstanceProfileSpecification().withName(instanceProfileName))
                 .withMinCount(1)
                 .withMaxCount(1);
         RunInstancesResult runInstancesResult = ec2Client.runInstances(runInstancesRequest);
@@ -306,5 +319,59 @@ public class DeployServiceImpl implements DeployService{
         }
         userDataScript = new String(Base64.encodeBase64(userDataScript.getBytes()));
         return userDataScript;
+    }
+
+    void createInstanceProfile(String name){
+        Policy trustPolicy = getTrustPolicy();
+        CreateRoleRequest createRoleRequest = new CreateRoleRequest();
+        createRoleRequest.withRoleName(name).withAssumeRolePolicyDocument(trustPolicy.toJson());
+        iamClient.createRole(createRoleRequest);
+
+        Policy permissionPolicy = getPermissionPolicy();
+        CreatePolicyRequest createPolicyRequest = new CreatePolicyRequest();
+        createPolicyRequest.withPolicyName(name).withPolicyDocument(permissionPolicy.toJson());
+        CreatePolicyResult createPolicyResult = iamClient.createPolicy(createPolicyRequest);
+
+        AttachRolePolicyRequest attachRolePolicyRequest = new AttachRolePolicyRequest();
+        attachRolePolicyRequest.withRoleName(name).withPolicyArn(createPolicyResult.getPolicy().getArn());
+        iamClient.attachRolePolicy(attachRolePolicyRequest);
+
+        CreateInstanceProfileRequest createInstanceProfileRequest = new CreateInstanceProfileRequest();
+        createInstanceProfileRequest.withInstanceProfileName(name);
+        iamClient.createInstanceProfile(createInstanceProfileRequest);
+
+        AddRoleToInstanceProfileRequest addRoleToInstanceProfileRequest = new AddRoleToInstanceProfileRequest();
+        addRoleToInstanceProfileRequest.withInstanceProfileName(name).withRoleName(name);
+        iamClient.addRoleToInstanceProfile(addRoleToInstanceProfileRequest);
+
+        try {
+            Thread.sleep(WAIT_TIME_MILLISEC);
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Unable to wait for getting instance running state");
+        }
+    }
+
+    private Policy getTrustPolicy(){
+        Principal principal = new Principal(Principal.Services.AmazonEC2);
+        Statement statement = new Statement(Statement.Effect.Allow)
+                .withActions(STSActions.AssumeRole)
+                .withPrincipals(principal);
+        Policy policy = new Policy()
+                .withStatements(statement);
+        return policy;
+    }
+
+    private Policy getPermissionPolicy(){
+        Statement s3Statement = new Statement(Statement.Effect.Allow)
+                .withResources(new com.amazonaws.auth.policy.Resource("*"))
+                .withActions(S3Actions.AllS3Actions);
+
+        Statement ec2Statement = new Statement(Statement.Effect.Allow)
+                .withResources(new com.amazonaws.auth.policy.Resource("*"))
+                .withActions(EC2Actions.AllEC2Actions);
+
+        Policy policy = new Policy();
+        policy.withStatements(s3Statement, ec2Statement);
+        return policy;
     }
 }

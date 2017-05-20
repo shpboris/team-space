@@ -5,6 +5,8 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagement;
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,5 +60,19 @@ public class AwsClientFactoryImpl implements AwsClientFactory {
             throw new RuntimeException("Unable to obtain S3 client");
         }
         return amazonS3Client;
+    }
+
+    @Override
+    public AmazonIdentityManagement getIAMClient() {
+        AmazonIdentityManagement amazonIdentityManagementClient;
+        if(awsCredentials != null) {
+            amazonIdentityManagementClient = AmazonIdentityManagementClientBuilder.standard()
+                    .withRegion(Regions.DEFAULT_REGION)
+                    .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
+                    .build();
+        } else{
+            throw new RuntimeException("Unable to obtain S3 client");
+        }
+        return amazonIdentityManagementClient;
     }
 }

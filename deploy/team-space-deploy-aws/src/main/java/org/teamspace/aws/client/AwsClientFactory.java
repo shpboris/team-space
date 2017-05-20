@@ -1,6 +1,7 @@
 package org.teamspace.aws.client;
 
 import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.identitymanagement.AmazonIdentityManagement;
 import com.amazonaws.services.s3.AmazonS3;
 
 /**
@@ -9,4 +10,5 @@ import com.amazonaws.services.s3.AmazonS3;
 public interface AwsClientFactory {
     AmazonEC2 getEc2Client();
     AmazonS3 getS3Client();
+    AmazonIdentityManagement getIAMClient();
 }
