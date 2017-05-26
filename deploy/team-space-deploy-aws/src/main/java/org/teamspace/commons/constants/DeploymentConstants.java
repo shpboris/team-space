@@ -23,8 +23,10 @@ public class DeploymentConstants {
     public static final String DEPLOYER_BUCKET_NAME = "deployer-target";
     public static final String INSTANCE_STATE_RUNNING = "running";
     public static final String INSTANCE_STATE_PENDING = "pending";
+    public static final String INSTANCE_STATE_TERMINATED = "terminated";
     public static final int HTTP_PORT = 8888;
     public static final int SSH_PORT = 22;
+    public static final String BLOCK_DEVICE_NAME = "/dev/sda1";
 
     public static final String TAR_FILE_NAME = "$tarFileName$";
     public static final String REGION_NAME = "$regionName$";

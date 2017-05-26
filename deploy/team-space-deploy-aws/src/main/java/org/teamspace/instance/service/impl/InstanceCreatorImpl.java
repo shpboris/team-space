@@ -96,6 +96,8 @@ public class InstanceCreatorImpl implements InstanceCreator {
                 .withUserData(getUserDataScript(tarName, regionName, bucketName))
                 .withIamInstanceProfile(new IamInstanceProfileSpecification().withName(instanceProfileName))
                 .withMinCount(1)
+                .withBlockDeviceMappings(new BlockDeviceMapping().withDeviceName(BLOCK_DEVICE_NAME)
+                        .withEbs(new EbsBlockDevice().withDeleteOnTermination(true)))
                 .withMaxCount(1);
         RunInstancesResult runInstancesResult = ec2Client.runInstances(runInstancesRequest);
         Instance instance = runInstancesResult.getReservation().getInstances().get(0);
@@ -257,5 +259,25 @@ public class InstanceCreatorImpl implements InstanceCreator {
         Policy policy = new Policy();
         policy.withStatements(s3Statement, ec2Statement);
         return policy;
+    }
+
+    public void markVolumesForDeleteOnTermination(Instance instance){
+        DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest();
+        describeInstancesRequest.withInstanceIds(instance.getInstanceId());
+        DescribeInstancesResult describeInstancesResult = ec2Client.describeInstances(describeInstancesRequest);
+        Instance upToDateInstanceDefinition = describeInstancesResult.getReservations().get(0).getInstances().get(0);
+        upToDateInstanceDefinition.getBlockDeviceMappings().stream().forEach(
+                blockDeviceMapping -> {
+                        InstanceBlockDeviceMappingSpecification mappingSpecification = new InstanceBlockDeviceMappingSpecification()
+                                .withDeviceName(blockDeviceMapping.getDeviceName())
+                                .withEbs(new EbsInstanceBlockDeviceSpecification().withDeleteOnTermination(true));
+
+                        ModifyInstanceAttributeRequest request = new ModifyInstanceAttributeRequest()
+                                .withInstanceId(instance.getInstanceId())
+                                .withBlockDeviceMappings(mappingSpecification);
+
+                        ec2Client.modifyInstanceAttribute(request);
+                }
+        );
     }
 }

@@ -10,11 +10,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.teamspace.aws.client.AwsClientFactory;
-import org.teamspace.deploy.domain.DeployRequest;
-import org.teamspace.deploy.domain.DeployResponse;
+import org.teamspace.deploy.domain.*;
 import org.teamspace.deploy.service.DeployService;
-import org.teamspace.instance.domain.CreateInstanceRequest;
-import org.teamspace.instance.domain.CreateInstanceResponse;
+import org.teamspace.instance.domain.*;
 import org.teamspace.instance.service.InstanceManager;
 import org.teamspace.network.domain.CreateNetworkRequest;
 import org.teamspace.network.domain.CreateNetworkResponse;
@@ -63,6 +61,7 @@ public class DeployServiceImpl implements DeployService{
 
     //connect to instance like that - ssh -i KeyPair.pem centos@54.149.13.100
     //KeyPair location is C:\Users\shpilb\Desktop\ts-key-pair\KeyPair.pem
+    @Override
     public DeployResponse deploy(DeployRequest deployRequest) {
         CreateNetworkRequest createNetworkRequest = new CreateNetworkRequest(deployRequest.getEnvTag());
         CreateNetworkResponse createNetworkResponse = networkManager.createNetwork(createNetworkRequest);
@@ -73,6 +72,12 @@ public class DeployServiceImpl implements DeployService{
                                 deployRequest.getArtifactName());
         CreateInstanceResponse createInstanceResponse = instanceManager.createInstance(createInstanceRequest);
         return new DeployResponse(createInstanceResponse.getPublicDns());
+    }
+
+    @Override
+    public void undeploy(UndeployRequest undeployRequest) {
+        DestroyInstanceRequest destroyInstanceRequest = new DestroyInstanceRequest(undeployRequest.getEnvTag());
+        instanceManager.destroyInstance(destroyInstanceRequest);
     }
 
     public void uploadArtifact(String artifactName){

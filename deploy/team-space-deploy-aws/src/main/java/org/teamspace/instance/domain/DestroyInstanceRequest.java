@@ -1,4 +1,4 @@
-package org.teamspace.network.domain;
+package org.teamspace.instance.domain;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,6 +8,6 @@ import lombok.Data;
  */
 @Data
 @AllArgsConstructor
-public class CreateNetworkRequest {
+public class DestroyInstanceRequest {
     private String envTag;
 }

@@ -8,6 +8,6 @@ import lombok.Data;
  */
 @Data
 @AllArgsConstructor
-public class CreateNetworkRequest {
+public class DestroyNetworkRequest {
     private String envTag;
 }
