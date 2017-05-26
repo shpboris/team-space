@@ -261,23 +261,4 @@ public class InstanceCreatorImpl implements InstanceCreator {
         return policy;
     }
 
-    public void markVolumesForDeleteOnTermination(Instance instance){
-        DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest();
-        describeInstancesRequest.withInstanceIds(instance.getInstanceId());
-        DescribeInstancesResult describeInstancesResult = ec2Client.describeInstances(describeInstancesRequest);
-        Instance upToDateInstanceDefinition = describeInstancesResult.getReservations().get(0).getInstances().get(0);
-        upToDateInstanceDefinition.getBlockDeviceMappings().stream().forEach(
-                blockDeviceMapping -> {
-                        InstanceBlockDeviceMappingSpecification mappingSpecification = new InstanceBlockDeviceMappingSpecification()
-                                .withDeviceName(blockDeviceMapping.getDeviceName())
-                                .withEbs(new EbsInstanceBlockDeviceSpecification().withDeleteOnTermination(true));
-
-                        ModifyInstanceAttributeRequest request = new ModifyInstanceAttributeRequest()
-                                .withInstanceId(instance.getInstanceId())
-                                .withBlockDeviceMappings(mappingSpecification);
-
-                        ec2Client.modifyInstanceAttribute(request);
-                }
-        );
-    }
 }

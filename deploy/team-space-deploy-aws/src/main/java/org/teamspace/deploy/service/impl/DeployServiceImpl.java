@@ -14,8 +14,7 @@ import org.teamspace.deploy.domain.*;
 import org.teamspace.deploy.service.DeployService;
 import org.teamspace.instance.domain.*;
 import org.teamspace.instance.service.InstanceManager;
-import org.teamspace.network.domain.CreateNetworkRequest;
-import org.teamspace.network.domain.CreateNetworkResponse;
+import org.teamspace.network.domain.*;
 import org.teamspace.network.service.NetworkManager;
 
 import javax.annotation.PostConstruct;
@@ -78,6 +77,8 @@ public class DeployServiceImpl implements DeployService{
     public void undeploy(UndeployRequest undeployRequest) {
         DestroyInstanceRequest destroyInstanceRequest = new DestroyInstanceRequest(undeployRequest.getEnvTag());
         instanceManager.destroyInstance(destroyInstanceRequest);
+        DestroyNetworkRequest destroyNetworkRequest = new DestroyNetworkRequest(undeployRequest.getEnvTag());
+        networkManager.destroyNetwork(destroyNetworkRequest);
     }
 
     public void uploadArtifact(String artifactName){
