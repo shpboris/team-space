@@ -7,5 +7,6 @@ import lombok.Data;
  */
 @Data
 public class UndeployRequest {
+    private String region;
     private String envTag;
 }

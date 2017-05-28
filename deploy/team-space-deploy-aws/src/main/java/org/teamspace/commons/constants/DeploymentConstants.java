@@ -1,5 +1,7 @@
 package org.teamspace.commons.constants;
 
+import com.amazonaws.regions.Regions;
+
 /**
  * Created by shpilb on 20/05/2017.
  */
@@ -13,6 +15,7 @@ public class DeploymentConstants {
     public static final String INSTANCE_ENTITY_TYPE = "INSTANCE";
     public static final String KEY_PAIR_ENTITY_TYPE = "KEY_PAIR";
     public static final String PROFILE_AND_ROLE_ENTITY_TYPE = "PROFILE_ROLE";
+    public static final String BUCKET_ENTITY_TYPE = "BUCKET";
 
     public static final String IMAGE_FILTER_PRODUCT_CODE = "product-code";
     public static final String CENTOS7_PRODUCT_CODE = "aw0evgkw8e5c1q413zgy5pjce";
@@ -20,7 +23,6 @@ public class DeploymentConstants {
     public static final int MAX_RETRIES = 12;
     public static final int WAIT_TIME_MILLISEC = 10000;
     public static final int TIMEOUT_MILLISEC = 30000;
-    public static final String DEPLOYER_BUCKET_NAME = "deployer-target";
     public static final String INSTANCE_STATE_RUNNING = "running";
     public static final String INSTANCE_STATE_PENDING = "pending";
     public static final String INSTANCE_STATE_TERMINATED = "terminated";
@@ -31,4 +33,5 @@ public class DeploymentConstants {
     public static final String TAR_FILE_NAME = "$tarFileName$";
     public static final String REGION_NAME = "$regionName$";
     public static final String BUCKET_NAME = "$bucketName$";
+    public static final String DEFAULT_REGION_NAME = Regions.DEFAULT_REGION.toString();
 }

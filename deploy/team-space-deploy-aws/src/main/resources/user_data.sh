@@ -8,7 +8,7 @@ wget https://s3.amazonaws.com/aws-cli/awscli-bundle.zip
 unzip awscli-bundle.zip
 ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws
 ./awscli-bundle/install -b ~/bin/
-aws s3 cp s3://$bucketName$/$tarFileName$.tar.gz $tarFileName$.tar.gz
+aws s3 cp s3://$bucketName$/$tarFileName$.tar.gz $tarFileName$.tar.gz --region $regionName$
 tar -zxvf $tarFileName$.tar.gz
 cd $tarFileName$
 sudo su

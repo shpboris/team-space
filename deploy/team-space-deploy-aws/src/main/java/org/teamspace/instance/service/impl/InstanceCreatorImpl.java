@@ -4,12 +4,8 @@ import com.amazonaws.auth.policy.Policy;
 import com.amazonaws.auth.policy.*;
 import com.amazonaws.auth.policy.actions.EC2Actions;
 import com.amazonaws.auth.policy.actions.S3Actions;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.model.*;
-import com.amazonaws.services.identitymanagement.AmazonIdentityManagement;
 import com.amazonaws.services.identitymanagement.model.*;
-import com.amazonaws.services.s3.AmazonS3;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
@@ -17,14 +13,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
-import org.teamspace.aws.client.AwsClientFactory;
+import org.teamspace.aws.client.context.AwsContext;
 import org.teamspace.commons.components.TagCreator;
 import org.teamspace.commons.utils.AwsEntitiesHelperUtil;
 import org.teamspace.instance.domain.CreateInstanceRequest;
 import org.teamspace.instance.domain.CreateInstanceResponse;
 import org.teamspace.instance.service.InstanceCreator;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -43,27 +38,11 @@ import static org.teamspace.commons.constants.DeploymentConstants.*;
 public class InstanceCreatorImpl implements InstanceCreator {
 
     @Autowired
-    private AwsClientFactory awsClientFactory;
-
-    @Autowired
     private TagCreator tagCreator;
 
     @Autowired
     private ResourceLoader resourceLoader;
 
-    private AmazonEC2 ec2Client;
-
-    private AmazonS3 s3Client;
-
-    private AmazonIdentityManagement iamClient;
-
-
-    @PostConstruct
-    private void initClients(){
-        ec2Client = awsClientFactory.getEc2Client();
-        s3Client = awsClientFactory.getS3Client();
-        iamClient = awsClientFactory.getIAMClient();
-    }
 
     @Override
     public CreateInstanceResponse createInstance(CreateInstanceRequest createInstanceRequest) {
@@ -75,10 +54,13 @@ public class InstanceCreatorImpl implements InstanceCreator {
                 .getEntityName(createInstanceRequest.getEnvTag(), PROFILE_AND_ROLE_ENTITY_TYPE);
         createInstanceProfile(profileName);
 
+        String bucketName = AwsEntitiesHelperUtil
+                .getEntityName(createInstanceRequest.getEnvTag(), BUCKET_ENTITY_TYPE).toLowerCase();
+
         String amiId = getAmiId(IMAGE_FILTER_PRODUCT_CODE, CENTOS7_PRODUCT_CODE);
         String publicDns = runInstance(amiId, INSTANCE_TYPE, keyPair, profileName,
                 createInstanceRequest.getSecurityGroupId(), createInstanceRequest.getSubnetId(),
-                Regions.DEFAULT_REGION.toString(), DEPLOYER_BUCKET_NAME,
+                AwsContext.getRegion().getName(), bucketName,
                 createInstanceRequest.getArtifactName(), createInstanceRequest.getEnvTag());
         waitForApplicationRunningState(publicDns, HTTP_PORT);
         CreateInstanceResponse createInstanceResponse = new CreateInstanceResponse(publicDns);
@@ -99,7 +81,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
                 .withBlockDeviceMappings(new BlockDeviceMapping().withDeviceName(BLOCK_DEVICE_NAME)
                         .withEbs(new EbsBlockDevice().withDeleteOnTermination(true)))
                 .withMaxCount(1);
-        RunInstancesResult runInstancesResult = ec2Client.runInstances(runInstancesRequest);
+        RunInstancesResult runInstancesResult = AwsContext.getEc2Client().runInstances(runInstancesRequest);
         Instance instance = runInstancesResult.getReservation().getInstances().get(0);
         tagCreator.createTag(instance.getInstanceId(), INSTANCE_ENTITY_TYPE, envTag);
         String state = waitForInstanceRunningState(instance);
@@ -113,7 +95,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
     private String waitForInstanceRunningState(Instance instance){
         DescribeInstanceStatusRequest describeInstanceStatusRequest = new DescribeInstanceStatusRequest();
         describeInstanceStatusRequest.withInstanceIds(instance.getInstanceId());
-        DescribeInstanceStatusResult describeInstanceStatusResult = ec2Client.describeInstanceStatus(describeInstanceStatusRequest);
+        DescribeInstanceStatusResult describeInstanceStatusResult = AwsContext.getEc2Client().describeInstanceStatus(describeInstanceStatusRequest);
         String instanceState = INSTANCE_STATE_PENDING;
         List<InstanceStatus> instancesStatuses = describeInstanceStatusResult.getInstanceStatuses();
         if(instancesStatuses != null && instancesStatuses.size() > 0){
@@ -127,7 +109,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
             } catch (InterruptedException e) {
                 throw new RuntimeException("Unable to wait for getting instance running state");
             }
-            describeInstanceStatusResult = ec2Client.describeInstanceStatus(describeInstanceStatusRequest);
+            describeInstanceStatusResult = AwsContext.getEc2Client().describeInstanceStatus(describeInstanceStatusRequest);
             instancesStatuses = describeInstanceStatusResult.getInstanceStatuses();
             if(instancesStatuses != null && instancesStatuses.size() > 0){
                 instanceState = instancesStatuses.get(0).getInstanceState().getName();
@@ -159,7 +141,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
     private String getInstancePublicDns(Instance instance){
         DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest();
         describeInstancesRequest.withInstanceIds(instance.getInstanceId());
-        DescribeInstancesResult describeInstancesResult = ec2Client.describeInstances(describeInstancesRequest);
+        DescribeInstancesResult describeInstancesResult = AwsContext.getEc2Client().describeInstances(describeInstancesRequest);
         String publicDns = describeInstancesResult.getReservations().get(0).getInstances().get(0).getPublicDnsName();
         return publicDns;
     }
@@ -167,7 +149,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
     private KeyPair createKeyPair(String key){
         CreateKeyPairRequest createKeyPairRequest = new CreateKeyPairRequest();
         createKeyPairRequest.withKeyName(key);
-        CreateKeyPairResult createKeyPairResult = ec2Client.createKeyPair(createKeyPairRequest);
+        CreateKeyPairResult createKeyPairResult = AwsContext.getEc2Client().createKeyPair(createKeyPairRequest);
         KeyPair keyPair = createKeyPairResult.getKeyPair();
         String keyPairFilePath = System.getProperty("user.dir") + "/KeyPair.pem";
         try {
@@ -182,9 +164,9 @@ public class InstanceCreatorImpl implements InstanceCreator {
     private String getAmiId(String imageFilterProductCode, String productCode){
         Filter filter = new Filter().withName(imageFilterProductCode).withValues(productCode);
         DescribeImagesRequest request = new DescribeImagesRequest().withFilters(filter);
-        DescribeImagesResult result = ec2Client.describeImages(request);
+        DescribeImagesResult result = AwsContext.getEc2Client().describeImages(request);
         List<Image> images = result.getImages();
-        return images.get(0).getImageId();
+        return images.get(images.size() - 1).getImageId();
     }
 
 
@@ -211,24 +193,24 @@ public class InstanceCreatorImpl implements InstanceCreator {
         Policy trustPolicy = getTrustPolicy();
         CreateRoleRequest createRoleRequest = new CreateRoleRequest();
         createRoleRequest.withRoleName(name).withAssumeRolePolicyDocument(trustPolicy.toJson());
-        iamClient.createRole(createRoleRequest);
+        AwsContext.getIamClient().createRole(createRoleRequest);
 
         Policy permissionPolicy = getPermissionPolicy();
         CreatePolicyRequest createPolicyRequest = new CreatePolicyRequest();
         createPolicyRequest.withPolicyName(name).withPolicyDocument(permissionPolicy.toJson());
-        CreatePolicyResult createPolicyResult = iamClient.createPolicy(createPolicyRequest);
+        CreatePolicyResult createPolicyResult = AwsContext.getIamClient().createPolicy(createPolicyRequest);
 
         AttachRolePolicyRequest attachRolePolicyRequest = new AttachRolePolicyRequest();
         attachRolePolicyRequest.withRoleName(name).withPolicyArn(createPolicyResult.getPolicy().getArn());
-        iamClient.attachRolePolicy(attachRolePolicyRequest);
+        AwsContext.getIamClient().attachRolePolicy(attachRolePolicyRequest);
 
         CreateInstanceProfileRequest createInstanceProfileRequest = new CreateInstanceProfileRequest();
         createInstanceProfileRequest.withInstanceProfileName(name);
-        iamClient.createInstanceProfile(createInstanceProfileRequest);
+        AwsContext.getIamClient().createInstanceProfile(createInstanceProfileRequest);
 
         AddRoleToInstanceProfileRequest addRoleToInstanceProfileRequest = new AddRoleToInstanceProfileRequest();
         addRoleToInstanceProfileRequest.withInstanceProfileName(name).withRoleName(name);
-        iamClient.addRoleToInstanceProfile(addRoleToInstanceProfileRequest);
+        AwsContext.getIamClient().addRoleToInstanceProfile(addRoleToInstanceProfileRequest);
 
         try {
             Thread.sleep(WAIT_TIME_MILLISEC);
@@ -236,6 +218,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
             throw new RuntimeException("Unable to wait after instance profile creation");
         }
     }
+
 
     private Policy getTrustPolicy(){
         Principal principal = new Principal(Principal.Services.AmazonEC2);
