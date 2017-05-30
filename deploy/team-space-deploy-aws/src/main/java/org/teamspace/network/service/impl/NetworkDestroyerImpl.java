@@ -54,11 +54,26 @@ public class NetworkDestroyerImpl implements NetworkDestroyer{
         Filter filter = new Filter().withName("tag:" + TAG_NAME).withValues(subnetTagValue);
         DescribeSubnetsRequest describeSubnetsRequest = new DescribeSubnetsRequest();
         describeSubnetsRequest.withFilters(filter);
-        DescribeSubnetsResult describeSubnetResult = AwsContext.getEc2Client().describeSubnets(describeSubnetsRequest);
-        describeSubnetResult.getSubnets().stream().forEach(subnet -> {
-            DeleteSubnetRequest deleteSubnetRequest = new DeleteSubnetRequest().withSubnetId(subnet.getSubnetId());
-            AwsContext.getEc2Client().deleteSubnet(deleteSubnetRequest);
-        });
+        boolean isSubnetsDeleted = false;
+        int retriesNum = 0;
+        while(!isSubnetsDeleted && retriesNum < MAX_RETRIES) {
+            retriesNum++;
+            try {
+                Thread.sleep(WAIT_TIME_MILLISEC);
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Unable to wait for application connected state");
+            }
+            try {
+                DescribeSubnetsResult describeSubnetResult = AwsContext.getEc2Client().describeSubnets(describeSubnetsRequest);
+                describeSubnetResult.getSubnets().stream().forEach(subnet -> {
+                    DeleteSubnetRequest deleteSubnetRequest = new DeleteSubnetRequest().withSubnetId(subnet.getSubnetId());
+                    AwsContext.getEc2Client().deleteSubnet(deleteSubnetRequest);
+                });
+                isSubnetsDeleted = true;
+            } catch (Exception e) {
+                log.warn("Attempt #" + retriesNum + " to delete subnet failed");
+            }
+        }
     }
 
     private void deleteRouteTable(String envTag){
