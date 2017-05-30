@@ -25,15 +25,18 @@ public class NetworkDestroyerImpl implements NetworkDestroyer{
 
     @Override
     public void destroyNetwork(DestroyNetworkRequest destroyNetworkRequest) {
+        log.info("Started network deletion");
         String envTag = destroyNetworkRequest.getEnvTag();
         deleteRouteTable(envTag);
         deleteGateway(envTag);
         deleteSubnets(envTag);
         deleteSecurityGroup(envTag);
         deleteVpc(envTag);
+        log.info("Completed network deletion");
     }
 
     private void deleteVpc(String envTag){
+        log.info("Deleting VPC ...");
         String vpcTagValue = AwsEntitiesHelperUtil
                 .getEntityName(envTag, VPC_ENTITY_TYPE);
         Filter filter = new Filter().withName("tag:" + TAG_NAME).withValues(vpcTagValue);
@@ -44,11 +47,13 @@ public class NetworkDestroyerImpl implements NetworkDestroyer{
             DeleteVpcRequest deleteVpcRequest = new DeleteVpcRequest();
             deleteVpcRequest.withVpcId(vpc.getVpcId());
             AwsContext.getEc2Client().deleteVpc(deleteVpcRequest);
+            log.info("Deleted VPC: " + vpc.getVpcId());
         });
 
     }
 
     private void deleteSubnets(String envTag){
+        log.info("Deleting subnet ...");
         String subnetTagValue = AwsEntitiesHelperUtil
                 .getEntityName(envTag, SUBNET_ENTITY_TYPE);
         Filter filter = new Filter().withName("tag:" + TAG_NAME).withValues(subnetTagValue);
@@ -68,6 +73,7 @@ public class NetworkDestroyerImpl implements NetworkDestroyer{
                 describeSubnetResult.getSubnets().stream().forEach(subnet -> {
                     DeleteSubnetRequest deleteSubnetRequest = new DeleteSubnetRequest().withSubnetId(subnet.getSubnetId());
                     AwsContext.getEc2Client().deleteSubnet(deleteSubnetRequest);
+                    log.info("Deleted subnet: " + subnet.getSubnetId());
                 });
                 isSubnetsDeleted = true;
             } catch (Exception e) {
@@ -77,6 +83,7 @@ public class NetworkDestroyerImpl implements NetworkDestroyer{
     }
 
     private void deleteRouteTable(String envTag){
+        log.info("Deleting route table ...");
         String routeTableTagValue = AwsEntitiesHelperUtil
                 .getEntityName(envTag, ROUTE_TABLE_ENTITY_TYPE);
         Filter filter = new Filter().withName("tag:" + TAG_NAME).withValues(routeTableTagValue);
@@ -88,14 +95,18 @@ public class NetworkDestroyerImpl implements NetworkDestroyer{
                 DisassociateRouteTableRequest disassociateRouteTableRequest = new DisassociateRouteTableRequest();
                 disassociateRouteTableRequest.withAssociationId(routeTableAssociation.getRouteTableAssociationId());
                 AwsContext.getEc2Client().disassociateRouteTable(disassociateRouteTableRequest);
+                log.info("Deleted route table association for subnet: " + routeTableAssociation
+                        .getSubnetId() + " and route table: " + routeTableAssociation.getRouteTableId());
             });
             DeleteRouteTableRequest deleteRouteTableRequest = new DeleteRouteTableRequest().withRouteTableId(routeTable.getRouteTableId());
             AwsContext.getEc2Client().deleteRouteTable(deleteRouteTableRequest);
+            log.info("Deleted route table: " + routeTable.getRouteTableId());
         });
 
     }
 
     private void deleteGateway(String envTag) {
+        log.info("Deleting gateway ...");
         String gatewayTagValue = AwsEntitiesHelperUtil
                 .getEntityName(envTag, GATEWAY_ENTITY_TYPE);
         Filter filter = new Filter().withName("tag:" + TAG_NAME).withValues(gatewayTagValue);
@@ -123,6 +134,7 @@ public class NetworkDestroyerImpl implements NetworkDestroyer{
                             DeleteInternetGatewayRequest deleteInternetGatewayRequest = new DeleteInternetGatewayRequest();
                             deleteInternetGatewayRequest.withInternetGatewayId(internetGateway.getInternetGatewayId());
                             AwsContext.getEc2Client().deleteInternetGateway(deleteInternetGatewayRequest);
+                            log.info("Deleted gateway: " + internetGateway.getInternetGatewayId());
                         }
                 );
                 isGatewayDeleted = true;
@@ -136,6 +148,7 @@ public class NetworkDestroyerImpl implements NetworkDestroyer{
     }
 
     private void deleteSecurityGroup(String envTag){
+        log.info("Deleting security group ...");
         String securityGroupTagValue = AwsEntitiesHelperUtil
                 .getEntityName(envTag, SECURITY_GROUP_ENTITY_TYPE);
         Filter filter = new Filter().withName("tag:" + TAG_NAME).withValues(securityGroupTagValue);
@@ -151,6 +164,7 @@ public class NetworkDestroyerImpl implements NetworkDestroyer{
             DeleteSecurityGroupRequest deleteSecurityGroupRequest = new DeleteSecurityGroupRequest();
             deleteSecurityGroupRequest.withGroupId(securityGroup.getGroupId());
             AwsContext.getEc2Client().deleteSecurityGroup(deleteSecurityGroupRequest);
+            log.info("Deleted security group: " + securityGroup.getGroupId());
         });
     }
 

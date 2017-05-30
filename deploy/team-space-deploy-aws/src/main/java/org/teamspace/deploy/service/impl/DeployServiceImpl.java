@@ -46,6 +46,8 @@ public class DeployServiceImpl implements DeployService{
     //KeyPair location is C:\Users\shpilb\Desktop\ts-key-pair\KeyPair.pem
     @Override
     public DeployResponse deploy(DeployRequest deployRequest) {
+        log.info("Started deploy to region: " + deployRequest
+                .getRegion() + " , env tag: " + deployRequest.getEnvTag());
         initAwsContext(deployRequest.getRegion());
         CreateNetworkRequest createNetworkRequest = new CreateNetworkRequest(deployRequest.getEnvTag());
         CreateNetworkResponse createNetworkResponse = networkManager.createNetwork(createNetworkRequest);
@@ -56,17 +58,24 @@ public class DeployServiceImpl implements DeployService{
                                 deployRequest.getArtifactName());
         CreateInstanceResponse createInstanceResponse = instanceManager.createInstance(createInstanceRequest);
         destroyAwsContext();
+        log.info("The public DNS of the instance is : " + createInstanceResponse.getPublicDns());
+        log.info("Completed deploy to region: " + deployRequest
+                .getRegion() + " , env tag: " + deployRequest.getEnvTag());
         return new DeployResponse(createInstanceResponse.getPublicDns());
     }
 
     @Override
     public void undeploy(UndeployRequest undeployRequest) {
+        log.info("Started undeploy from region: " + undeployRequest
+                .getRegion() + " , env tag: " + undeployRequest.getEnvTag());
         initAwsContext(undeployRequest.getRegion());
         DestroyInstanceRequest destroyInstanceRequest = new DestroyInstanceRequest(undeployRequest.getEnvTag());
         instanceManager.destroyInstance(destroyInstanceRequest);
         DestroyNetworkRequest destroyNetworkRequest = new DestroyNetworkRequest(undeployRequest.getEnvTag());
         networkManager.destroyNetwork(destroyNetworkRequest);
         destroyAwsContext();
+        log.info("Completed undeploy from region: " + undeployRequest
+                .getRegion() + " , env tag: " + undeployRequest.getEnvTag());
     }
 
     public void uploadArtifact(String artifactName, Regions region, String envTag){

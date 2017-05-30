@@ -1,3 +1,4 @@
+********* team space server app *************
 1.
 Add module test with Spring runner
 2.
@@ -10,3 +11,30 @@ Add groups module and implement some join logic between users and groups
 Add performance tests vs MySql DB
 8.
 Add Spring Profiles
+
+*********** deployer app *************
+1.
+Configure slf4j logging
+2.
+Retry logic
+3.
+Verify upload to S3 as a part of deploy flow
+4.
+Create user to connect through SSH
+5.
+Add systemd script to run the app as a service
+6.
+Allow multiple deploys to the same VPC
+7.
+Add option to create separate VM with MySql DB
+8.
+Add option to start/stop/delete the app from AWS from console
+9.
+Configure Oauth2 for deployer Spring Boot project
+10.
+Configure HTTPS
+11.
+Try free certificates from Let's encrypt for HTTPS
+12.
+Finalize flow of standard deploy (no scripts) and advanced deploy
+

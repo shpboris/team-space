@@ -46,6 +46,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
 
     @Override
     public CreateInstanceResponse createInstance(CreateInstanceRequest createInstanceRequest) {
+        log.info("Started instance creation");
         String keyPairName = AwsEntitiesHelperUtil.
                 getEntityName(createInstanceRequest.getEnvTag(), KEY_PAIR_ENTITY_TYPE);
         KeyPair keyPair = createKeyPair(keyPairName);
@@ -64,12 +65,14 @@ public class InstanceCreatorImpl implements InstanceCreator {
                 createInstanceRequest.getArtifactName(), createInstanceRequest.getEnvTag());
         waitForApplicationRunningState(publicDns, HTTP_PORT);
         CreateInstanceResponse createInstanceResponse = new CreateInstanceResponse(publicDns);
+        log.info("Completed instance creation");
         return createInstanceResponse;
     }
 
     private String runInstance(String amiId, String instanceType,
                               KeyPair keyPair, String instanceProfileName, String securityGroupId, String subnetId, String regionName,
                               String bucketName, String tarName, String envTag){
+        log.info("Running instance ...");
         RunInstancesRequest runInstancesRequest = new RunInstancesRequest();
         runInstancesRequest.withImageId(amiId).withInstanceType(instanceType)
                 .withKeyName(keyPair.getKeyName())
@@ -89,10 +92,12 @@ public class InstanceCreatorImpl implements InstanceCreator {
         if(state.equals(INSTANCE_STATE_RUNNING)){
             publicDns = getInstancePublicDns(instance);
         }
+        log.info("Intsance is running with public DNS: " + publicDns);
         return publicDns;
     }
 
     private String waitForInstanceRunningState(Instance instance){
+        log.info("Waiting for instance running state ...");
         DescribeInstanceStatusRequest describeInstanceStatusRequest = new DescribeInstanceStatusRequest();
         describeInstanceStatusRequest.withInstanceIds(instance.getInstanceId());
         DescribeInstanceStatusResult describeInstanceStatusResult = AwsContext.getEc2Client().describeInstanceStatus(describeInstanceStatusRequest);
@@ -115,10 +120,12 @@ public class InstanceCreatorImpl implements InstanceCreator {
                 instanceState = instancesStatuses.get(0).getInstanceState().getName();
             }
         }
+        log.info("Waiting for instance running state is over, instance state is: " + instanceState);
         return instanceState;
     }
 
     private boolean waitForApplicationRunningState(String publicDns, int port){
+        log.info("Waiting for application running state ...");
         boolean isConnected = false;
         int retriesNum = 0;
         while(!isConnected && retriesNum < MAX_RETRIES){
@@ -135,18 +142,22 @@ public class InstanceCreatorImpl implements InstanceCreator {
             } catch (Exception e) {
             }
         }
+        log.info("Wait for application running state is over, state is: " + isConnected);
         return isConnected;
     }
 
     private String getInstancePublicDns(Instance instance){
+        log.info("Getting instance public DNS ...");
         DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest();
         describeInstancesRequest.withInstanceIds(instance.getInstanceId());
         DescribeInstancesResult describeInstancesResult = AwsContext.getEc2Client().describeInstances(describeInstancesRequest);
         String publicDns = describeInstancesResult.getReservations().get(0).getInstances().get(0).getPublicDnsName();
+        log.info("Got instance public DNS: " + publicDns);
         return publicDns;
     }
 
     private KeyPair createKeyPair(String key){
+        log.info("Creating key pair ...");
         CreateKeyPairRequest createKeyPairRequest = new CreateKeyPairRequest();
         createKeyPairRequest.withKeyName(key);
         CreateKeyPairResult createKeyPairResult = AwsContext.getEc2Client().createKeyPair(createKeyPairRequest);
@@ -162,15 +173,19 @@ public class InstanceCreatorImpl implements InstanceCreator {
     }
 
     private String getAmiId(String imageFilterProductCode, String productCode){
+        log.info("Getting AMI id");
         Filter filter = new Filter().withName(imageFilterProductCode).withValues(productCode);
         DescribeImagesRequest request = new DescribeImagesRequest().withFilters(filter);
         DescribeImagesResult result = AwsContext.getEc2Client().describeImages(request);
         List<Image> images = result.getImages();
-        return images.get(images.size() - 1).getImageId();
+        String amiId = images.get(images.size() - 1).getImageId();
+        log.info("AMI id: " + amiId);
+        return amiId;
     }
 
 
     private String getUserDataScript(String tarFileName, String regionName, String bucketName){
+        log.info("Getting user data script ...");
         String userDataScript = null;
         InputStream inputStream = null;
         try {
@@ -185,38 +200,47 @@ public class InstanceCreatorImpl implements InstanceCreator {
         } finally {
             IOUtils.closeQuietly(inputStream);
         }
+        log.info("Got user data script");
+        log.debug(userDataScript);
         userDataScript = new String(Base64.encodeBase64(userDataScript.getBytes()));
         return userDataScript;
     }
 
    private void createInstanceProfile(String name){
+        log.info("Creating instance profile ...");
         Policy trustPolicy = getTrustPolicy();
         CreateRoleRequest createRoleRequest = new CreateRoleRequest();
         createRoleRequest.withRoleName(name).withAssumeRolePolicyDocument(trustPolicy.toJson());
         AwsContext.getIamClient().createRole(createRoleRequest);
+        log.info("Created role: " + name);
 
         Policy permissionPolicy = getPermissionPolicy();
         CreatePolicyRequest createPolicyRequest = new CreatePolicyRequest();
         createPolicyRequest.withPolicyName(name).withPolicyDocument(permissionPolicy.toJson());
         CreatePolicyResult createPolicyResult = AwsContext.getIamClient().createPolicy(createPolicyRequest);
+        log.info("Created policy: " + createPolicyResult.getPolicy().getArn());
 
         AttachRolePolicyRequest attachRolePolicyRequest = new AttachRolePolicyRequest();
         attachRolePolicyRequest.withRoleName(name).withPolicyArn(createPolicyResult.getPolicy().getArn());
         AwsContext.getIamClient().attachRolePolicy(attachRolePolicyRequest);
+        log.info("Attached role to policy");
 
         CreateInstanceProfileRequest createInstanceProfileRequest = new CreateInstanceProfileRequest();
         createInstanceProfileRequest.withInstanceProfileName(name);
         AwsContext.getIamClient().createInstanceProfile(createInstanceProfileRequest);
+        log.info("Created instance profile");
 
         AddRoleToInstanceProfileRequest addRoleToInstanceProfileRequest = new AddRoleToInstanceProfileRequest();
         addRoleToInstanceProfileRequest.withInstanceProfileName(name).withRoleName(name);
         AwsContext.getIamClient().addRoleToInstanceProfile(addRoleToInstanceProfileRequest);
+        log.info("Added role to instance profile");
 
         try {
             Thread.sleep(WAIT_TIME_MILLISEC);
         } catch (InterruptedException e) {
             throw new RuntimeException("Unable to wait after instance profile creation");
         }
+        log.info("Instance profile finally created");
     }
 
 
