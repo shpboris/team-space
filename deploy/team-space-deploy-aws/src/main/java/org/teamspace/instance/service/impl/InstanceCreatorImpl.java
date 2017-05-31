@@ -201,7 +201,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
             IOUtils.closeQuietly(inputStream);
         }
         log.info("Got user data script");
-        log.debug(userDataScript);
+        log.debug("\n" + userDataScript);
         userDataScript = new String(Base64.encodeBase64(userDataScript.getBytes()));
         return userDataScript;
     }
