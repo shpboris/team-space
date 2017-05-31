@@ -33,5 +33,7 @@ public class DeploymentConstants {
     public static final String TAR_FILE_NAME = "$tarFileName$";
     public static final String REGION_NAME = "$regionName$";
     public static final String BUCKET_NAME = "$bucketName$";
+    public static final String USER = "$user$";
+    public static final String PASSWORD = "$pass$";
     public static final String DEFAULT_REGION_NAME = Regions.DEFAULT_REGION.toString();
 }

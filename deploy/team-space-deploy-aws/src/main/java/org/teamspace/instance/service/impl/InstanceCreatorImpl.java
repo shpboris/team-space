@@ -62,7 +62,8 @@ public class InstanceCreatorImpl implements InstanceCreator {
         String publicDns = runInstance(amiId, INSTANCE_TYPE, keyPair, profileName,
                 createInstanceRequest.getSecurityGroupId(), createInstanceRequest.getSubnetId(),
                 AwsContext.getRegion().getName(), bucketName,
-                createInstanceRequest.getArtifactName(), createInstanceRequest.getEnvTag());
+                createInstanceRequest.getArtifactName(), createInstanceRequest.getEnvTag(),
+                createInstanceRequest.getUser(), createInstanceRequest.getPassword());
         waitForApplicationRunningState(publicDns, HTTP_PORT);
         CreateInstanceResponse createInstanceResponse = new CreateInstanceResponse(publicDns);
         log.info("Completed instance creation");
@@ -71,14 +72,14 @@ public class InstanceCreatorImpl implements InstanceCreator {
 
     private String runInstance(String amiId, String instanceType,
                               KeyPair keyPair, String instanceProfileName, String securityGroupId, String subnetId, String regionName,
-                              String bucketName, String tarName, String envTag){
+                              String bucketName, String tarName, String envTag, String user, String password){
         log.info("Running instance ...");
         RunInstancesRequest runInstancesRequest = new RunInstancesRequest();
         runInstancesRequest.withImageId(amiId).withInstanceType(instanceType)
                 .withKeyName(keyPair.getKeyName())
                 .withSecurityGroupIds(securityGroupId)
                 .withSubnetId(subnetId)
-                .withUserData(getUserDataScript(tarName, regionName, bucketName))
+                .withUserData(getUserDataScript(tarName, regionName, bucketName, user, password))
                 .withIamInstanceProfile(new IamInstanceProfileSpecification().withName(instanceProfileName))
                 .withMinCount(1)
                 .withBlockDeviceMappings(new BlockDeviceMapping().withDeviceName(BLOCK_DEVICE_NAME)
@@ -184,7 +185,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
     }
 
 
-    private String getUserDataScript(String tarFileName, String regionName, String bucketName){
+    private String getUserDataScript(String tarFileName, String regionName, String bucketName, String user, String password){
         log.info("Getting user data script ...");
         String userDataScript = null;
         InputStream inputStream = null;
@@ -195,6 +196,8 @@ public class InstanceCreatorImpl implements InstanceCreator {
             userDataScript = userDataScript.replace(TAR_FILE_NAME, tarFileName);
             userDataScript = userDataScript.replace(REGION_NAME, regionName);
             userDataScript = userDataScript.replace(BUCKET_NAME, bucketName);
+            userDataScript = userDataScript.replace(USER, user);
+            userDataScript = userDataScript.replace(PASSWORD, password);
         } catch (Exception e){
             throw new RuntimeException("Unable to read user data");
         } finally {

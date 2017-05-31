@@ -13,4 +13,6 @@ public class CreateInstanceRequest {
     private String subnetId;
     private String securityGroupId;
     private String artifactName;
+    private String user;
+    private String password;
 }

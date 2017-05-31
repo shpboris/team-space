@@ -55,7 +55,8 @@ public class DeployServiceImpl implements DeployService{
                 new CreateInstanceRequest(deployRequest.getEnvTag(),
                         createNetworkResponse.getPublicSubnetId(),
                             createNetworkResponse.getSecurityGroupId(),
-                                deployRequest.getArtifactName());
+                                deployRequest.getArtifactName(),
+                                    deployRequest.getUser(), deployRequest.getPassword());
         CreateInstanceResponse createInstanceResponse = instanceManager.createInstance(createInstanceRequest);
         destroyAwsContext();
         log.info("The public DNS of the instance is : " + createInstanceResponse.getPublicDns());

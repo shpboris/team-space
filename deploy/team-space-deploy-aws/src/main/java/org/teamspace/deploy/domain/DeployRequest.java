@@ -10,4 +10,6 @@ public class DeployRequest {
     private String region;
     private String envTag;
     private String artifactName;
+    private String user;
+    private String password;
 }
