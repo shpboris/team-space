@@ -13,14 +13,11 @@ Add performance tests vs MySql DB
 Add Spring Profiles
 
 *********** deployer app *************
-1.
-Configure slf4j logging
+
 2.
 Retry logic
 3.
 Verify upload to S3 as a part of deploy flow
-4.
-Create user to connect through SSH
 5.
 Add systemd script to run the app as a service
 6.
@@ -37,4 +34,6 @@ Configure HTTPS
 Try free certificates from Let's encrypt for HTTPS
 12.
 Finalize flow of standard deploy (no scripts) and advanced deploy
+13.
+Add logging for VM setup scripts to understand what takes time
 
