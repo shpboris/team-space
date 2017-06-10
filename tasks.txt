@@ -34,4 +34,6 @@ Configure HTTPS
 Try free certificates from Let's encrypt for HTTPS
 12.
 Finalize flow of standard deploy (no scripts) and advanced deploy
+13.
+Check H2 DB console client
 

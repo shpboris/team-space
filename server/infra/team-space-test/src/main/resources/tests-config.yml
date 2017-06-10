@@ -1,0 +1,10 @@
+adminCredentials:
+  user: user1
+  password: pass1
+database:
+  driver: org.h2.Driver
+  url: jdbc:h2:mem:;MODE=mySQL;
+  user:
+  password:
+  maxActive: 10
+  maxIdle: 5

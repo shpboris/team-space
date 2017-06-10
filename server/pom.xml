@@ -91,6 +91,11 @@
             <artifactId>mockito-core</artifactId>
             <version>${mockito-core.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>${spring-context.version}</version>
+        </dependency>
     </dependencies>
 
 

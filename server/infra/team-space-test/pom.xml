@@ -3,30 +3,24 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <groupId>org.team-space.server</groupId>
-        <artifactId>server</artifactId>
+        <artifactId>infra</artifactId>
+        <groupId>org.team-space.server.infra</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>team-space-users</artifactId>
+    <artifactId>team-space-test</artifactId>
 
     <dependencies>
-        <dependency>
-            <groupId>org.team-space.server.infra</groupId>
-            <artifactId>team-space-auth</artifactId>
-            <version>${project.version}</version>
-        </dependency>
         <dependency>
             <groupId>org.team-space.server.infra</groupId>
             <artifactId>team-space-persistence</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.team-space.server.infra</groupId>
-            <artifactId>team-space-test</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>${junit.version}</version>
         </dependency>
     </dependencies>
 

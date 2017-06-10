@@ -15,6 +15,7 @@
     <modules>
         <module>team-space-auth</module>
         <module>team-space-persistence</module>
+        <module>team-space-test</module>
     </modules>
 
 
