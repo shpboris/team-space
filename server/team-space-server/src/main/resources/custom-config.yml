@@ -4,7 +4,7 @@ adminCredentials:
 database:
   driver: org.h2.Driver
   url: jdbc:h2:tcp://localhost/~/teamspace;
-  user:
-  password:
+  user: admin
+  password: admin
   maxActive: 10
   maxIdle: 5
