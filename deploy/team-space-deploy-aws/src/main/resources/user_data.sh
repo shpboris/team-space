@@ -41,6 +41,7 @@ aws s3 cp s3://$bucketName$/$tarFileName$.tar.gz $tarFileName$.tar.gz --region $
 echo "Completed app download from S3 at: "$(date +"%T") >> $log
 tar -zxvf $tarFileName$.tar.gz
 cd $tarFileName$
+
 chmod +x setup.sh
 dos2unix setup.sh
 sudo su - $user$

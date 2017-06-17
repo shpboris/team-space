@@ -1,6 +1,4 @@
 ********* team space server app *************
-1.
-Add module test with Spring runner
 2.
 Make a full commit flow with Jenkins, Git and integration tests
 3.
@@ -34,4 +32,6 @@ Configure HTTPS
 Try free certificates from Let's encrypt for HTTPS
 12.
 Finalize flow of standard deploy (no scripts) and advanced deploy
+13.
+Create RPM package for team-space app and use it in deploy
 
