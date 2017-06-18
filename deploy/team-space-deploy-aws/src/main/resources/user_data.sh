@@ -17,11 +17,16 @@ echo "Completed zip/unzip install at: "$(date +"%T") >> $log
 yum -y install dos2unix
 echo "Completed dos2unix install at: "$(date +"%T") >> $log
 
-
 sed -ie 's/#PasswordAuthentication yes/PasswordAuthentication yes/g' /etc/ssh/sshd_config
 sed -ie 's/#PasswordAuthentication no//g' /etc/ssh/sshd_config
 service sshd reload
 echo "Completed sshd service reload at: "$(date +"%T") >> $log
+
+rpm -Uvh https://s3.amazonaws.com/aaronsilber/public/authbind-2.1.1-0.1.x86_64.rpm
+touch /etc/authbind/byport/443
+chown $user$:$user$ /etc/authbind/byport/443
+chmod 755 /etc/authbind/byport/443
+echo "Completed authbind config at: "$(date +"%T") >> $log
 
 cd /home/$user$
 wget https://s3.amazonaws.com/aws-cli/awscli-bundle.zip
@@ -44,6 +49,8 @@ cd $tarFileName$
 
 chmod +x setup.sh
 dos2unix setup.sh
+
+chown -R $user$:$user$ /home/$user$
 sudo su - $user$
 echo "Completed app extraction, ready to run a setup.sh at: "$(date +"%T") >> $log
 sudo ./setup.sh

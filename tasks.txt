@@ -16,8 +16,6 @@ Add Spring Profiles
 Retry logic
 3.
 Verify upload to S3 as a part of deploy flow
-5.
-Add systemd script to run the app as a service
 6.
 Allow multiple deploys to the same VPC
 7.

@@ -3,9 +3,10 @@ Description=Team Space Service
 After=network.target
 
 [Service]
+User=ts
 EnvironmentFile=/etc/sysconfig/team-space
 WorkingDirectory=/home/ts/team-space
-ExecStart=/bin/sh -c 'java $KEYSTORE -jar $TS_JAR server config.yml>/dev/null 2>&1'
+ExecStart=/bin/sh -c 'authbind java $KEYSTORE -jar $TS_JAR server config.yml>/dev/null 2>&1'
 KillMode=control-group
 SuccessExitStatus=143
 
