@@ -36,4 +36,6 @@ public class DeploymentConstants {
     public static final String USER = "$user$";
     public static final String PASSWORD = "$pass$";
     public static final String DEFAULT_REGION_NAME = Regions.DEFAULT_REGION.toString();
+    public static final boolean OVERRIDE_EXISTING_ARTIFACT = false;
+    public static final String ARTIFACT_EXTENSION = ".tar.gz";
 }

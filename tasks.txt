@@ -32,4 +32,8 @@ Try free certificates from Let's encrypt for HTTPS
 Finalize flow of standard deploy (no scripts) and advanced deploy
 13.
 Create RPM package for team-space app and use it in deploy
+14.
+Add create RDS flow
+15.
+Switch  from port 8888 to 443/80
 
