@@ -11,7 +11,7 @@ import java.net.URL;
 @Slf4j
 public class AuthHelperUtil {
     public static final String protocol = "http";
-    public static final Integer port = 8888;
+    public static final Integer port = 80;
     public static final String path = "/rest";
 
     public static String getHostBasePath(String host) {
