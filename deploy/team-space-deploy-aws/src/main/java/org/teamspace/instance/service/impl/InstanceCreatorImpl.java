@@ -128,9 +128,9 @@ public class InstanceCreatorImpl implements InstanceCreator {
     private boolean waitForApplicationRunningState(String publicDns, int port){
         log.info("Waiting for application running state ...");
         boolean isConnected = false;
-        int retriesNum = 0;
-        while(!isConnected && retriesNum < MAX_RETRIES){
-            retriesNum++;
+        int retryNum = 0;
+        while(!isConnected && retryNum < MAX_RETRIES){
+            retryNum++;
             try {
                 Thread.sleep(WAIT_TIME_MILLISEC);
             } catch (InterruptedException e) {
@@ -141,6 +141,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
                 socket.connect(new InetSocketAddress(publicDns, port), TIMEOUT_MILLISEC);
                 isConnected = true;
             } catch (Exception e) {
+                log.debug("Attempt #" + retryNum + " to connect to application failed");
             }
         }
         log.info("Wait for application running state is over, state is: " + isConnected);

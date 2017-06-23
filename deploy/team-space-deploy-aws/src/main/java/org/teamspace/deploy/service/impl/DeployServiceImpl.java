@@ -100,7 +100,7 @@ public class DeployServiceImpl implements DeployService{
                 boolean isArtifactExists = objectListing.getObjectSummaries()
                         .stream().filter(o -> o.getKey().equals(fullArtifactName)).findFirst().isPresent();
                 if (isArtifactExists) {
-                    log.debug("Deleting artifact: " + fullArtifactName + "from bucket: " + bucketName);
+                    log.debug("Deleting artifact: " + fullArtifactName + " from bucket: " + bucketName);
                     DeleteObjectRequest deleteObjectRequest = new DeleteObjectRequest(bucketName, fullArtifactName);
                     s3Client.deleteObject(deleteObjectRequest);
                 }

@@ -26,6 +26,9 @@ rpm -Uvh https://s3.amazonaws.com/aaronsilber/public/authbind-2.1.1-0.1.x86_64.r
 touch /etc/authbind/byport/443
 chown $user$:$user$ /etc/authbind/byport/443
 chmod 755 /etc/authbind/byport/443
+touch /etc/authbind/byport/80
+chown $user$:$user$ /etc/authbind/byport/80
+chmod 755 /etc/authbind/byport/80
 echo "Completed authbind config at: "$(date +"%T") >> $log
 
 cd /home/$user$
@@ -55,10 +58,10 @@ sudo su - $user$
 echo "Completed app extraction, ready to run a setup.sh at: "$(date +"%T") >> $log
 sudo ./setup.sh
 
-netstat -ln | grep ":8888 " 2>&1 > /dev/null
+netstat -ln | grep ":80 " 2>&1 > /dev/null
 while [ $? -ne 0 ]
 do
     sleep 1
-    netstat -ln | grep ":8888 " 2>&1 > /dev/null
+    netstat -ln | grep ":80 " 2>&1 > /dev/null
 done
 echo "Started the application at: "$(date +"%T") >> $log
