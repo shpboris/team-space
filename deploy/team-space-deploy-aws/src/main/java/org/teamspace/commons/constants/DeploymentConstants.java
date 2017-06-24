@@ -8,11 +8,14 @@ import com.amazonaws.regions.Regions;
 public class DeploymentConstants {
     public static final String TAG_NAME = "Name";
     public static final String VPC_ENTITY_TYPE = "VPC";
-    public static final String SUBNET_ENTITY_TYPE = "SUBNET";
+    public static final String PUBLIC_SUBNET_ENTITY_TYPE = "PUBLIC_SUBNET";
+    public static final String PRIVATE_SUBNET_ENTITY_TYPE = "PRIVATE_SUBNET";
     public static final String GATEWAY_ENTITY_TYPE = "GATEWAY";
-    public static final String ROUTE_TABLE_ENTITY_TYPE = "ROUTE_TABLE";
+    public static final String PUBLIC_ROUTE_TABLE_ENTITY_TYPE = "PUBLIC_ROUTE_TABLE";
+    public static final String PRIVATE_ROUTE_TABLE_ENTITY_TYPE = "PRIVATE_ROUTE_TABLE";
     public static final String SECURITY_GROUP_ENTITY_TYPE = "SECURITY_GROUP";
-    public static final String INSTANCE_ENTITY_TYPE = "INSTANCE";
+    public static final String APP_INSTANCE_ENTITY_TYPE = "APP_INSTANCE";
+    public static final String DB_INSTANCE_ENTITY_TYPE = "DB_INSTANCE";
     public static final String KEY_PAIR_ENTITY_TYPE = "KEY_PAIR";
     public static final String DB_KEY_PAIR_ENTITY_TYPE = "DB_KEY_PAIR";
     public static final String PROFILE_AND_ROLE_ENTITY_TYPE = "PROFILE_ROLE";

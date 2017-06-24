@@ -28,18 +28,18 @@ public class NetworkCreatorImpl implements NetworkCreator{
         log.info("Started network creation");
         String envTag = createNetworkRequest.getEnvTag();
         Vpc vpc = createVpc("10.0.0.0/16", envTag);
-        Subnet publicSubnet = createSubnet(vpc, "10.0.0.0/24", envTag);
-        Subnet privateSubnet = createSubnet(vpc, "10.0.1.0/24", envTag);
+        Subnet publicSubnet = createSubnet(vpc, "10.0.0.0/24", envTag, PUBLIC_SUBNET_ENTITY_TYPE);
+        Subnet privateSubnet = createSubnet(vpc, "10.0.1.0/24", envTag, PRIVATE_SUBNET_ENTITY_TYPE);
 
         InternetGateway internetGateway = createInternetGateway(envTag);
         attachGatewayToVpc(vpc, internetGateway);
-        RouteTable routeTable = createRouteTable(vpc, envTag);
+        RouteTable routeTable = createRouteTable(vpc, envTag, PUBLIC_ROUTE_TABLE_ENTITY_TYPE);
         createRouteToInternetGateway(internetGateway, routeTable);
         associateRouteTableWithSubnet(routeTable, publicSubnet);
         mapPublicIpOnLaunch(publicSubnet);
 
         NatGateway natGateway = createNatGateway(publicSubnet, envTag);
-        RouteTable routeTableForPrivateSubnet = createRouteTable(vpc, envTag);
+        RouteTable routeTableForPrivateSubnet = createRouteTable(vpc, envTag, PRIVATE_ROUTE_TABLE_ENTITY_TYPE);
         createRouteToNatGateway(natGateway, routeTableForPrivateSubnet);
         associateRouteTableWithSubnet(routeTableForPrivateSubnet, privateSubnet);
 
@@ -79,12 +79,12 @@ public class NetworkCreatorImpl implements NetworkCreator{
         return natGateway;
     }
 
-    private Subnet createSubnet(Vpc vpc, String cidrBlock, String envTag){
+    private Subnet createSubnet(Vpc vpc, String cidrBlock, String envTag, String entityType){
         log.info("Creating subnet ...");
         CreateSubnetRequest createSubnetRequest = new CreateSubnetRequest(vpc.getVpcId(), cidrBlock);
         CreateSubnetResult createSubnetResult = AwsContext.getEc2Client().createSubnet(createSubnetRequest);
         Subnet subnet = createSubnetResult.getSubnet();
-        tagCreator.createTag(subnet.getSubnetId(), SUBNET_ENTITY_TYPE, envTag);
+        tagCreator.createTag(subnet.getSubnetId(), entityType, envTag);
         log.info("Created subnet: " + subnet.getSubnetId() + " in VPC: " + vpc.getVpcId());
         return subnet;
     }
@@ -109,13 +109,13 @@ public class NetworkCreatorImpl implements NetworkCreator{
         log.info("Attached gateway: " + internetGateway.getInternetGatewayId() + " to VPC: " + vpc.getVpcId());
     }
 
-    private RouteTable createRouteTable(Vpc vpc, String envTag){
+    private RouteTable createRouteTable(Vpc vpc, String envTag, String entityType){
         log.info("Creating route table ...");
         CreateRouteTableRequest createRouteTableRequest = new CreateRouteTableRequest();
         createRouteTableRequest.withVpcId(vpc.getVpcId());
         CreateRouteTableResult createRouteTableResult = AwsContext.getEc2Client().createRouteTable(createRouteTableRequest);
         RouteTable routeTable = createRouteTableResult.getRouteTable();
-        tagCreator.createTag(routeTable.getRouteTableId(), ROUTE_TABLE_ENTITY_TYPE, envTag);
+        tagCreator.createTag(routeTable.getRouteTableId(), entityType, envTag);
         log.info("Created route table: " + routeTable.getRouteTableId());
         return routeTable;
     }

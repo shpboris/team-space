@@ -26,7 +26,7 @@ public class InstanceDestroyerImpl implements InstanceDestroyer {
         String envTag = destroyInstanceRequest.getEnvTag();
         deleteKeyPair(envTag);
         deleteInstanceProfile(envTag);
-        deleteInstance(envTag);
+        deleteInstances(envTag);
         log.info("Completed instance deletion");
     }
 
@@ -87,11 +87,13 @@ public class InstanceDestroyerImpl implements InstanceDestroyer {
         log.info("Finally deleted instance profile");
     }
 
-    private void deleteInstance(String envTag){
+    private void deleteInstances(String envTag){
         log.info("Deleting instance ...");
-        String instanceTagValue = AwsEntitiesHelperUtil
-                .getEntityName(envTag, INSTANCE_ENTITY_TYPE);
-        Filter filter = new Filter().withName("tag:" + TAG_NAME).withValues(instanceTagValue);
+        String appInstanceTagValue = AwsEntitiesHelperUtil
+                .getEntityName(envTag, APP_INSTANCE_ENTITY_TYPE);
+        String dbInstanceTagValue = AwsEntitiesHelperUtil
+                .getEntityName(envTag, DB_INSTANCE_ENTITY_TYPE);
+        Filter filter = new Filter().withName("tag:" + TAG_NAME).withValues(appInstanceTagValue, dbInstanceTagValue);
         DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest();
         describeInstancesRequest.withFilters(filter);
         DescribeInstancesResult describeInstancesResult = AwsContext.getEc2Client().describeInstances(describeInstancesRequest);

@@ -115,7 +115,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
                 .withMaxCount(1);
         RunInstancesResult runInstancesResult = AwsContext.getEc2Client().runInstances(runInstancesRequest);
         Instance instance = runInstancesResult.getReservation().getInstances().get(0);
-        tagCreator.createTag(instance.getInstanceId(), INSTANCE_ENTITY_TYPE, envTag);
+        tagCreator.createTag(instance.getInstanceId(), APP_INSTANCE_ENTITY_TYPE, envTag);
         String state = waitForInstanceRunningState(instance);
         String publicDns = null;
         if(state.equals(INSTANCE_STATE_RUNNING)){
@@ -142,7 +142,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
                 .withMaxCount(1);
         RunInstancesResult runInstancesResult = AwsContext.getEc2Client().runInstances(runInstancesRequest);
         Instance instance = runInstancesResult.getReservation().getInstances().get(0);
-        tagCreator.createTag(instance.getInstanceId(), INSTANCE_ENTITY_TYPE, envTag);
+        tagCreator.createTag(instance.getInstanceId(), DB_INSTANCE_ENTITY_TYPE, envTag);
         String state = waitForInstanceRunningState(instance);
         String privateDns = null;
         if(state.equals(INSTANCE_STATE_RUNNING)){

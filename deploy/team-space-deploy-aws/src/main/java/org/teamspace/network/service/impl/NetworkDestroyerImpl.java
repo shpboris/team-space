@@ -54,10 +54,12 @@ public class NetworkDestroyerImpl implements NetworkDestroyer{
     }
 
     private void deleteSubnets(String envTag){
-        log.info("Deleting subnet ...");
-        String subnetTagValue = AwsEntitiesHelperUtil
-                .getEntityName(envTag, SUBNET_ENTITY_TYPE);
-        Filter filter = new Filter().withName("tag:" + TAG_NAME).withValues(subnetTagValue);
+        log.info("Deleting subnets ...");
+        String publicSubnetTagValue = AwsEntitiesHelperUtil
+                .getEntityName(envTag, PUBLIC_SUBNET_ENTITY_TYPE);
+        String privateSubnetTagValue = AwsEntitiesHelperUtil
+                .getEntityName(envTag, PRIVATE_SUBNET_ENTITY_TYPE);
+        Filter filter = new Filter().withName("tag:" + TAG_NAME).withValues(publicSubnetTagValue, privateSubnetTagValue);
         DescribeSubnetsRequest describeSubnetsRequest = new DescribeSubnetsRequest();
         describeSubnetsRequest.withFilters(filter);
         boolean isSubnetsDeleted = false;
@@ -85,9 +87,11 @@ public class NetworkDestroyerImpl implements NetworkDestroyer{
 
     private void deleteRouteTables(String envTag){
         log.info("Deleting route table ...");
-        String routeTableTagValue = AwsEntitiesHelperUtil
-                .getEntityName(envTag, ROUTE_TABLE_ENTITY_TYPE);
-        Filter filter = new Filter().withName("tag:" + TAG_NAME).withValues(routeTableTagValue);
+        String publicRouteTableTagValue = AwsEntitiesHelperUtil
+                .getEntityName(envTag, PUBLIC_ROUTE_TABLE_ENTITY_TYPE);
+        String privateRouteTableTagValue = AwsEntitiesHelperUtil
+                .getEntityName(envTag, PRIVATE_ROUTE_TABLE_ENTITY_TYPE);
+        Filter filter = new Filter().withName("tag:" + TAG_NAME).withValues(publicRouteTableTagValue, privateRouteTableTagValue);
         DescribeRouteTablesRequest describeRouteTablesRequest = new DescribeRouteTablesRequest();
         describeRouteTablesRequest.withFilters(filter);
         DescribeRouteTablesResult describeRouteTablesResult = AwsContext.getEc2Client().describeRouteTables(describeRouteTablesRequest);
