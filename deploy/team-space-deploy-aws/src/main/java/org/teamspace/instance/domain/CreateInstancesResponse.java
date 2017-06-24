@@ -8,7 +8,7 @@ import lombok.*;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateInstanceResponse {
+public class CreateInstancesResponse {
     private String appInstancePublicDns;
     private String dbInstancePrivateDns;
 }

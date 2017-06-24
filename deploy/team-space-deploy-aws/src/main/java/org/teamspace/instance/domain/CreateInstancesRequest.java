@@ -8,9 +8,9 @@ import lombok.Data;
  */
 @Data
 @AllArgsConstructor
-public class CreateInstanceRequest {
+public class CreateInstancesRequest {
     private String envTag;
-    private String subnetId;
+    private String publicSubnetId;
     private String privateSubnetId;
     private String securityGroupId;
     private String artifactName;

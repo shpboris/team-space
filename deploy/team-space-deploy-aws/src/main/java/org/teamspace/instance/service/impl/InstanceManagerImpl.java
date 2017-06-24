@@ -18,8 +18,8 @@ public class InstanceManagerImpl implements InstanceManager {
     private InstanceDestroyer instanceDestroyer;
 
     @Override
-    public CreateInstanceResponse createInstance(CreateInstanceRequest createInstanceRequest) {
-        CreateInstanceResponse createInstanceResponse = instanceCreator.createInstances(createInstanceRequest);
+    public CreateInstancesResponse createInstance(CreateInstancesRequest createInstanceRequest) {
+        CreateInstancesResponse createInstanceResponse = instanceCreator.createInstances(createInstanceRequest);
         return createInstanceResponse;
     }
 

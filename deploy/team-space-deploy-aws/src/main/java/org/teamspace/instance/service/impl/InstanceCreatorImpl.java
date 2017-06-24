@@ -16,8 +16,8 @@ import org.springframework.stereotype.Component;
 import org.teamspace.aws.client.context.AwsContext;
 import org.teamspace.commons.components.TagCreator;
 import org.teamspace.commons.utils.AwsEntitiesHelperUtil;
-import org.teamspace.instance.domain.CreateInstanceRequest;
-import org.teamspace.instance.domain.CreateInstanceResponse;
+import org.teamspace.instance.domain.CreateInstancesRequest;
+import org.teamspace.instance.domain.CreateInstancesResponse;
 import org.teamspace.instance.service.InstanceCreator;
 
 import java.io.IOException;
@@ -45,17 +45,17 @@ public class InstanceCreatorImpl implements InstanceCreator {
 
 
     @Override
-    public CreateInstanceResponse createInstances(CreateInstanceRequest createInstanceRequest) {
+    public CreateInstancesResponse createInstances(CreateInstancesRequest createInstanceRequest) {
         log.info("Started instances creation");
-        CreateInstanceResponse createDbInstanceResponse = createDbInstance(createInstanceRequest);
-        CreateInstanceResponse createAppInstanceResponse = createAppInstance(createInstanceRequest);
+        CreateInstancesResponse createDbInstanceResponse = createDbInstance(createInstanceRequest);
+        CreateInstancesResponse createAppInstanceResponse = createAppInstance(createInstanceRequest);
         createAppInstanceResponse.setDbInstancePrivateDns(createDbInstanceResponse.getDbInstancePrivateDns());
         log.info("Completed instances creation");
         return createAppInstanceResponse;
     }
 
 
-    private CreateInstanceResponse createAppInstance(CreateInstanceRequest createInstanceRequest) {
+    private CreateInstancesResponse createAppInstance(CreateInstancesRequest createInstanceRequest) {
         log.info("Started app instance creation");
         String keyPairName = AwsEntitiesHelperUtil.
                 getEntityName(createInstanceRequest.getEnvTag(), KEY_PAIR_ENTITY_TYPE);
@@ -70,18 +70,18 @@ public class InstanceCreatorImpl implements InstanceCreator {
 
         String amiId = getAmiId(IMAGE_FILTER_PRODUCT_CODE, CENTOS7_PRODUCT_CODE);
         String publicDns = runInstance(amiId, INSTANCE_TYPE, keyPair, profileName,
-                createInstanceRequest.getSecurityGroupId(), createInstanceRequest.getSubnetId(),
+                createInstanceRequest.getSecurityGroupId(), createInstanceRequest.getPublicSubnetId(),
                 AwsContext.getRegion().getName(), bucketName,
                 createInstanceRequest.getArtifactName(), createInstanceRequest.getEnvTag(),
                 createInstanceRequest.getUser(), createInstanceRequest.getPassword());
         waitForApplicationRunningState(publicDns, HTTP_PORT);
-        CreateInstanceResponse createInstanceResponse = new CreateInstanceResponse();
+        CreateInstancesResponse createInstanceResponse = new CreateInstancesResponse();
         createInstanceResponse.setAppInstancePublicDns(publicDns);
         log.info("Completed app instance creation");
         return createInstanceResponse;
     }
 
-    private CreateInstanceResponse createDbInstance(CreateInstanceRequest createInstanceRequest) {
+    private CreateInstancesResponse createDbInstance(CreateInstancesRequest createInstanceRequest) {
         log.info("Started DB instance creation");
         String keyPairName = AwsEntitiesHelperUtil.
                 getEntityName(createInstanceRequest.getEnvTag(), DB_KEY_PAIR_ENTITY_TYPE);
@@ -92,7 +92,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
                 createInstanceRequest.getSecurityGroupId(), createInstanceRequest.getPrivateSubnetId(),
                 createInstanceRequest.getEnvTag(), createInstanceRequest.getUser(),
                 createInstanceRequest.getPassword());
-        CreateInstanceResponse createInstanceResponse = new CreateInstanceResponse();
+        CreateInstancesResponse createInstanceResponse = new CreateInstancesResponse();
         createInstanceResponse.setDbInstancePrivateDns(privateDns);
         log.info("Completed DB instance creation");
         return createInstanceResponse;

@@ -1,11 +1,11 @@
 package org.teamspace.instance.service;
 
-import org.teamspace.instance.domain.CreateInstanceRequest;
-import org.teamspace.instance.domain.CreateInstanceResponse;
+import org.teamspace.instance.domain.CreateInstancesRequest;
+import org.teamspace.instance.domain.CreateInstancesResponse;
 
 /**
  * Created by shpilb on 20/05/2017.
  */
 public interface InstanceCreator {
-    CreateInstanceResponse createInstances(CreateInstanceRequest createInstanceRequest);
+    CreateInstancesResponse createInstances(CreateInstancesRequest createInstanceRequest);
 }
