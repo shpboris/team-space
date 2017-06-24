@@ -9,5 +9,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class DeployResponse {
-    private String publicDns;
+    private String appInstancePublicDns;
+    private String dbInstancePrivateDns;
 }

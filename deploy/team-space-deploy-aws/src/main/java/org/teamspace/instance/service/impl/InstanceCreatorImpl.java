@@ -45,8 +45,18 @@ public class InstanceCreatorImpl implements InstanceCreator {
 
 
     @Override
-    public CreateInstanceResponse createInstance(CreateInstanceRequest createInstanceRequest) {
-        log.info("Started instance creation");
+    public CreateInstanceResponse createInstances(CreateInstanceRequest createInstanceRequest) {
+        log.info("Started instances creation");
+        CreateInstanceResponse createDbInstanceResponse = createDbInstance(createInstanceRequest);
+        CreateInstanceResponse createAppInstanceResponse = createAppInstance(createInstanceRequest);
+        createAppInstanceResponse.setDbInstancePrivateDns(createDbInstanceResponse.getDbInstancePrivateDns());
+        log.info("Completed instances creation");
+        return createAppInstanceResponse;
+    }
+
+
+    private CreateInstanceResponse createAppInstance(CreateInstanceRequest createInstanceRequest) {
+        log.info("Started app instance creation");
         String keyPairName = AwsEntitiesHelperUtil.
                 getEntityName(createInstanceRequest.getEnvTag(), KEY_PAIR_ENTITY_TYPE);
         KeyPair keyPair = createKeyPair(keyPairName);
@@ -65,8 +75,26 @@ public class InstanceCreatorImpl implements InstanceCreator {
                 createInstanceRequest.getArtifactName(), createInstanceRequest.getEnvTag(),
                 createInstanceRequest.getUser(), createInstanceRequest.getPassword());
         waitForApplicationRunningState(publicDns, HTTP_PORT);
-        CreateInstanceResponse createInstanceResponse = new CreateInstanceResponse(publicDns);
-        log.info("Completed instance creation");
+        CreateInstanceResponse createInstanceResponse = new CreateInstanceResponse();
+        createInstanceResponse.setAppInstancePublicDns(publicDns);
+        log.info("Completed app instance creation");
+        return createInstanceResponse;
+    }
+
+    private CreateInstanceResponse createDbInstance(CreateInstanceRequest createInstanceRequest) {
+        log.info("Started DB instance creation");
+        String keyPairName = AwsEntitiesHelperUtil.
+                getEntityName(createInstanceRequest.getEnvTag(), DB_KEY_PAIR_ENTITY_TYPE);
+        KeyPair keyPair = createKeyPair(keyPairName);
+
+        String amiId = getAmiId(IMAGE_FILTER_PRODUCT_CODE, CENTOS7_PRODUCT_CODE);
+        String privateDns = runDbInstance(amiId, INSTANCE_TYPE, keyPair,
+                createInstanceRequest.getSecurityGroupId(), createInstanceRequest.getPrivateSubnetId(),
+                createInstanceRequest.getEnvTag(), createInstanceRequest.getUser(),
+                createInstanceRequest.getPassword());
+        CreateInstanceResponse createInstanceResponse = new CreateInstanceResponse();
+        createInstanceResponse.setDbInstancePrivateDns(privateDns);
+        log.info("Completed DB instance creation");
         return createInstanceResponse;
     }
 
@@ -93,8 +121,35 @@ public class InstanceCreatorImpl implements InstanceCreator {
         if(state.equals(INSTANCE_STATE_RUNNING)){
             publicDns = getInstancePublicDns(instance);
         }
-        log.info("Intsance is running with public DNS: " + publicDns);
+        log.info("Instance is running with public DNS: " + publicDns);
         return publicDns;
+    }
+
+
+    private String runDbInstance(String amiId, String instanceType,
+                               KeyPair keyPair, String securityGroupId, String subnetId,
+                                 String envTag, String user, String password){
+        log.info("Running DB instance ...");
+        RunInstancesRequest runInstancesRequest = new RunInstancesRequest();
+        runInstancesRequest.withImageId(amiId).withInstanceType(instanceType)
+                .withKeyName(keyPair.getKeyName())
+                .withSecurityGroupIds(securityGroupId)
+                .withSubnetId(subnetId)
+                .withUserData(getDbUserDataScript(user, password))
+                .withMinCount(1)
+                .withBlockDeviceMappings(new BlockDeviceMapping().withDeviceName(BLOCK_DEVICE_NAME)
+                        .withEbs(new EbsBlockDevice().withDeleteOnTermination(true)))
+                .withMaxCount(1);
+        RunInstancesResult runInstancesResult = AwsContext.getEc2Client().runInstances(runInstancesRequest);
+        Instance instance = runInstancesResult.getReservation().getInstances().get(0);
+        tagCreator.createTag(instance.getInstanceId(), INSTANCE_ENTITY_TYPE, envTag);
+        String state = waitForInstanceRunningState(instance);
+        String privateDns = null;
+        if(state.equals(INSTANCE_STATE_RUNNING)){
+            privateDns = getInstancePrivateDns(instance);
+        }
+        log.info("DB instance is running with private DNS: " + privateDns);
+        return privateDns;
     }
 
     private String waitForInstanceRunningState(Instance instance){
@@ -158,6 +213,16 @@ public class InstanceCreatorImpl implements InstanceCreator {
         return publicDns;
     }
 
+    private String getInstancePrivateDns(Instance instance){
+        log.info("Getting instance private DNS ...");
+        DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest();
+        describeInstancesRequest.withInstanceIds(instance.getInstanceId());
+        DescribeInstancesResult describeInstancesResult = AwsContext.getEc2Client().describeInstances(describeInstancesRequest);
+        String privateDns = describeInstancesResult.getReservations().get(0).getInstances().get(0).getPrivateDnsName();
+        log.info("Got instance private DNS: " + privateDns);
+        return privateDns;
+    }
+
     private KeyPair createKeyPair(String key){
         log.info("Creating key pair ...");
         CreateKeyPairRequest createKeyPairRequest = new CreateKeyPairRequest();
@@ -205,6 +270,27 @@ public class InstanceCreatorImpl implements InstanceCreator {
             IOUtils.closeQuietly(inputStream);
         }
         log.info("Got user data script");
+        log.debug("\n" + userDataScript);
+        userDataScript = new String(Base64.encodeBase64(userDataScript.getBytes()));
+        return userDataScript;
+    }
+
+    private String getDbUserDataScript(String user, String password){
+        log.info("Getting DB user data script ...");
+        String userDataScript = null;
+        InputStream inputStream = null;
+        try {
+            Resource resource = resourceLoader.getResource("classpath:db_user_data.sh");
+            inputStream = resource.getInputStream();
+            userDataScript = IOUtils.toString(inputStream, "UTF-8");
+            userDataScript = userDataScript.replace(USER, user);
+            userDataScript = userDataScript.replace(PASSWORD, password);
+        } catch (Exception e){
+            throw new RuntimeException("Unable to read user data");
+        } finally {
+            IOUtils.closeQuietly(inputStream);
+        }
+        log.info("Got DB user data script");
         log.debug("\n" + userDataScript);
         userDataScript = new String(Base64.encodeBase64(userDataScript.getBytes()));
         return userDataScript;

@@ -19,7 +19,7 @@ public class InstanceManagerImpl implements InstanceManager {
 
     @Override
     public CreateInstanceResponse createInstance(CreateInstanceRequest createInstanceRequest) {
-        CreateInstanceResponse createInstanceResponse = instanceCreator.createInstance(createInstanceRequest);
+        CreateInstanceResponse createInstanceResponse = instanceCreator.createInstances(createInstanceRequest);
         return createInstanceResponse;
     }
 

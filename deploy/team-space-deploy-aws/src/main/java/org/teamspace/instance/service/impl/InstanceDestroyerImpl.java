@@ -31,14 +31,19 @@ public class InstanceDestroyerImpl implements InstanceDestroyer {
     }
 
     private void deleteKeyPair(String envTag){
-        log.info("Deleting key pair ...");
+        log.info("Deleting key pairs ...");
         String keyPairName = AwsEntitiesHelperUtil.
                 getEntityName(envTag, KEY_PAIR_ENTITY_TYPE);
-
         DeleteKeyPairRequest deleteKeyPairRequest = new DeleteKeyPairRequest();
         deleteKeyPairRequest.withKeyName(keyPairName);
         AwsContext.getEc2Client().deleteKeyPair(deleteKeyPairRequest);
-        log.info("Deleted key pair");
+
+        keyPairName = AwsEntitiesHelperUtil.
+                getEntityName(envTag, DB_KEY_PAIR_ENTITY_TYPE);
+        deleteKeyPairRequest = new DeleteKeyPairRequest();
+        deleteKeyPairRequest.withKeyName(keyPairName);
+        AwsContext.getEc2Client().deleteKeyPair(deleteKeyPairRequest);
+        log.info("Deleted key pairs");
     }
 
     private void deleteInstanceProfile(String envTag){

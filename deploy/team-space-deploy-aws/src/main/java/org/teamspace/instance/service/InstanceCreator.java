@@ -7,5 +7,5 @@ import org.teamspace.instance.domain.CreateInstanceResponse;
  * Created by shpilb on 20/05/2017.
  */
 public interface InstanceCreator {
-    CreateInstanceResponse createInstance(CreateInstanceRequest createInstanceRequest);
+    CreateInstanceResponse createInstances(CreateInstanceRequest createInstanceRequest);
 }

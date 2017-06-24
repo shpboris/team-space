@@ -14,6 +14,7 @@ public class DeploymentConstants {
     public static final String SECURITY_GROUP_ENTITY_TYPE = "SECURITY_GROUP";
     public static final String INSTANCE_ENTITY_TYPE = "INSTANCE";
     public static final String KEY_PAIR_ENTITY_TYPE = "KEY_PAIR";
+    public static final String DB_KEY_PAIR_ENTITY_TYPE = "DB_KEY_PAIR";
     public static final String PROFILE_AND_ROLE_ENTITY_TYPE = "PROFILE_ROLE";
     public static final String BUCKET_ENTITY_TYPE = "BUCKET";
 

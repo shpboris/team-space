@@ -11,6 +11,7 @@ import lombok.Data;
 public class CreateInstanceRequest {
     private String envTag;
     private String subnetId;
+    private String privateSubnetId;
     private String securityGroupId;
     private String artifactName;
     private String user;

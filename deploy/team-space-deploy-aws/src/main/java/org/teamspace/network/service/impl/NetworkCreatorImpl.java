@@ -34,9 +34,15 @@ public class NetworkCreatorImpl implements NetworkCreator{
         InternetGateway internetGateway = createInternetGateway(envTag);
         attachGatewayToVpc(vpc, internetGateway);
         RouteTable routeTable = createRouteTable(vpc, envTag);
-        createRoute(internetGateway, routeTable);
+        createRouteToInternetGateway(internetGateway, routeTable);
         associateRouteTableWithSubnet(routeTable, publicSubnet);
         mapPublicIpOnLaunch(publicSubnet);
+
+        NatGateway natGateway = createNatGateway(publicSubnet, envTag);
+        RouteTable routeTableForPrivateSubnet = createRouteTable(vpc, envTag);
+        createRouteToNatGateway(natGateway, routeTableForPrivateSubnet);
+        associateRouteTableWithSubnet(routeTableForPrivateSubnet, privateSubnet);
+
         String securityGroupId = createSecurityGroup("HTTP-SSH-SG", vpc, envTag);
         authorizeSecurityGroupIngress(securityGroupId, "tcp", SSH_PORT, "0.0.0.0/0");
         authorizeSecurityGroupIngress(securityGroupId, "tcp", HTTP_PORT, "0.0.0.0/0");
@@ -56,6 +62,21 @@ public class NetworkCreatorImpl implements NetworkCreator{
         enableDnsHostnames(vpc);
         log.info("Created VPC: " + vpc.getVpcId());
         return vpc;
+    }
+
+    private NatGateway createNatGateway(Subnet publicSubnet, String envTag){
+        log.info("Creating NAT gateway ...");
+        CreateNatGatewayRequest createNatGatewayRequest = new CreateNatGatewayRequest();
+        AllocateAddressRequest allocateAddressRequest = new AllocateAddressRequest().withDomain(DomainType.Vpc);
+        AllocateAddressResult allocateAddressResult = AwsContext.getEc2Client().allocateAddress(allocateAddressRequest);
+        log.info("Allocated address: " + allocateAddressResult.getPublicIp()
+                + " with allocation id: " + allocateAddressResult.getAllocationId());
+        createNatGatewayRequest.withSubnetId(publicSubnet.getSubnetId())
+                .withAllocationId(allocateAddressResult.getAllocationId());
+        CreateNatGatewayResult createNatGatewayResult = AwsContext.getEc2Client().createNatGateway(createNatGatewayRequest);
+        NatGateway natGateway = createNatGatewayResult.getNatGateway();
+        log.info("Created NAT gateway: " + natGateway.getNatGatewayId() + " in subnet: " + publicSubnet.getSubnetId());
+        return natGateway;
     }
 
     private Subnet createSubnet(Vpc vpc, String cidrBlock, String envTag){
@@ -99,14 +120,39 @@ public class NetworkCreatorImpl implements NetworkCreator{
         return routeTable;
     }
 
-    private void createRoute(InternetGateway internetGateway, RouteTable routeTable){
-        log.info("Creating route ...");
+    private void createRouteToInternetGateway(InternetGateway internetGateway, RouteTable routeTable){
+        log.info("Creating route to internet gateway...");
         CreateRouteRequest createRouteRequest = new CreateRouteRequest();
         createRouteRequest.withGatewayId(internetGateway.getInternetGatewayId())
                 .withRouteTableId(routeTable.getRouteTableId())
                 .withDestinationCidrBlock("0.0.0.0/0");
         CreateRouteResult createRouteResult = AwsContext.getEc2Client().createRoute(createRouteRequest);
-        log.info("Created route");
+        log.info("Created route to internet gateway");
+    }
+
+    private void createRouteToNatGateway(NatGateway natGateway, RouteTable routeTable){
+        log.info("Creating route to NAT gateway...");
+        boolean isRouteCreated = false;
+        int retriesNum = 0;
+        while(!isRouteCreated && retriesNum < MAX_RETRIES) {
+            retriesNum++;
+            try {
+                Thread.sleep(WAIT_TIME_MILLISEC);
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Unable to wait for route creation");
+            }
+            try {
+                CreateRouteRequest createRouteRequest = new CreateRouteRequest();
+                createRouteRequest.withNatGatewayId(natGateway.getNatGatewayId())
+                        .withRouteTableId(routeTable.getRouteTableId())
+                        .withDestinationCidrBlock("0.0.0.0/0");
+                CreateRouteResult createRouteResult = AwsContext.getEc2Client().createRoute(createRouteRequest);
+                isRouteCreated = true;
+            }catch (Exception e){
+                log.warn("Attempt #" + retriesNum + " to create route to NAT GW failed");
+            }
+        }
+        log.info("Created route to NAT gateway");
     }
 
     private void associateRouteTableWithSubnet(RouteTable routeTable, Subnet subnet){
@@ -114,8 +160,7 @@ public class NetworkCreatorImpl implements NetworkCreator{
         AssociateRouteTableRequest associateRouteTableRequest = new AssociateRouteTableRequest();
         associateRouteTableRequest.withRouteTableId(routeTable.getRouteTableId())
                 .withSubnetId(subnet.getSubnetId());
-        AssociateRouteTableResult associateRouteTableResult = new AssociateRouteTableResult();
-        associateRouteTableResult = AwsContext.getEc2Client().associateRouteTable(associateRouteTableRequest);
+        AssociateRouteTableResult associateRouteTableResult = AwsContext.getEc2Client().associateRouteTable(associateRouteTableRequest);
         log.info("Associated route table: " + routeTable.getRouteTableId() + " with subnet " + subnet.getSubnetId());
     }
 
