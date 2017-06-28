@@ -10,12 +10,16 @@ echo '$user$ ALL=(ALL:ALL) NOPASSWD:ALL' >> /etc/sudoers
 log=/home/$user$/deployer.log
 touch $log
 echo "Started deploy at: "$(date) >> $log
+
 yum -y install wget
+echo "wget is finally installed: "$(date +"%T") >> $log
 echo "Completed wget install at: "$(date +"%T") >> $log
 yum -y install zip unzip
 echo "Completed zip/unzip install at: "$(date +"%T") >> $log
 yum -y install dos2unix
 echo "Completed dos2unix install at: "$(date +"%T") >> $log
+yum -y install mysql
+echo "Completed MySql client install at: "$(date +"%T") >> $log
 
 sed -ie 's/#PasswordAuthentication yes/PasswordAuthentication yes/g' /etc/ssh/sshd_config
 sed -ie 's/#PasswordAuthentication no//g' /etc/ssh/sshd_config

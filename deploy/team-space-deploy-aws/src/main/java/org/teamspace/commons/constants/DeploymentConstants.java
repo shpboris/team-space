@@ -32,6 +32,7 @@ public class DeploymentConstants {
     public static final String INSTANCE_STATE_TERMINATED = "terminated";
     public static final int HTTP_PORT = 80;
     public static final int HTTPS_PORT = 443;
+    public static final int MYSQL_PORT = 3306;
     public static final int SSH_PORT = 22;
     public static final String BLOCK_DEVICE_NAME = "/dev/sda1";
 
