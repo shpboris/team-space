@@ -27,6 +27,17 @@ java -cp team-space-server-1.0-SNAPSHOT.jar org.h2.tools.Shell -url jdbc:h2:tcp:
 
 This works from either Windows or Linux
 
+1.5)
+To access a MySql DB on Windows from regular console use -
+"C:\Program Files\MySQL\MySQL Server 5.6\bin\mysql.exe" "--defaults-file=C:\ProgramData\MySQL\MySQL Server 5.6\my.ini" "-uts" "-pts111"
+
+1.6)
+To access MySql DB on CentOS app instance from console, use -
+mysql -u ts -h ip-10-0-1-247.eu-central-1.compute.internal teamspace -pts111
+
+Options are -u, -h, -p. Pay attention password (ts111) should follow -p without space.
+Database name (teamspace) just follows the host without any special option.
+
 
 2.
 Automation

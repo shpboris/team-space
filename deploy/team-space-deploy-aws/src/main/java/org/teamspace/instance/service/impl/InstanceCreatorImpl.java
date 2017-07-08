@@ -49,7 +49,10 @@ public class InstanceCreatorImpl implements InstanceCreator {
         log.info("Started instances creation");
         CreateInstancesResponse createDbInstanceResponse = createDbInstance(createInstanceRequest);
         CreateInstancesResponse createAppInstanceResponse = createAppInstance(createInstanceRequest);
-        createAppInstanceResponse.setDbInstancePrivateDns(createDbInstanceResponse.getDbInstancePrivateDns());
+        String dbInstancePrivateDns = createDbInstanceResponse.getDbInstancePrivateDns();
+        String dbUrl = getDbUrl(dbInstancePrivateDns, createInstanceRequest.getArtifactName());
+        createAppInstanceResponse.setDbInstancePrivateDns(dbInstancePrivateDns);
+        createAppInstanceResponse.setDbUrl(dbUrl);
         log.info("Completed instances creation");
         return createAppInstanceResponse;
     }
@@ -73,6 +76,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
                 createInstanceRequest.getSecurityGroupId(), createInstanceRequest.getPublicSubnetId(),
                 AwsContext.getRegion().getName(), bucketName,
                 createInstanceRequest.getArtifactName(), createInstanceRequest.getEnvTag(),
+                createInstanceRequest.getDbInstancePrivateDns(),
                 createInstanceRequest.getUser(), createInstanceRequest.getPassword());
         waitForApplicationRunningState(publicDns, HTTP_PORT);
         CreateInstancesResponse createInstanceResponse = new CreateInstancesResponse();
@@ -90,8 +94,9 @@ public class InstanceCreatorImpl implements InstanceCreator {
         String amiId = getAmiId(IMAGE_FILTER_PRODUCT_CODE, CENTOS7_PRODUCT_CODE);
         String privateDns = runDbInstance(amiId, INSTANCE_TYPE, keyPair,
                 createInstanceRequest.getSecurityGroupId(), createInstanceRequest.getPrivateSubnetId(),
-                createInstanceRequest.getEnvTag(), createInstanceRequest.getUser(),
+                createInstanceRequest.getEnvTag(), createInstanceRequest.getArtifactName(), createInstanceRequest.getUser(),
                 createInstanceRequest.getPassword());
+        createInstanceRequest.setDbInstancePrivateDns(privateDns);
         CreateInstancesResponse createInstanceResponse = new CreateInstancesResponse();
         createInstanceResponse.setDbInstancePrivateDns(privateDns);
         log.info("Completed DB instance creation");
@@ -100,14 +105,14 @@ public class InstanceCreatorImpl implements InstanceCreator {
 
     private String runInstance(String amiId, String instanceType,
                               KeyPair keyPair, String instanceProfileName, String securityGroupId, String subnetId, String regionName,
-                              String bucketName, String tarName, String envTag, String user, String password){
+                              String bucketName, String tarName, String envTag, String dbInstancePrivateDns, String user, String password){
         log.info("Running instance ...");
         RunInstancesRequest runInstancesRequest = new RunInstancesRequest();
         runInstancesRequest.withImageId(amiId).withInstanceType(instanceType)
                 .withKeyName(keyPair.getKeyName())
                 .withSecurityGroupIds(securityGroupId)
                 .withSubnetId(subnetId)
-                .withUserData(getUserDataScript(tarName, regionName, bucketName, user, password))
+                .withUserData(getUserDataScript(tarName, regionName, bucketName, dbInstancePrivateDns, user, password))
                 .withIamInstanceProfile(new IamInstanceProfileSpecification().withName(instanceProfileName))
                 .withMinCount(1)
                 .withBlockDeviceMappings(new BlockDeviceMapping().withDeviceName(BLOCK_DEVICE_NAME)
@@ -128,14 +133,14 @@ public class InstanceCreatorImpl implements InstanceCreator {
 
     private String runDbInstance(String amiId, String instanceType,
                                KeyPair keyPair, String securityGroupId, String subnetId,
-                                 String envTag, String user, String password){
+                                 String envTag, String tarFileName, String user, String password){
         log.info("Running DB instance ...");
         RunInstancesRequest runInstancesRequest = new RunInstancesRequest();
         runInstancesRequest.withImageId(amiId).withInstanceType(instanceType)
                 .withKeyName(keyPair.getKeyName())
                 .withSecurityGroupIds(securityGroupId)
                 .withSubnetId(subnetId)
-                .withUserData(getDbUserDataScript(user, password))
+                .withUserData(getDbUserDataScript(tarFileName, user, password))
                 .withMinCount(1)
                 .withBlockDeviceMappings(new BlockDeviceMapping().withDeviceName(BLOCK_DEVICE_NAME)
                         .withEbs(new EbsBlockDevice().withDeleteOnTermination(true)))
@@ -251,7 +256,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
     }
 
 
-    private String getUserDataScript(String tarFileName, String regionName, String bucketName, String user, String password){
+    private String getUserDataScript(String tarFileName, String regionName, String bucketName, String dbInstancePrivateDns, String user, String password){
         log.info("Getting user data script ...");
         String userDataScript = null;
         InputStream inputStream = null;
@@ -264,6 +269,9 @@ public class InstanceCreatorImpl implements InstanceCreator {
             userDataScript = userDataScript.replace(BUCKET_NAME, bucketName);
             userDataScript = userDataScript.replace(USER, user);
             userDataScript = userDataScript.replace(PASSWORD, password);
+            userDataScript = userDataScript.replace(DB_HOST, dbInstancePrivateDns);
+            String dbUrl = getDbUrl(dbInstancePrivateDns, tarFileName);
+            userDataScript = userDataScript.replace(DB_URL, dbUrl);
         } catch (Exception e){
             throw new RuntimeException("Unable to read user data");
         } finally {
@@ -275,7 +283,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
         return userDataScript;
     }
 
-    private String getDbUserDataScript(String user, String password){
+    private String getDbUserDataScript(String tarFileName, String user, String password){
         log.info("Getting DB user data script ...");
         String userDataScript = null;
         InputStream inputStream = null;
@@ -285,6 +293,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
             userDataScript = IOUtils.toString(inputStream, "UTF-8");
             userDataScript = userDataScript.replace(USER, user);
             userDataScript = userDataScript.replace(PASSWORD, password);
+            userDataScript = userDataScript.replace(DB_NAME, getDbNormalizedName(tarFileName));
         } catch (Exception e){
             throw new RuntimeException("Unable to read user data");
         } finally {
@@ -294,6 +303,18 @@ public class InstanceCreatorImpl implements InstanceCreator {
         log.debug("\n" + userDataScript);
         userDataScript = new String(Base64.encodeBase64(userDataScript.getBytes()));
         return userDataScript;
+    }
+
+    private String getDbUrl(String dbInstancePrivateDns, String tarFileName){
+        String dbUrl = DB_URL_TEMPLATE.replace(DB_HOST, dbInstancePrivateDns);
+        String dbName = getDbNormalizedName(tarFileName);
+        dbUrl = dbUrl.replace(DB_NAME, dbName);
+        return dbUrl;
+    }
+
+    private String getDbNormalizedName(String tarFileName){
+        String dbName = tarFileName.replaceAll("[^a-zA-Z0-9]+","");
+        return  dbName;
     }
 
    private void createInstanceProfile(String name){

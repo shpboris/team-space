@@ -41,6 +41,10 @@ public class DeploymentConstants {
     public static final String BUCKET_NAME = "$bucketName$";
     public static final String USER = "$user$";
     public static final String PASSWORD = "$pass$";
+    public static final String DB_URL = "$dburl$";
+    public static final String DB_HOST = "$dbhost$";
+    public static final String DB_NAME = "$dbname$";
+    public static final String DB_URL_TEMPLATE = "jdbc:mysql://$dbhost$:3306/$dbname$";
     public static final String DEFAULT_REGION_NAME = Regions.DEFAULT_REGION.toString();
     public static final boolean OVERRIDE_EXISTING_ARTIFACT = false;
     public static final String ARTIFACT_EXTENSION = ".tar.gz";

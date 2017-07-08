@@ -46,18 +46,12 @@ cat >dbsetup.sql <<EOF
 uninstall plugin validate_password;
 DELETE FROM mysql.user WHERE User='';
 DROP DATABASE IF EXISTS test;
-CREATE DATABASE teamspace;
+CREATE DATABASE $dbname$;
 CREATE USER '$user$'@'localhost' IDENTIFIED BY '$pass$';
 GRANT ALL PRIVILEGES ON * . * TO '$user$'@'%' IDENTIFIED BY '$pass$';
 FLUSH PRIVILEGES;
 EOF
 
-#https://dba.stackexchange.com/questions/62521/why-cant-i-find-my-databases-from-mysql-on-linux
-#sudo systemctl stop mysqld
-#mysql -u ts -h ip-10-0-1-183.eu-central-1.compute.internal -p
-#mysql -u USERNAME -pPASSWORD -h REMOTE_SERVER_IP DB_NAME
-#GRANT ALL PRIVILEGES ON * . * TO 'ts'@'%' IDENTIFIED BY 'ts111';
-#GRANT ALL PRIVILEGES ON *.* TO 'ts'@'%' IDENTIFIED BY 'ts111' WITH GRANT OPTION;
 sudo systemctl set-environment MYSQLD_OPTS="--skip-grant-tables"
 sudo systemctl start mysqld
 

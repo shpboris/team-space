@@ -6,7 +6,7 @@ After=network.target
 User=ts
 EnvironmentFile=/etc/sysconfig/team-space
 WorkingDirectory=/home/ts/team-space
-ExecStart=/bin/sh -c 'authbind java $KEYSTORE -jar $TS_JAR server config.yml>/dev/null 2>&1'
+ExecStart=/bin/sh -c 'authbind java $KEYSTORE $DB_DRIVER $DB_URL $DB_USER $DB_PASSWORD -jar $TS_JAR server config.yml>/dev/null 2>&1'
 KillMode=control-group
 SuccessExitStatus=143
 

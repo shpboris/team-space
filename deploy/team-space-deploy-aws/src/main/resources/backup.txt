@@ -1,0 +1,39 @@
+DB_DRIVER=com.mysql.jdbc.Driver
+DB_URL=jdbc:mysql://dbhost:3306/dbname
+DB_USER=user
+DB_PASS=pass
+
+
+#https://dba.stackexchange.com/questions/62521/why-cant-i-find-my-databases-from-mysql-on-linuxhttps://stackoverflow.com/questions/5016505/mysql-grant-all-privileges-on-database
+#mysql -u USERNAME -pPASSWORD -h REMOTE_SERVER_IP DB_NAME
+
+
+
+export database.driver=com.mysql.jdbc.Driver
+export database.url=jdbc:mysql://$dbhost$:3306/$dbname$
+export database.user=$user$
+export database.password=$pass$
+
+
+CREATE USER 'ts'@'localhost' IDENTIFIED BY 'ts111';
+
+GRANT ALL PRIVILEGES ON * . * TO 'ts'@'%' IDENTIFIED BY 'ts111';
+
+GRANT ALL PRIVILEGES ON * . * TO 'ts'@'127.0.0.1' IDENTIFIED BY 'ts111';
+
+GRANT ALL PRIVILEGES ON * . * TO 'ts'@'localhost' IDENTIFIED BY 'ts111';
+
+
+grant all privileges on teamspace.* to ts@'%' identified by 'ts111';
+grant all privileges on teamspace.* to ts@localhost identified by 'ts111';
+
+FLUSH PRIVILEGES;
+
+
+cat >>/etc/environment <<EOF
+database.driver=com.mysql.jdbc.Driver
+database.url=jdbc:mysql://$dbhost$:3306/$dbname$
+database.user=$user$
+database.password=$pass$
+EOF
+source /etc/environment

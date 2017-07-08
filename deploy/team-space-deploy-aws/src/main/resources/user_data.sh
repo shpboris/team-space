@@ -49,16 +49,38 @@ echo "Completed JRE download at: "$(date +"%T") >> $log
 yum -y localinstall jre-8u131-linux-x64.rpm
 echo "Completed JRE install at: "$(date +"%T") >> $log
 
+
 aws s3 cp s3://$bucketName$/$tarFileName$.tar.gz $tarFileName$.tar.gz --region $regionName$
 echo "Completed app download from S3 at: "$(date +"%T") >> $log
 tar -zxvf $tarFileName$.tar.gz
 cd $tarFileName$
+
+
+cat >dbdetails <<EOF
+
+DB_URL="$dburl$"
+DB_USER="$user$"
+DB_PASSWORD="$pass$"
+DB_DRIVER="com.mysql.jdbc.Driver"
+EOF
 
 chmod +x setup.sh
 dos2unix setup.sh
 
 chown -R $user$:$user$ /home/$user$
 sudo su - $user$
+
+echo "testing DB connection at: "$(date +"%T") >> $log
+timeout 3 bash -c "</dev/tcp/$dbhost$/3306">/dev/null 2>&1
+while [ $? -ne 0 ]
+do
+    echo "DB is not connected yet at: "$(date +"%T") >> $log
+    sleep 1
+    timeout 3 bash -c "</dev/tcp/$dbhost$/3306">/dev/null 2>&1
+done
+echo "DB is finally connected: "$(date +"%T") >> $log
+
+
 echo "Completed app extraction, ready to run a setup.sh at: "$(date +"%T") >> $log
 sudo ./setup.sh
 
