@@ -55,7 +55,10 @@ echo "Completed app download from S3 at: "$(date +"%T") >> $log
 tar -zxvf $tarFileName$.tar.gz
 cd $tarFileName$
 
+DB_MODE="$dbmode$"
 
+if [ $DB_MODE == MYSQL ]
+then
 cat >dbdetails <<EOF
 
 DB_URL="$dburl$"
@@ -63,6 +66,9 @@ DB_USER="$user$"
 DB_PASSWORD="$pass$"
 DB_DRIVER="com.mysql.jdbc.Driver"
 EOF
+fi
+
+
 
 chmod +x setup.sh
 dos2unix setup.sh
@@ -70,15 +76,19 @@ dos2unix setup.sh
 chown -R $user$:$user$ /home/$user$
 sudo su - $user$
 
-echo "testing DB connection at: "$(date +"%T") >> $log
-timeout 3 bash -c "</dev/tcp/$dbhost$/3306">/dev/null 2>&1
-while [ $? -ne 0 ]
-do
-    echo "DB is not connected yet at: "$(date +"%T") >> $log
-    sleep 1
+
+if [ $DB_MODE == MYSQL ]
+then
+    echo "Testing DB connection at: "$(date +"%T") >> $log
     timeout 3 bash -c "</dev/tcp/$dbhost$/3306">/dev/null 2>&1
-done
-echo "DB is finally connected: "$(date +"%T") >> $log
+    while [ $? -ne 0 ]
+    do
+        echo "DB is not connected yet at: "$(date +"%T") >> $log
+        sleep 5
+        timeout 3 bash -c "</dev/tcp/$dbhost$/3306">/dev/null 2>&1
+    done
+    echo "DB is finally connected: "$(date +"%T") >> $log
+fi
 
 
 echo "Completed app extraction, ready to run a setup.sh at: "$(date +"%T") >> $log

@@ -14,6 +14,7 @@ public class CreateInstancesRequest {
     private String privateSubnetId;
     private String securityGroupId;
     private String artifactName;
+    private String dbMode;
     private String dbInstancePrivateDns;
     private String user;
     private String password;

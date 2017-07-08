@@ -11,5 +11,4 @@ import lombok.Data;
 public class DeployResponse {
     private String appInstancePublicDns;
     private String dbInstancePrivateDns;
-    private String dbUrl;
 }

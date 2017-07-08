@@ -59,7 +59,7 @@ public class DeployServiceImpl implements DeployService{
                         createNetworkResponse.getPublicSubnetId(),
                         createNetworkResponse.getPrivateSubnetId(),
                             createNetworkResponse.getSecurityGroupId(),
-                                deployRequest.getArtifactName(),null,
+                                deployRequest.getArtifactName(),deployRequest.getDbMode(), null,
                                     deployRequest.getUser(), deployRequest.getPassword());
         CreateInstancesResponse createInstanceResponse = instanceManager.createInstance(createInstanceRequest);
         destroyAwsContext();
@@ -67,7 +67,7 @@ public class DeployServiceImpl implements DeployService{
         log.info("Completed deploy to region: " + deployRequest
                 .getRegion() + " , env tag: " + deployRequest.getEnvTag());
         return new DeployResponse(createInstanceResponse.getAppInstancePublicDns(),
-                createInstanceResponse.getDbInstancePrivateDns(), createInstanceResponse.getDbUrl());
+                createInstanceResponse.getDbInstancePrivateDns());
     }
 
     @Override

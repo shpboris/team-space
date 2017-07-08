@@ -47,12 +47,15 @@ public class InstanceCreatorImpl implements InstanceCreator {
     @Override
     public CreateInstancesResponse createInstances(CreateInstancesRequest createInstanceRequest) {
         log.info("Started instances creation");
-        CreateInstancesResponse createDbInstanceResponse = createDbInstance(createInstanceRequest);
+        CreateInstancesResponse createDbInstanceResponse = null;
+        if(createInstanceRequest.getDbMode().equals(DB_MODE_MYSQL)) {
+            createDbInstanceResponse = createDbInstance(createInstanceRequest);
+        }
         CreateInstancesResponse createAppInstanceResponse = createAppInstance(createInstanceRequest);
-        String dbInstancePrivateDns = createDbInstanceResponse.getDbInstancePrivateDns();
-        String dbUrl = getDbUrl(dbInstancePrivateDns, createInstanceRequest.getArtifactName());
-        createAppInstanceResponse.setDbInstancePrivateDns(dbInstancePrivateDns);
-        createAppInstanceResponse.setDbUrl(dbUrl);
+        if(createDbInstanceResponse != null) {
+            String dbInstancePrivateDns = createDbInstanceResponse.getDbInstancePrivateDns();
+            createAppInstanceResponse.setDbInstancePrivateDns(dbInstancePrivateDns);
+        }
         log.info("Completed instances creation");
         return createAppInstanceResponse;
     }
@@ -76,6 +79,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
                 createInstanceRequest.getSecurityGroupId(), createInstanceRequest.getPublicSubnetId(),
                 AwsContext.getRegion().getName(), bucketName,
                 createInstanceRequest.getArtifactName(), createInstanceRequest.getEnvTag(),
+                createInstanceRequest.getDbMode(),
                 createInstanceRequest.getDbInstancePrivateDns(),
                 createInstanceRequest.getUser(), createInstanceRequest.getPassword());
         waitForApplicationRunningState(publicDns, HTTP_PORT);
@@ -105,14 +109,14 @@ public class InstanceCreatorImpl implements InstanceCreator {
 
     private String runInstance(String amiId, String instanceType,
                               KeyPair keyPair, String instanceProfileName, String securityGroupId, String subnetId, String regionName,
-                              String bucketName, String tarName, String envTag, String dbInstancePrivateDns, String user, String password){
+                              String bucketName, String tarName, String envTag, String dbMode, String dbInstancePrivateDns, String user, String password){
         log.info("Running instance ...");
         RunInstancesRequest runInstancesRequest = new RunInstancesRequest();
         runInstancesRequest.withImageId(amiId).withInstanceType(instanceType)
                 .withKeyName(keyPair.getKeyName())
                 .withSecurityGroupIds(securityGroupId)
                 .withSubnetId(subnetId)
-                .withUserData(getUserDataScript(tarName, regionName, bucketName, dbInstancePrivateDns, user, password))
+                .withUserData(getUserDataScript(tarName, regionName, bucketName, dbMode, dbInstancePrivateDns, user, password))
                 .withIamInstanceProfile(new IamInstanceProfileSpecification().withName(instanceProfileName))
                 .withMinCount(1)
                 .withBlockDeviceMappings(new BlockDeviceMapping().withDeviceName(BLOCK_DEVICE_NAME)
@@ -256,7 +260,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
     }
 
 
-    private String getUserDataScript(String tarFileName, String regionName, String bucketName, String dbInstancePrivateDns, String user, String password){
+    private String getUserDataScript(String tarFileName, String regionName, String bucketName, String dbMode, String dbInstancePrivateDns, String user, String password){
         log.info("Getting user data script ...");
         String userDataScript = null;
         InputStream inputStream = null;
@@ -269,10 +273,14 @@ public class InstanceCreatorImpl implements InstanceCreator {
             userDataScript = userDataScript.replace(BUCKET_NAME, bucketName);
             userDataScript = userDataScript.replace(USER, user);
             userDataScript = userDataScript.replace(PASSWORD, password);
-            userDataScript = userDataScript.replace(DB_HOST, dbInstancePrivateDns);
-            String dbUrl = getDbUrl(dbInstancePrivateDns, tarFileName);
-            userDataScript = userDataScript.replace(DB_URL, dbUrl);
+            userDataScript = userDataScript.replace(DB_MODE, dbMode);
+            if(dbMode.equals(DB_MODE_MYSQL)) {
+                userDataScript = userDataScript.replace(DB_HOST, dbInstancePrivateDns);
+                String dbUrl = getDbUrl(dbInstancePrivateDns, tarFileName);
+                userDataScript = userDataScript.replace(DB_URL, dbUrl);
+            }
         } catch (Exception e){
+            log.error("Unable to read user data", e);
             throw new RuntimeException("Unable to read user data");
         } finally {
             IOUtils.closeQuietly(inputStream);

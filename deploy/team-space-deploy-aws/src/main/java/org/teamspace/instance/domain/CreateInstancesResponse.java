@@ -11,5 +11,4 @@ import lombok.*;
 public class CreateInstancesResponse {
     private String appInstancePublicDns;
     private String dbInstancePrivateDns;
-    private String dbUrl;
 }

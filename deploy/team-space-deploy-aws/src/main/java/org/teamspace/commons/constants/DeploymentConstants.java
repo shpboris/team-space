@@ -41,6 +41,9 @@ public class DeploymentConstants {
     public static final String BUCKET_NAME = "$bucketName$";
     public static final String USER = "$user$";
     public static final String PASSWORD = "$pass$";
+    public static final String DB_MODE = "$dbmode$";
+    public static final String DB_MODE_MYSQL = "MYSQL";
+    public static final String DB_MODE_H2 = "H2";
     public static final String DB_URL = "$dburl$";
     public static final String DB_HOST = "$dbhost$";
     public static final String DB_NAME = "$dbname$";
