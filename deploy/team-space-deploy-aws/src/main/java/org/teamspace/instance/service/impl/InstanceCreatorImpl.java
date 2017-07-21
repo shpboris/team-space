@@ -146,8 +146,8 @@ public class InstanceCreatorImpl implements InstanceCreator {
                     describeStacks(describeStacksRequest).getStacks().get(0);
             if (stack.getStackStatus().equals(StackStatus.CREATE_COMPLETE.toString()) ||
                     stack.getStackStatus().equals(StackStatus.CREATE_FAILED.toString()) ||
-                    stack.getStackStatus().equals(StackStatus.ROLLBACK_FAILED.toString()) ||
-                    stack.getStackStatus().equals(StackStatus.DELETE_FAILED.toString())) {
+                    stack.getStackStatus().equals(StackStatus.ROLLBACK_COMPLETE.toString()) ||
+                    stack.getStackStatus().equals(StackStatus.ROLLBACK_FAILED.toString())) {
                 isStackCreationCompleted = true;
             }
             log.debug("Waiting for stack creation: attempt #{}, stack status is {}", retriesCount, stack.getStackStatus());

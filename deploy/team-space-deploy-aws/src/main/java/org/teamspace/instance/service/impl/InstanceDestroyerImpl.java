@@ -1,5 +1,6 @@
 package org.teamspace.instance.service.impl;
 
+import com.amazonaws.services.cloudformation.model.*;
 import com.amazonaws.services.ec2.model.*;
 import com.amazonaws.services.identitymanagement.model.*;
 import lombok.extern.slf4j.Slf4j;
@@ -9,6 +10,7 @@ import org.teamspace.commons.utils.AwsEntitiesHelperUtil;
 import org.teamspace.instance.domain.DestroyInstanceRequest;
 import org.teamspace.instance.service.InstanceDestroyer;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.teamspace.commons.constants.DeploymentConstants.*;
@@ -27,7 +29,68 @@ public class InstanceDestroyerImpl implements InstanceDestroyer {
         deleteKeyPair(envTag);
         deleteInstanceProfile(envTag);
         deleteInstances(envTag);
+        deleteStacks(envTag);
         log.info("Completed instance deletion");
+    }
+
+    private void deleteStacks(String envTag){
+        log.info("Started stack deletion ...");
+        try {
+            String stackName = AwsEntitiesHelperUtil.
+                    getEntityName(envTag, RDS_STACK_ENTITY_TYPE);
+            DescribeStacksRequest describeStacksRequest = new DescribeStacksRequest();
+            describeStacksRequest.withStackName(stackName);
+            DescribeStacksResult describeStacksResult =
+                    AwsContext.getCloudFormationClient().describeStacks(describeStacksRequest);
+            describeStacksResult.getStacks().forEach(stack -> {
+                log.debug("Started delete of stack {}", stackName);
+                DeleteStackRequest deleteStackRequest = new DeleteStackRequest();
+                deleteStackRequest.withStackName(stackName);
+                AwsContext.getCloudFormationClient().deleteStack(deleteStackRequest);
+                try {
+                    waitForStackDeletion(stackName);
+                } catch (Exception e) {
+                    log.error("Couldn't wait for stack deletion completion", e);
+                }
+                log.debug("Deleted stack {}", stackName);
+            });
+        }catch (Exception e){
+            log.warn(e.getMessage());
+        }
+        log.info("Completed stack deletion");
+    }
+
+    public Stack waitForStackDeletion(String stackName) throws Exception {
+        log.info("Started waiting for stack deletion completion");
+        List<Stack> stacks = null;
+        Stack stack = null;
+        String stackStatus = null;
+        DescribeStacksRequest describeStacksRequest = new DescribeStacksRequest();
+        describeStacksRequest.setStackName(stackName);
+        int retriesCount = 0;
+        boolean isStackDeletionCompleted = false;
+        while (!isStackDeletionCompleted && retriesCount < RDS_CF_MAX_RETRIES) {
+            retriesCount++;
+            Thread.sleep(RDS_CF_WAIT_TIME_MILLISEC);
+            try {
+                stacks = AwsContext.getCloudFormationClient().
+                        describeStacks(describeStacksRequest).getStacks();
+            } catch (Exception e){
+                log.warn(e.getMessage());
+                stack = null;
+                stackStatus = StackStatus.DELETE_COMPLETE.toString();
+                break;
+            }
+            stack = stacks.get(0);
+            stackStatus = stack.getStackStatus();
+            if (stackStatus.equals(StackStatus.DELETE_FAILED.toString())
+                    || stackStatus.equals(StackStatus.DELETE_COMPLETE.toString())) {
+                isStackDeletionCompleted = true;
+            }
+            log.debug("Waiting for stack deletion: attempt #{}, stack status is {}", retriesCount, stackStatus);
+        }
+        log.info("Finished waiting for stack deletion completion, stack status is {}", stackStatus);
+        return stack;
     }
 
     private void deleteKeyPair(String envTag){

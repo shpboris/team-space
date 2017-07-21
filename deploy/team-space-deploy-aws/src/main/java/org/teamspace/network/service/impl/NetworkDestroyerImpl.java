@@ -184,38 +184,41 @@ public class NetworkDestroyerImpl implements NetworkDestroyer{
         DescribeVpcsRequest describeVpcsRequest = new DescribeVpcsRequest();
         describeVpcsRequest.withFilters(filter);
         DescribeVpcsResult describeVpcResult = AwsContext.getEc2Client().describeVpcs(describeVpcsRequest);
-        String vpcId = describeVpcResult.getVpcs().get(0).getVpcId();
 
-        DescribeNatGatewaysRequest describeNatGatewaysRequest = new DescribeNatGatewaysRequest();
-        DescribeNatGatewaysResult natGatewaysResult = AwsContext.getEc2Client().describeNatGateways(describeNatGatewaysRequest);
-        natGatewaysResult.getNatGateways().stream().forEach(natGateway -> {
-            if (natGateway.getVpcId().equals(vpcId) && !natGateway.getState().equals("deleted")) {
-                DeleteNatGatewayRequest deleteNatGatewayRequest = new DeleteNatGatewayRequest();
-                deleteNatGatewayRequest.withNatGatewayId(natGateway.getNatGatewayId());
-                AwsContext.getEc2Client().deleteNatGateway(deleteNatGatewayRequest);
-                log.info("Deleted NAT gateway: " + natGateway.getNatGatewayId());
-                natGateway.getNatGatewayAddresses().stream().forEach(natGatewayAddress -> {
-                    log.info("Releasing elastic IP ...");
-                    boolean isAddressReleased = false;
-                    int retriesNum = 0;
-                    while(!isAddressReleased && retriesNum < MAX_RETRIES) {
-                        retriesNum++;
-                        try {
-                            Thread.sleep(WAIT_TIME_MILLISEC);
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException("Unable to wait for address release");
+        if(describeVpcResult.getVpcs() != null && !describeVpcResult.getVpcs().isEmpty()) {
+            String vpcId = describeVpcResult.getVpcs().get(0).getVpcId();
+
+            DescribeNatGatewaysRequest describeNatGatewaysRequest = new DescribeNatGatewaysRequest();
+            DescribeNatGatewaysResult natGatewaysResult = AwsContext.getEc2Client().describeNatGateways(describeNatGatewaysRequest);
+            natGatewaysResult.getNatGateways().stream().forEach(natGateway -> {
+                if (natGateway.getVpcId().equals(vpcId) && !natGateway.getState().equals("deleted")) {
+                    DeleteNatGatewayRequest deleteNatGatewayRequest = new DeleteNatGatewayRequest();
+                    deleteNatGatewayRequest.withNatGatewayId(natGateway.getNatGatewayId());
+                    AwsContext.getEc2Client().deleteNatGateway(deleteNatGatewayRequest);
+                    log.info("Deleted NAT gateway: " + natGateway.getNatGatewayId());
+                    natGateway.getNatGatewayAddresses().stream().forEach(natGatewayAddress -> {
+                        log.info("Releasing elastic IP ...");
+                        boolean isAddressReleased = false;
+                        int retriesNum = 0;
+                        while (!isAddressReleased && retriesNum < MAX_RETRIES) {
+                            retriesNum++;
+                            try {
+                                Thread.sleep(WAIT_TIME_MILLISEC);
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException("Unable to wait for address release");
+                            }
+                            try {
+                                AwsContext.getEc2Client().releaseAddress(new ReleaseAddressRequest().withAllocationId(natGatewayAddress.getAllocationId()));
+                                log.info("Released allocation: " + natGatewayAddress.getAllocationId());
+                                isAddressReleased = true;
+                            } catch (Exception e) {
+                                log.warn("Attempt #" + retriesNum + " to release address failed");
+                            }
                         }
-                        try {
-                            AwsContext.getEc2Client().releaseAddress(new ReleaseAddressRequest().withAllocationId(natGatewayAddress.getAllocationId()));
-                            log.info("Released allocation: " + natGatewayAddress.getAllocationId());
-                            isAddressReleased = true;
-                        } catch (Exception e) {
-                            log.warn("Attempt #" + retriesNum + " to release address failed");
-                        }
-                    }
-                });
-            }
-        });
+                    });
+                }
+            });
+        }
     }
 
 

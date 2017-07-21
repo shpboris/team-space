@@ -21,6 +21,7 @@ public class DeploymentConstants {
     public static final String DB_KEY_PAIR_ENTITY_TYPE = "DB_KEY_PAIR";
     public static final String PROFILE_AND_ROLE_ENTITY_TYPE = "PROFILE_ROLE";
     public static final String BUCKET_ENTITY_TYPE = "BUCKET";
+    public static final String RDS_STACK_ENTITY_TYPE = "STACK";
 
     public static final String IMAGE_FILTER_PRODUCT_CODE = "product-code";
     public static final String CENTOS7_PRODUCT_CODE = "aw0evgkw8e5c1q413zgy5pjce";
