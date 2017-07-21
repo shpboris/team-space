@@ -10,4 +10,5 @@ import lombok.Data;
 @AllArgsConstructor
 public class CreateNetworkRequest {
     private String envTag;
+    private String dbMode;
 }

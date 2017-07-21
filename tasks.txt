@@ -16,8 +16,6 @@ Add Spring Profiles
 Retry logic
 6.
 Allow multiple deploys to the same VPC
-7.
-Add option to create separate VM with MySql DB
 8.
 Add option to start/stop/delete the app from AWS from console
 9.

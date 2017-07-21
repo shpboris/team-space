@@ -52,12 +52,14 @@ public class DeployServiceImpl implements DeployService{
                 .getRegion() + " , env tag: " + deployRequest.getEnvTag());
         initAwsContext(deployRequest.getRegion());
         uploadArtifact(deployRequest.getArtifactName(), deployRequest.getEnvTag());
-        CreateNetworkRequest createNetworkRequest = new CreateNetworkRequest(deployRequest.getEnvTag());
+        CreateNetworkRequest createNetworkRequest = new CreateNetworkRequest(deployRequest.getEnvTag(),
+                deployRequest.getDbMode());
         CreateNetworkResponse createNetworkResponse = networkManager.createNetwork(createNetworkRequest);
         CreateInstancesRequest createInstanceRequest =
                 new CreateInstancesRequest(deployRequest.getEnvTag(),
                         createNetworkResponse.getPublicSubnetId(),
-                        createNetworkResponse.getPrivateSubnetId(),
+                        createNetworkResponse.getPrivateSubnetIdFirstAz(),
+                        createNetworkResponse.getPrivateSubnetIdSecondAz(),
                             createNetworkResponse.getSecurityGroupId(),
                                 deployRequest.getArtifactName(),deployRequest.getDbMode(), null,
                                     deployRequest.getUser(), deployRequest.getPassword());
@@ -118,7 +120,8 @@ public class DeployServiceImpl implements DeployService{
     private void initAwsContext(String region){
         Regions regions = Regions.fromName(region);
         AwsContext.init(regions, awsClientFactory.getEc2Client(regions),
-                awsClientFactory.getS3Client(regions), awsClientFactory.getIAMClient(regions));
+                awsClientFactory.getS3Client(regions),
+                awsClientFactory.getIAMClient(regions), awsClientFactory.getCloudFormationClient(regions));
     }
 
     private void destroyAwsContext(){

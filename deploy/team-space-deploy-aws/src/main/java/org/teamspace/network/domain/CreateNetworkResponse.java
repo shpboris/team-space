@@ -12,6 +12,7 @@ import lombok.experimental.Wither;
 @AllArgsConstructor
 public class CreateNetworkResponse {
     private String publicSubnetId;
-    private String privateSubnetId;
+    private String privateSubnetIdFirstAz;
+    private String privateSubnetIdSecondAz;
     private String securityGroupId;
 }

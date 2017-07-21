@@ -57,7 +57,7 @@ cd $tarFileName$
 
 DB_MODE="$dbmode$"
 
-if [ $DB_MODE == MYSQL ]
+if [ $DB_MODE == MYSQL ] || [ $DB_MODE == RDS ]
 then
 cat >dbdetails <<EOF
 
@@ -77,7 +77,7 @@ chown -R $user$:$user$ /home/$user$
 sudo su - $user$
 
 
-if [ $DB_MODE == MYSQL ]
+if [ $DB_MODE == MYSQL ] || [ $DB_MODE == RDS ]
 then
     echo "Testing DB connection at: "$(date +"%T") >> $log
     timeout 3 bash -c "</dev/tcp/$dbhost$/3306">/dev/null 2>&1

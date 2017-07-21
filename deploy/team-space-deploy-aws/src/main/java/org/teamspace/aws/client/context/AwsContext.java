@@ -1,6 +1,7 @@
 package org.teamspace.aws.client.context;
 
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.cloudformation.AmazonCloudFormation;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagement;
 import com.amazonaws.services.s3.AmazonS3;
@@ -13,12 +14,17 @@ public class AwsContext {
     private static final ThreadLocal<AmazonEC2> ec2Client = new ThreadLocal<AmazonEC2>();
     private static final ThreadLocal<AmazonS3> s3Client = new ThreadLocal<AmazonS3>();
     private static final ThreadLocal<AmazonIdentityManagement> iamClient = new ThreadLocal<AmazonIdentityManagement>();
+    private static final ThreadLocal<AmazonCloudFormation> cloudFormationClient = new ThreadLocal<AmazonCloudFormation>();
 
-    public static void init(Regions regions, AmazonEC2 amazonEC2, AmazonS3 amazonS3, AmazonIdentityManagement amazonIdentityManagement){
+    public static void init(Regions regions, AmazonEC2 amazonEC2,
+                            AmazonS3 amazonS3,
+                            AmazonIdentityManagement amazonIdentityManagement,
+                            AmazonCloudFormation amazonCloudFormation){
         region.set(regions);
         ec2Client.set(amazonEC2);
         s3Client.set(amazonS3);
         iamClient.set(amazonIdentityManagement);
+        cloudFormationClient.set(amazonCloudFormation);
     }
 
     public static void destroy(){
@@ -26,6 +32,7 @@ public class AwsContext {
         ec2Client.remove();
         s3Client.remove();
         iamClient.remove();
+        cloudFormationClient.remove();
     }
 
     public static AmazonEC2 getEc2Client(){
@@ -38,6 +45,10 @@ public class AwsContext {
 
     public static AmazonIdentityManagement getIamClient(){
         return iamClient.get();
+    }
+
+    public static AmazonCloudFormation getCloudFormationClient(){
+        return cloudFormationClient.get();
     }
 
     public static Regions getRegion(){

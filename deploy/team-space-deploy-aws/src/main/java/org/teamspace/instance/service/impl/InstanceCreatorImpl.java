@@ -4,6 +4,7 @@ import com.amazonaws.auth.policy.Policy;
 import com.amazonaws.auth.policy.*;
 import com.amazonaws.auth.policy.actions.EC2Actions;
 import com.amazonaws.auth.policy.actions.S3Actions;
+import com.amazonaws.services.cloudformation.model.*;
 import com.amazonaws.services.ec2.model.*;
 import com.amazonaws.services.identitymanagement.model.*;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.teamspace.commons.constants.DeploymentConstants.*;
@@ -49,7 +51,9 @@ public class InstanceCreatorImpl implements InstanceCreator {
         log.info("Started instances creation");
         CreateInstancesResponse createDbInstanceResponse = null;
         if(createInstanceRequest.getDbMode().equals(DB_MODE_MYSQL)) {
-            createDbInstanceResponse = createDbInstance(createInstanceRequest);
+            createDbInstanceResponse = createMySqlDbInstance(createInstanceRequest);
+        } else if(createInstanceRequest.getDbMode().equals(DB_MODE_RDS)){
+            createDbInstanceResponse = createRdsDbInstance(createInstanceRequest);
         }
         CreateInstancesResponse createAppInstanceResponse = createAppInstance(createInstanceRequest);
         if(createDbInstanceResponse != null) {
@@ -89,7 +93,96 @@ public class InstanceCreatorImpl implements InstanceCreator {
         return createInstanceResponse;
     }
 
-    private CreateInstancesResponse createDbInstance(CreateInstancesRequest createInstanceRequest) {
+    private CreateInstancesResponse createRdsDbInstance(CreateInstancesRequest createInstanceRequest) {
+        log.info("Started RDS instance creation");
+        CreateInstancesResponse createInstanceResponse = new CreateInstancesResponse();
+        try {
+            String stackName = createStack(createInstanceRequest);
+            Stack stack = waitForStackCreation(stackName);
+            if (!stack.getStackStatus().equals(StackStatus.CREATE_COMPLETE.toString())) {
+                log.error("Stack creation failed with stack status {} and reason {}",
+                        stack.getStackStatus(), stack.getStackName());
+                throw new RuntimeException("Stack creation failed");
+            }
+            String privateDns = getDbPrivateDnsFromStackOutput(stackName);
+            log.debug("RDS instance private DNS is {}", privateDns);
+            createInstanceRequest.setDbInstancePrivateDns(privateDns);
+
+            createInstanceResponse.setDbInstancePrivateDns(privateDns);
+        } catch (Exception e){
+            throw new RuntimeException("Stack creation failed", e);
+        }
+        log.info("Completed RDS instance creation");
+        return createInstanceResponse;
+    }
+
+    private String createStack(CreateInstancesRequest createInstanceRequest) throws Exception{
+        log.info("Started stack creation");
+        CreateStackRequest createStackRequest = new CreateStackRequest();
+        String stackName = createInstanceRequest.getEnvTag() + "-" + "STACK";
+        log.debug("Stack names is {}", stackName);
+        createStackRequest.setStackName(stackName);
+        createStackRequest.setParameters(getStackParameters(createInstanceRequest));
+        Resource resource = resourceLoader.getResource("classpath:aws-rds.template");
+        InputStream inputStream = resource.getInputStream();
+        String rdsTemplate = IOUtils.toString(inputStream, "UTF-8");
+        createStackRequest.setTemplateBody(rdsTemplate);
+        AwsContext.getCloudFormationClient().createStack(createStackRequest);
+        log.info("Completed stack creation");
+        return stackName;
+    }
+
+    public Stack waitForStackCreation(String stackName) throws Exception {
+        log.info("Started waiting for stack creation completion");
+        Stack stack = null;
+        DescribeStacksRequest describeStacksRequest = new DescribeStacksRequest();
+        describeStacksRequest.setStackName(stackName);
+        int retriesCount = 0;
+        boolean isStackCreationCompleted = false;
+        while (!isStackCreationCompleted && retriesCount < RDS_CF_MAX_RETRIES) {
+            retriesCount++;
+            Thread.sleep(RDS_CF_WAIT_TIME_MILLISEC);
+            stack = AwsContext.getCloudFormationClient().
+                    describeStacks(describeStacksRequest).getStacks().get(0);
+            if (stack.getStackStatus().equals(StackStatus.CREATE_COMPLETE.toString()) ||
+                    stack.getStackStatus().equals(StackStatus.CREATE_FAILED.toString()) ||
+                    stack.getStackStatus().equals(StackStatus.ROLLBACK_FAILED.toString()) ||
+                    stack.getStackStatus().equals(StackStatus.DELETE_FAILED.toString())) {
+                isStackCreationCompleted = true;
+            }
+            log.debug("Waiting for stack creation: attempt #{}, stack status is {}", retriesCount, stack.getStackStatus());
+        }
+        log.info("Finished waiting for stack creation completion, stack status is {}", stack.getStackStatus());
+        return stack;
+    }
+
+    String getDbPrivateDnsFromStackOutput(String stackName){
+        DescribeStacksRequest describeStacksRequest = new DescribeStacksRequest().withStackName(stackName);
+        DescribeStacksResult describeStacksResult = AwsContext.getCloudFormationClient().describeStacks(describeStacksRequest);
+        List<Output> stackOutputs = describeStacksResult.getStacks().get(0).getOutputs();
+        return stackOutputs.stream()
+                .filter(output -> output.getOutputKey().equals("DBPrivateDns")).findFirst().get().getOutputValue();
+    }
+
+    private List<Parameter> getStackParameters(CreateInstancesRequest createInstanceRequest){
+        String subnetsList = String.join(",",createInstanceRequest.getPrivateSubnetIdFirstAz(),
+                createInstanceRequest.getPrivateSubnetIdSecondAz());
+        Parameter subnets = new Parameter()
+                .withParameterKey(STACK_PARAMS_SUBNETS_KEY).withParameterValue(subnetsList);
+        Parameter securityGroup = new Parameter()
+                .withParameterKey(STACK_PARAMS_DB_SECURITY_GROUP_KEY).withParameterValue(createInstanceRequest.getSecurityGroupId());
+        String dbNormalizedName = getDbNormalizedName(createInstanceRequest.getArtifactName());
+        Parameter dbName = new Parameter().withParameterKey(STACK_PARAMS_DB_NAME_KEY)
+                .withParameterValue(dbNormalizedName);
+        Parameter dbUsername = new Parameter().withParameterKey(STACK_PARAMS_DB_USERNAME_KEY)
+                .withParameterValue(createInstanceRequest.getUser());
+        Parameter dbPassword = new Parameter().withParameterKey(STACK_PARAMS_DB_PASSWORD_KEY)
+                .withParameterValue(createInstanceRequest.getPassword());
+
+        return Arrays.asList(subnets, securityGroup, dbName, dbUsername, dbPassword);
+    }
+
+    private CreateInstancesResponse createMySqlDbInstance(CreateInstancesRequest createInstanceRequest) {
         log.info("Started DB instance creation");
         String keyPairName = AwsEntitiesHelperUtil.
                 getEntityName(createInstanceRequest.getEnvTag(), DB_KEY_PAIR_ENTITY_TYPE);
@@ -97,7 +190,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
 
         String amiId = getAmiId(IMAGE_FILTER_PRODUCT_CODE, CENTOS7_PRODUCT_CODE);
         String privateDns = runDbInstance(amiId, INSTANCE_TYPE, keyPair,
-                createInstanceRequest.getSecurityGroupId(), createInstanceRequest.getPrivateSubnetId(),
+                createInstanceRequest.getSecurityGroupId(), createInstanceRequest.getPrivateSubnetIdFirstAz(),
                 createInstanceRequest.getEnvTag(), createInstanceRequest.getArtifactName(), createInstanceRequest.getUser(),
                 createInstanceRequest.getPassword());
         createInstanceRequest.setDbInstancePrivateDns(privateDns);
@@ -274,7 +367,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
             userDataScript = userDataScript.replace(USER, user);
             userDataScript = userDataScript.replace(PASSWORD, password);
             userDataScript = userDataScript.replace(DB_MODE, dbMode);
-            if(dbMode.equals(DB_MODE_MYSQL)) {
+            if(dbMode.equals(DB_MODE_MYSQL) || dbMode.equals(DB_MODE_RDS)) {
                 userDataScript = userDataScript.replace(DB_HOST, dbInstancePrivateDns);
                 String dbUrl = getDbUrl(dbInstancePrivateDns, tarFileName);
                 userDataScript = userDataScript.replace(DB_URL, dbUrl);

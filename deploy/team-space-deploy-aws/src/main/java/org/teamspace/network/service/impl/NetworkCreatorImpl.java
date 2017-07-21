@@ -10,6 +10,8 @@ import org.teamspace.network.domain.CreateNetworkRequest;
 import org.teamspace.network.domain.CreateNetworkResponse;
 import org.teamspace.network.service.NetworkCreator;
 
+import java.util.List;
+
 import static org.teamspace.commons.constants.DeploymentConstants.*;
 
 /**
@@ -28,8 +30,16 @@ public class NetworkCreatorImpl implements NetworkCreator{
         log.info("Started network creation");
         String envTag = createNetworkRequest.getEnvTag();
         Vpc vpc = createVpc("10.0.0.0/16", envTag);
-        Subnet publicSubnet = createSubnet(vpc, "10.0.0.0/24", envTag, PUBLIC_SUBNET_ENTITY_TYPE);
-        Subnet privateSubnet = createSubnet(vpc, "10.0.1.0/24", envTag, PRIVATE_SUBNET_ENTITY_TYPE);
+        List<AvailabilityZone> availabilityZones = getAvailabilityZones();
+        Subnet publicSubnet = createSubnet(vpc, "10.0.0.0/24", envTag,
+                PUBLIC_SUBNET_ENTITY_TYPE, availabilityZones.get(0));
+        Subnet privateSubnetFirstAz = createSubnet(vpc, "10.0.1.0/24", envTag,
+                PRIVATE_SUBNET_FIRST_AZ_ENTITY_TYPE, availabilityZones.get(0));
+        Subnet privateSubnetSecondAz = null;
+        if(createNetworkRequest.getDbMode().equals(DB_MODE_RDS)){
+            privateSubnetSecondAz = createSubnet(vpc, "10.0.2.0/24", envTag,
+                    PRIVATE_SUBNET_SECOND_AZ_ENTITY_TYPE, availabilityZones.get(1));
+        }
 
         InternetGateway internetGateway = createInternetGateway(envTag);
         attachGatewayToVpc(vpc, internetGateway);
@@ -38,10 +48,12 @@ public class NetworkCreatorImpl implements NetworkCreator{
         associateRouteTableWithSubnet(routeTable, publicSubnet);
         mapPublicIpOnLaunch(publicSubnet);
 
-        NatGateway natGateway = createNatGateway(publicSubnet, envTag);
-        RouteTable routeTableForPrivateSubnet = createRouteTable(vpc, envTag, PRIVATE_ROUTE_TABLE_ENTITY_TYPE);
-        createRouteToNatGateway(natGateway, routeTableForPrivateSubnet);
-        associateRouteTableWithSubnet(routeTableForPrivateSubnet, privateSubnet);
+        if(createNetworkRequest.getDbMode().equals(DB_MODE_MYSQL)) {
+            NatGateway natGateway = createNatGateway(publicSubnet, envTag);
+            RouteTable routeTableForPrivateSubnet = createRouteTable(vpc, envTag, PRIVATE_ROUTE_TABLE_ENTITY_TYPE);
+            createRouteToNatGateway(natGateway, routeTableForPrivateSubnet);
+            associateRouteTableWithSubnet(routeTableForPrivateSubnet, privateSubnetFirstAz);
+        }
 
         String securityGroupId = createSecurityGroup("HTTP-SSH-SG", vpc, envTag);
         authorizeSecurityGroupIngress(securityGroupId, "tcp", SSH_PORT, "0.0.0.0/0");
@@ -49,7 +61,8 @@ public class NetworkCreatorImpl implements NetworkCreator{
         authorizeSecurityGroupIngress(securityGroupId, "tcp", HTTPS_PORT, "0.0.0.0/0");
         authorizeSecurityGroupIngress(securityGroupId, "tcp", MYSQL_PORT, "0.0.0.0/0");
         CreateNetworkResponse createNetworkResponse =
-                new CreateNetworkResponse(publicSubnet.getSubnetId(), privateSubnet.getSubnetId(), securityGroupId);
+                new CreateNetworkResponse(publicSubnet.getSubnetId(), privateSubnetFirstAz.getSubnetId(),
+                        privateSubnetSecondAz.getSubnetId(), securityGroupId);
         log.info("Completed network creation");
         return createNetworkResponse;
     }
@@ -80,9 +93,11 @@ public class NetworkCreatorImpl implements NetworkCreator{
         return natGateway;
     }
 
-    private Subnet createSubnet(Vpc vpc, String cidrBlock, String envTag, String entityType){
+    private Subnet createSubnet(Vpc vpc, String cidrBlock, String envTag,
+                                String entityType, AvailabilityZone availabilityZone){
         log.info("Creating subnet ...");
         CreateSubnetRequest createSubnetRequest = new CreateSubnetRequest(vpc.getVpcId(), cidrBlock);
+        createSubnetRequest.withAvailabilityZone(availabilityZone.getZoneName());
         CreateSubnetResult createSubnetResult = AwsContext.getEc2Client().createSubnet(createSubnetRequest);
         Subnet subnet = createSubnetResult.getSubnet();
         tagCreator.createTag(subnet.getSubnetId(), entityType, envTag);
@@ -203,6 +218,13 @@ public class NetworkCreatorImpl implements NetworkCreator{
 
         AwsContext.getEc2Client().modifyVpcAttribute(modifyVpcAttributeRequest);
 
+    }
+
+    public List<AvailabilityZone> getAvailabilityZones() {
+        DescribeAvailabilityZonesRequest describeAvailabilityZonesRequest = new DescribeAvailabilityZonesRequest();
+        DescribeAvailabilityZonesResult res = AwsContext.getEc2Client().describeAvailabilityZones(describeAvailabilityZonesRequest);
+        List<AvailabilityZone> availabilityZones = res.getAvailabilityZones();
+        return availabilityZones;
     }
 
 }

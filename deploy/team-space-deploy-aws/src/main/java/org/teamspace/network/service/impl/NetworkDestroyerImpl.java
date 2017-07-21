@@ -57,9 +57,12 @@ public class NetworkDestroyerImpl implements NetworkDestroyer{
         log.info("Deleting subnets ...");
         String publicSubnetTagValue = AwsEntitiesHelperUtil
                 .getEntityName(envTag, PUBLIC_SUBNET_ENTITY_TYPE);
-        String privateSubnetTagValue = AwsEntitiesHelperUtil
-                .getEntityName(envTag, PRIVATE_SUBNET_ENTITY_TYPE);
-        Filter filter = new Filter().withName("tag:" + TAG_NAME).withValues(publicSubnetTagValue, privateSubnetTagValue);
+        String privateSubnetFirstAzTagValue = AwsEntitiesHelperUtil
+                .getEntityName(envTag, PRIVATE_SUBNET_FIRST_AZ_ENTITY_TYPE);
+        String privateSubnetSecondAzTagValue = AwsEntitiesHelperUtil
+                .getEntityName(envTag, PRIVATE_SUBNET_SECOND_AZ_ENTITY_TYPE);
+        Filter filter = new Filter().withName("tag:" + TAG_NAME)
+                .withValues(publicSubnetTagValue, privateSubnetFirstAzTagValue, privateSubnetSecondAzTagValue);
         DescribeSubnetsRequest describeSubnetsRequest = new DescribeSubnetsRequest();
         describeSubnetsRequest.withFilters(filter);
         boolean isSubnetsDeleted = false;

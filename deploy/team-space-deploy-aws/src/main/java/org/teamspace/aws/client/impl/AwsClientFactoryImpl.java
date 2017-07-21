@@ -1,8 +1,11 @@
 package org.teamspace.aws.client.impl;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
+import com.amazonaws.services.cloudformation.AmazonCloudFormation;
+import com.amazonaws.services.cloudformation.AmazonCloudFormationClientBuilder;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagement;
@@ -33,6 +36,7 @@ public class AwsClientFactoryImpl implements AwsClientFactory {
 
     private Map<Regions, AmazonEC2> regionsToEc2ClientMap = new EnumMap<>(Regions.class);
     private Map<Regions, AmazonS3> regionsToS3ClientMap = new EnumMap<>(Regions.class);
+    private Map<Regions, AmazonCloudFormation> regionsToCloudFormationClientMap = new EnumMap<>(Regions.class);
     private Map<Regions, AmazonIdentityManagement> regionsIamClientMap = new EnumMap<>(Regions.class);
 
     @PostConstruct
@@ -76,6 +80,26 @@ public class AwsClientFactoryImpl implements AwsClientFactory {
             }
         }
         return amazonS3Client;
+    }
+
+    @Override
+    public synchronized AmazonCloudFormation getCloudFormationClient(Regions region) {
+        AmazonCloudFormation cloudFormationClient;
+        if(regionsToCloudFormationClientMap.get(region) != null){
+            cloudFormationClient = regionsToCloudFormationClientMap.get(region);
+        } else {
+            if (awsCredentials != null) {
+                cloudFormationClient = AmazonCloudFormationClientBuilder.standard()
+                        .withRegion(region)
+                        .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
+                        .withClientConfiguration(new ClientConfiguration().withConnectionTimeout(30000))
+                        .build();
+                regionsToCloudFormationClientMap.put(region, cloudFormationClient);
+            } else {
+                throw new RuntimeException("Unable to obtain Cloud Formation client");
+            }
+        }
+        return cloudFormationClient;
     }
 
     @Override
