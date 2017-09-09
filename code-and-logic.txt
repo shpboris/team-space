@@ -1,0 +1,36 @@
+1.
+Team Space app
+
+1.1
+Multiple datasources/transaction managers
+
+The TS app runs with two pairs of datasources/transaction managers.
+One pair for TS app itself, other - for Spring batch.
+
+a)
+TS app persistence is configured in PersistenceConfig.
+Data source bean has a custom not standard name of "getBasicDataSource".
+Mybatis uses this datasource.
+
+The transaction manager has custom not standard name of txManager which uses
+data source "getBasicDataSource".
+
+Code in UserServiceImpl explicitely uses custom transaction manager like this
+@Transactional("txManager").
+
+All of the above makes TS app to explicitly use the custom DS and transaction manager above
+and not to load any random Spring bean.
+
+b)
+In my project Spring Batch uses InfrastructureConfigurationImpl for its persitence config.
+DefaultBatchConfigurer is created and is beaing provided DataSource bean with standard name.
+Later data source is injected again into DefaultBatchConfigurer since its setter is marked
+with @Autowire. Spring context have two datasources "getBasicDataSource" and "DataSource".
+So Spring can't make decision which to autowire based on type. So it proceeds to fallback by bean name
+and injects "DataSource" bean and uses it for transaction manager !!! Thats how TS and Spring batch use
+two different pairs of datasource/transaction manager.
+
+c)
+H2 DB is running in mixed mode - i.e local app connects directly to DB in embedded mode.
+All external apps/tools connect to TCP server and the server (that runs within the same JVM ?)
+forwards the requests to DB.
