@@ -53,21 +53,21 @@ public class UserServiceImpl implements UsersService {
     }
 
     @Override
-    @Transactional
+    @Transactional("txManager")
     public User create(User user) {
         usersDao.create(user);
         return usersDao.findOneByUsername(user.getUsername());
     }
 
     @Override
-    @Transactional
+    @Transactional("txManager")
     public User update(User user) {
         usersDao.update(user);
         return usersDao.findOneByUsername(user.getUsername());
     }
 
     @Override
-    @Transactional
+    @Transactional("txManager")
     public void delete(User user) {
         usersDao.delete(user);
     }
@@ -79,7 +79,7 @@ public class UserServiceImpl implements UsersService {
     }
 
     @Override
-    @Transactional
+    @Transactional("txManager")
     public List<User> importUsers(List<User> users) {
         List<User> createdUsersList = new ArrayList<>();
         Map<String, User> existingUsers = findAll()

@@ -62,7 +62,7 @@ public class NetworkCreatorImpl implements NetworkCreator{
         authorizeSecurityGroupIngress(securityGroupId, "tcp", MYSQL_PORT, "0.0.0.0/0");
         CreateNetworkResponse createNetworkResponse =
                 new CreateNetworkResponse(publicSubnet.getSubnetId(), privateSubnetFirstAz.getSubnetId(),
-                        privateSubnetSecondAz.getSubnetId(), securityGroupId);
+                        privateSubnetSecondAz == null ? null : privateSubnetSecondAz.getSubnetId(), securityGroupId);
         log.info("Completed network creation");
         return createNetworkResponse;
     }

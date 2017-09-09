@@ -9,15 +9,15 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.team-space.server.infra</groupId>
-    <artifactId>infra</artifactId>
-    <packaging>pom</packaging>
-    <modules>
-        <module>team-space-auth</module>
-        <module>team-space-persistence</module>
-        <module>team-space-test</module>
-        <module>team-space-batch</module>
-    </modules>
+    <artifactId>team-space-data-import</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.team-space.server.infra</groupId>
+            <artifactId>team-space-batch</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
 
 
 </project>

@@ -27,6 +27,7 @@
               <locations>
                 <location>org.teamspace.users.resources</location>
                 <location>org.teamspace.auth.resources</location>
+                <location>org.teamspace.data_import.resources</location>
               </locations>
               <info>
                 <title>Team Space Rest API Document</title>

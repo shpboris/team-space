@@ -16,6 +16,7 @@
         <module>team-space-server</module>
         <module>infra</module>
         <module>team-space-users</module>
+        <module>team-space-data-import</module>
     </modules>
     <dependencies>
         <dependency>
@@ -95,6 +96,16 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
             <version>${spring-context.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.batch</groupId>
+            <artifactId>spring-batch-core</artifactId>
+            <version>${spring.batch.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.batch</groupId>
+            <artifactId>spring-batch-infrastructure</artifactId>
+            <version>${spring.batch.version}</version>
         </dependency>
     </dependencies>
 

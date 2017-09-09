@@ -50,7 +50,7 @@ public class PersistenceTestConfig {
         return dataSource;
     }
     @Bean
-    public DataSourceTransactionManager transactionManager() {
+    public DataSourceTransactionManager txManager() {
         return new DataSourceTransactionManager(getDataSource());
     }
     @Bean

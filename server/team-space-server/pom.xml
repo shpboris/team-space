@@ -17,6 +17,11 @@
             <artifactId>team-space-users</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.team-space.server</groupId>
+            <artifactId>team-space-data-import</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -30,6 +35,7 @@
                             <locations>
                                 <location>org.teamspace.users.resources</location>
                                 <location>org.teamspace.auth.resources</location>
+                                <location>org.teamspace.data_import.resources</location>
                             </locations>
                             <info>
                                 <title>Team Space Rest API Document</title>

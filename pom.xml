@@ -54,6 +54,7 @@
         <mockito-core.version>1.10.19</mockito-core.version>
         <mockito-all.version>1.10.19</mockito-all.version>
         <aws.version>1.11.93</aws.version>
+        <spring.batch.version>3.0.7.RELEASE</spring.batch.version>
 
     </properties>
 

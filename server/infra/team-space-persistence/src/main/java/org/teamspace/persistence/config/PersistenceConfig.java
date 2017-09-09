@@ -5,8 +5,7 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.*;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.teamspace.persistence.common.Dao;
@@ -42,7 +41,7 @@ public class PersistenceConfig {
     private Integer maxIdle;
 
     @Bean
-    public DataSource getDataSource() {
+    public DataSource getBasicDataSource() {
         BasicDataSource dataSource = new BasicDataSource();
         dataSource.setDriverClassName(driver);
         dataSource.setUrl(url);
@@ -53,13 +52,13 @@ public class PersistenceConfig {
         return dataSource;
     }
     @Bean
-    public DataSourceTransactionManager transactionManager() {
-        return new DataSourceTransactionManager(getDataSource());
+    public DataSourceTransactionManager txManager() {
+        return new DataSourceTransactionManager(getBasicDataSource());
     }
     @Bean
     public SqlSessionFactory sqlSessionFactory() throws Exception {
         SqlSessionFactoryBean sessionFactory = new SqlSessionFactoryBean();
-        sessionFactory.setDataSource(getDataSource());
+        sessionFactory.setDataSource(getBasicDataSource());
         return sessionFactory.getObject();
     }
 }
