@@ -15,7 +15,7 @@ Mybatis uses this datasource.
 The transaction manager has custom not standard name of txManager which uses
 data source "getBasicDataSource".
 
-Code in UserServiceImpl explicitely uses custom transaction manager like this
+Code in UserServiceImpl explicitly uses custom transaction manager like this
 @Transactional("txManager").
 
 All of the above makes TS app to explicitly use the custom DS and transaction manager above
@@ -31,6 +31,13 @@ and injects "DataSource" bean and uses it for transaction manager !!! Thats how 
 two different pairs of datasource/transaction manager.
 
 c)
+Stopping the job is the only transactional operation of job operator.
+So during this operation there is an attempt to find transaction manager which
+fails due to having 2 transaction manager in context - one for team space app DB and another is
+for to Spring batch DB. To force the job operator to select a its own transaction manager, CustomJobOperator
+was created and its "stop" method explicitly specifies transaction manager as @Transactional("transactionManager").
+
+d)
 H2 DB is running in mixed mode - i.e local app connects directly to DB in embedded mode.
 All external apps/tools connect to TCP server and the server (that runs within the same JVM ?)
 forwards the requests to DB.

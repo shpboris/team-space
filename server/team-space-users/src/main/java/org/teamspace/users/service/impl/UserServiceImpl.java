@@ -94,8 +94,21 @@ public class UserServiceImpl implements UsersService {
         return createdUsersList;
     }
 
+    @Override
+    @Transactional("txManager")
+    public void deleteNonAdminUsers() {
+        findAll().stream().filter(u -> !isAdminUser(u)).forEach(u -> {
+            delete(u);
+        });
+    }
+
     private User getAdminUser(){
         User admin = new User(adminUser, adminPassword, adminUser, adminUser, ADMIN_ROLE);
         return admin;
     }
+
+    private boolean isAdminUser(User user) {
+        return user.getUsername().equals(adminUser);
+    }
+
 }

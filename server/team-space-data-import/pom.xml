@@ -17,6 +17,11 @@
             <artifactId>team-space-batch</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.team-space.server</groupId>
+            <artifactId>team-space-users</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
 

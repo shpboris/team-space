@@ -9,5 +9,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class DataImportResult {
-    String res;
+    private Long jobId;
+    private String step;
+    private String status;
 }

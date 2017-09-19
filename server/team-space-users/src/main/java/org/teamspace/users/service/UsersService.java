@@ -16,4 +16,5 @@ public interface UsersService {
     public void init();
     public List<User> findNonPrivilegedUsers();
     public List<User> importUsers(List<User> users);
+    public void deleteNonAdminUsers();
 }

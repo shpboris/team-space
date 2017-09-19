@@ -1,0 +1,34 @@
+[
+  {
+    "id" : 2,
+    "firstName": "user1FirstName",
+    "lastName": "user1LastName",
+    "username": "user1Login",
+    "password": "user1Password",
+    "role": "USER"
+  },
+  {
+    "id" : 3,
+    "firstName": "user2FirstName",
+    "lastName": "user2LastName",
+    "username": "user2Login",
+    "password": "user2Password",
+    "role": "USER"
+  },
+  {
+    "id" : 4,
+    "firstName": "user3FirstName",
+    "lastName": "user3LastName",
+    "username": "user3Login",
+    "password": "user3Password",
+    "role": "USER"
+  },
+  {
+    "id" : 5,
+    "firstName": "user4FirstName",
+    "lastName": "user4LastName",
+    "username": "user4Login",
+    "password": "user4Password",
+    "role": "USER"
+  }
+]

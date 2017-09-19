@@ -17,6 +17,8 @@
         <module>infra</module>
         <module>team-space-users</module>
         <module>team-space-data-import</module>
+        <module>team-space-groups</module>
+        <module>team-space-membership</module>
     </modules>
     <dependencies>
         <dependency>
