@@ -11,6 +11,7 @@ import org.springframework.batch.core.configuration.support.JobRegistryBeanPostP
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.batch.core.launch.support.SimpleJobLauncher;
 import org.springframework.batch.core.launch.support.SimpleJobOperator;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,15 +23,20 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.init.DatabasePopulatorUtils;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 
+
 @Configuration
 @EnableBatchProcessing
 @EnableTransactionManagement
 public class InfrastructureConfigurationImpl implements InfrastructureConfiguration {
+
+    private static final int CORE_POOL_SIZE = 20;
+    private static final int MAX_POOL_SIZE = 80;
 
     @Value("${batch-database.driver}")
     private String driver;
@@ -44,14 +50,17 @@ public class InfrastructureConfigurationImpl implements InfrastructureConfigurat
     @Value("${batch-database.password}")
     private String password;
 
+    @Value("${batch-database.maxActive}")
+    private Integer maxActive;
+
+    @Value("${batch-database.maxIdle}")
+    private Integer maxIdle;
+
     @Autowired
     private JobRepository jobRepository;
 
     @Autowired
     private JobRegistry jobRegistry;
-
-    @Autowired
-    private JobLauncher jobLauncher;
 
     @Autowired
     private JobExplorer jobExplorer;
@@ -76,6 +85,8 @@ public class InfrastructureConfigurationImpl implements InfrastructureConfigurat
     @Bean
     public DataSource dataSource(){
         BasicDataSource dataSource = new BasicDataSource();
+        dataSource.setMaxActive(maxActive);
+        dataSource.setMaxIdle(maxIdle);
         dataSource.setDriverClassName(driver);
         dataSource.setUrl(url);
         dataSource.setUsername(user);
@@ -92,10 +103,26 @@ public class InfrastructureConfigurationImpl implements InfrastructureConfigurat
     public JobOperator jobOperator() {
         SimpleJobOperator jobOperator = new CustomJobOperator();
         jobOperator.setJobExplorer(jobExplorer);
-        jobOperator.setJobLauncher(jobLauncher);
+        jobOperator.setJobLauncher(jobLauncher());
         jobOperator.setJobRegistry(jobRegistry);
         jobOperator.setJobRepository(jobRepository);
         return jobOperator;
+    }
+
+    @Bean
+    public JobLauncher jobLauncher() {
+        SimpleJobLauncher simpleJobLauncher = new SimpleJobLauncher();
+        simpleJobLauncher.setJobRepository(jobRepository);
+        simpleJobLauncher.setTaskExecutor(taskExecutor());
+        return simpleJobLauncher;
+    }
+
+    @Bean
+    public ThreadPoolTaskExecutor taskExecutor() {
+        ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
+        threadPoolTaskExecutor.setCorePoolSize(CORE_POOL_SIZE);
+        threadPoolTaskExecutor.setMaxPoolSize(MAX_POOL_SIZE);
+        return threadPoolTaskExecutor;
     }
 
    @Bean
