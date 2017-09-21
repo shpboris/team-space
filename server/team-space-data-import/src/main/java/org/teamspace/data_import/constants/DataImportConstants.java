@@ -6,6 +6,7 @@ package org.teamspace.data_import.constants;
 public class DataImportConstants {
     public static final String USERS_FILE_NAME = "users.json";
     public static final String USERS_DATA_JOB_KEY = "usersDataJobKey";
+    public static final String CUSTOM_PARAMETERS_JOB_KEY = "customParametersJobKey";
     public static final String DATA_IMPORT_JOB_NAME = "dataImportJob";
     public static final Integer MAX_JOB_INSTANCES_COUNT = 100;
 }

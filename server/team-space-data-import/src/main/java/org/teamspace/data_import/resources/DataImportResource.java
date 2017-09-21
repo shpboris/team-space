@@ -9,12 +9,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.teamspace.data_import.domain.DataImportRequest;
 import org.teamspace.data_import.domain.DataImportResult;
+import org.teamspace.data_import.job_config.parameters_registry.JobParametersRegistry;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.*;
 
+import static org.teamspace.data_import.constants.DataImportConstants.CUSTOM_PARAMETERS_JOB_KEY;
 import static org.teamspace.data_import.constants.DataImportConstants.DATA_IMPORT_JOB_NAME;
 import static org.teamspace.data_import.constants.DataImportConstants.MAX_JOB_INSTANCES_COUNT;
 
@@ -36,6 +38,9 @@ public class DataImportResource {
     @Autowired
     private JobOperator jobOperator;
 
+    @Autowired
+    private JobParametersRegistry jobParametersRegistry;
+
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -45,7 +50,9 @@ public class DataImportResource {
                 .toJobParameters();
         DataImportResult dataImportResult = new DataImportResult();
         try {
-            Long jobId = jobOperator.start(DATA_IMPORT_JOB_NAME, UUID.randomUUID().toString());
+            String jobParameterValue = getJobParameterValue();
+            updateJobParameterRegistry(jobParameterValue, dataImportRequest);
+            Long jobId = jobOperator.start(DATA_IMPORT_JOB_NAME, getJobParametersStr(jobParameterValue));
             dataImportResult.setJobId(jobId);
             dataImportResult.setStatus(BatchStatus.STARTING.toString());
         } catch (Exception e) {
@@ -113,6 +120,22 @@ public class DataImportResource {
             log.error("Failed to restart data import", e);
         }
         return Response.status(Response.Status.OK).entity(dataImportResult).build();
+    }
+
+    private void updateJobParameterRegistry(String jobParameterValue, DataImportRequest dataImportRequest){
+        jobParametersRegistry.addParameter(jobParameterValue, dataImportRequest);
+    }
+
+    private String getJobParameterValue(){
+        return UUID.randomUUID().toString();
+    }
+
+    private String getJobParametersStr(String jobParameterValue){
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(CUSTOM_PARAMETERS_JOB_KEY);
+        stringBuilder.append("=");
+        stringBuilder.append(jobParameterValue);
+        return stringBuilder.toString();
     }
 
 }

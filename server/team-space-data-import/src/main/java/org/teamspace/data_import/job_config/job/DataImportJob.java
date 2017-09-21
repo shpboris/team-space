@@ -8,6 +8,7 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.*;
 import org.teamspace.batch.InfrastructureConfigurationImpl;
+import org.teamspace.data_import.job_config.listener.DataImportJobListener;
 import org.teamspace.data_import.job_config.tasks.DataReaderTasklet;
 import org.teamspace.data_import.job_config.tasks.DataWriterTasklet;
 
@@ -23,12 +24,11 @@ public class DataImportJob {
     @Autowired
     private StepBuilderFactory stepBuilders;
 
-    @Autowired
-    private InfrastructureConfigurationImpl infrastructureConfiguration;
 
     @Bean(name = "dataImport")
     public Job dataImportJob(){
         return jobBuilders.get("dataImportJob")
+                .listener(dataImportJobListener())
                 .start(dataReaderStep())
                 .next(dataWriterStep())
                 .build();
@@ -56,6 +56,11 @@ public class DataImportJob {
     @Bean
     public Tasklet dataWriterTasklet() {
         return new DataWriterTasklet();
+    }
+
+    @Bean
+    public DataImportJobListener dataImportJobListener(){
+        return new DataImportJobListener();
     }
 
 }
