@@ -5,4 +5,5 @@ package org.teamspace.persistence.common;
  */
 public class CommonConstants {
     public static final String BASE_PACKAGE = "org.teamspace";
+    public static final String TX_MANAGER = "txManager";
 }

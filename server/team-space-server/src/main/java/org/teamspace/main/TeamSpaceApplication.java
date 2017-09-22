@@ -62,7 +62,7 @@ public class TeamSpaceApplication extends Application<Configuration> {
 
         environment.jersey().register(new AuthDynamicFeature(oauthCredentialAuthFilter));
         environment.jersey().register(RolesAllowedDynamicFeature.class);
-        environment.jersey().register(new AuthValueFactoryProvider.Binder<>(User.class));
+        environment.jersey().register(new AuthValueFactoryProvider.Binder<User>(User.class));
     }
 
     private void registerRestResources(Bundler bundler, Environment environment){

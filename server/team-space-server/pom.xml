@@ -44,6 +44,8 @@
                         <apiSource>
                             <locations>
                                 <location>org.teamspace.users.resources</location>
+                                <location>org.teamspace.groups.resources</location>
+                                <location>org.teamspace.membership.resources</location>
                                 <location>org.teamspace.auth.resources</location>
                                 <location>org.teamspace.data_import.resources</location>
                             </locations>

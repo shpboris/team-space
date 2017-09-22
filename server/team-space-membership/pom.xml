@@ -11,5 +11,23 @@
 
     <artifactId>team-space-membership</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.team-space.server.infra</groupId>
+            <artifactId>team-space-persistence</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.team-space.server</groupId>
+            <artifactId>team-space-groups</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.team-space.server</groupId>
+            <artifactId>team-space-users</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
 
 </project>

@@ -14,6 +14,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.teamspace.persistence.common.CommonConstants.TX_MANAGER;
+
 /**
  * Created by shpilb on 11/04/2017.
  */
@@ -53,21 +55,21 @@ public class UserServiceImpl implements UsersService {
     }
 
     @Override
-    @Transactional("txManager")
+    @Transactional(TX_MANAGER)
     public User create(User user) {
         usersDao.create(user);
         return usersDao.findOneByUsername(user.getUsername());
     }
 
     @Override
-    @Transactional("txManager")
+    @Transactional(TX_MANAGER)
     public User update(User user) {
         usersDao.update(user);
         return usersDao.findOneByUsername(user.getUsername());
     }
 
     @Override
-    @Transactional("txManager")
+    @Transactional(TX_MANAGER)
     public void delete(User user) {
         usersDao.delete(user);
     }
@@ -79,7 +81,7 @@ public class UserServiceImpl implements UsersService {
     }
 
     @Override
-    @Transactional("txManager")
+    @Transactional(TX_MANAGER)
     public List<User> importUsers(List<User> users) {
         List<User> createdUsersList = new ArrayList<>();
         Map<String, User> existingUsers = findAll()
@@ -95,7 +97,7 @@ public class UserServiceImpl implements UsersService {
     }
 
     @Override
-    @Transactional("txManager")
+    @Transactional(TX_MANAGER)
     public void deleteNonAdminUsers() {
         findAll().stream().filter(u -> !isAdminUser(u)).forEach(u -> {
             delete(u);

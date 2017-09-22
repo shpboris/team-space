@@ -7,6 +7,7 @@ import java.security.Principal;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class User implements Principal {
 	private Integer id;
 	private String username;
