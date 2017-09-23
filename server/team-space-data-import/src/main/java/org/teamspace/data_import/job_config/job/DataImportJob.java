@@ -4,9 +4,12 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.builder.FlowBuilder;
+import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.*;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.teamspace.batch.InfrastructureConfigurationImpl;
 import org.teamspace.data_import.job_config.listener.DataImportJobListener;
 import org.teamspace.data_import.job_config.tasks.*;
@@ -28,10 +31,41 @@ public class DataImportJob {
     public Job dataImportJob(){
         return jobBuilders.get("dataImportJob")
                 .listener(dataImportJobListener())
-                .start(usersDataReaderStep())
-                .next(groupsDataReaderStep())
-                .next(membershipsDataReaderStep())
+                .start(dataReaderStep())
                 .next(dataWriterStep())
+                .build();
+    }
+
+    @Bean
+    public Flow dataReaderFlow(){
+        Flow dataReaderSplitFlow = new FlowBuilder<Flow>("dataReaderFlow")
+                .split(new SimpleAsyncTaskExecutor())
+                .add(usersDataReaderFlow(), groupsDataReaderFlow(), membershipsDataReaderFlow()).build();
+        return dataReaderSplitFlow;
+    }
+
+    @Bean
+    public Flow usersDataReaderFlow(){
+        Flow usersDataReaderFlow = new FlowBuilder<Flow>("userDataReaderFlow").from(usersDataReaderStep()).end();
+        return usersDataReaderFlow;
+    }
+
+    @Bean
+    public Flow groupsDataReaderFlow(){
+        Flow groupsDataReaderFlow = new FlowBuilder<Flow>("groupsDataReaderFlow").from(groupsDataReaderStep()).end();
+        return groupsDataReaderFlow;
+    }
+
+    @Bean
+    public Flow membershipsDataReaderFlow(){
+        Flow membershipsDataReaderFlow = new FlowBuilder<Flow>("membershipsDataReaderFlow").from(membershipsDataReaderStep()).end();
+        return membershipsDataReaderFlow;
+    }
+
+    @Bean
+    public Step dataReaderStep(){
+        return stepBuilders.get("dataReaderStep")
+                .flow(dataReaderFlow())
                 .build();
     }
 
