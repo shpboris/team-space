@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.teamspace.membership.dao.MembershipsDao;
-import org.teamspace.membership.domain.FullMembership;
 import org.teamspace.membership.domain.Membership;
 import org.teamspace.membership.service.MembershipsService;
 
@@ -20,11 +19,6 @@ public class MembershipsServiceImpl implements MembershipsService{
 
     @Autowired
     private MembershipsDao membershipsDao;
-
-    @Override
-    public List<FullMembership> findAllWithUsersGroupsData() {
-        return membershipsDao.findAllWithUsersGroupsData();
-    }
 
     @Override
     public List<Membership> findAll() {
@@ -45,8 +39,7 @@ public class MembershipsServiceImpl implements MembershipsService{
     @Transactional(TX_MANAGER)
     public Membership create(Membership membership) {
         membershipsDao.create(membership);
-        return membershipsDao
-                .findOneByUserIdAndGroupId(membership.getUserId(), membership.getGroupId());
+        return findOneByUserIdAndGroupId(membership.getUser().getId(), membership.getGroup().getId());
     }
 
     @Override

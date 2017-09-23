@@ -1,6 +1,5 @@
 package org.teamspace.membership.service;
 
-import org.teamspace.membership.domain.FullMembership;
 import org.teamspace.membership.domain.Membership;
 
 import java.util.List;
@@ -14,5 +13,4 @@ public interface MembershipsService {
     Membership findOneByUserIdAndGroupId(Integer userId, Integer groupId);
     Membership create(Membership Membership);
     void delete(Membership Membership);
-    List<FullMembership> findAllWithUsersGroupsData();
 }

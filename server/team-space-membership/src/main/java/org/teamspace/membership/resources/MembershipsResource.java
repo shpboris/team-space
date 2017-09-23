@@ -3,7 +3,6 @@ package org.teamspace.membership.resources;
 import io.swagger.annotations.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.teamspace.membership.domain.FullMembership;
 import org.teamspace.membership.domain.Membership;
 import org.teamspace.membership.service.MembershipsService;
 
@@ -29,14 +28,6 @@ public class MembershipsResource {
 
     @Autowired
     private MembershipsService membershipsService;
-
-    @GET
-    @Path("/full")
-    @ApiOperation(value = "find all memberships with user and groups",
-            response = Membership.class, responseContainer = "list")
-    public List<FullMembership> findAllWithUsersGroupsData() {
-        return membershipsService.findAllWithUsersGroupsData();
-    }
 
     @GET
     @ApiOperation(value = "find all memberships",
