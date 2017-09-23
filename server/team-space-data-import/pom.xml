@@ -22,6 +22,16 @@
             <artifactId>team-space-users</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.team-space.server</groupId>
+            <artifactId>team-space-groups</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.team-space.server</groupId>
+            <artifactId>team-space-membership</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
 

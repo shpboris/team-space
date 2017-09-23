@@ -1,18 +1,29 @@
 [
   {
-    "userId" : 1,
-    "groupId" : 1
+    "id" : 1,
+    "user" : {
+      "id" : 2
+    },
+    "group" : {
+      "id" : 1
+    }
   },
   {
-    "userId" : 2,
-    "groupId" : 1
+    "id" : 2,
+    "user" : {
+      "id" : 3
+    },
+    "group" : {
+      "id" : 2
+    }
   },
   {
-    "userId" : 3,
-    "groupId" : 1
-  },
-  {
-    "userId" : 4,
-    "groupId" : 2
+    "id" : 3,
+    "user" : {
+      "id" : 4
+    },
+    "group" : {
+      "id" : 2
+    }
   }
 ]

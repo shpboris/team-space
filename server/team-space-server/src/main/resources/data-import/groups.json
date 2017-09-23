@@ -6,5 +6,9 @@
   {
     "id" : 2,
     "name": "group2Name"
+  },
+  {
+    "id" : 3,
+    "name": "group3Name"
   }
 ]

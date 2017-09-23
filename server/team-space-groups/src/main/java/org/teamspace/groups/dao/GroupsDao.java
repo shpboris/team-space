@@ -36,6 +36,9 @@ public interface GroupsDao {
     @Delete("DELETE FROM GROUPS WHERE ID = #{id}")
     int delete(Group group);
 
+    @Delete("DELETE FROM GROUPS")
+    int deleteAll();
+
     @TableCreator
     @Update("CREATE TABLE IF NOT EXISTS GROUPS(ID INT AUTO_INCREMENT PRIMARY KEY NOT NULL, " +
             "NAME VARCHAR(50) NOT NULL)")

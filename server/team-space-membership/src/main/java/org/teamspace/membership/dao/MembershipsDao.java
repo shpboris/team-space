@@ -57,6 +57,9 @@ public interface MembershipsDao {
     @Delete("DELETE FROM MEMBERSHIPS WHERE ID = #{id}")
     int delete(Membership membership);
 
+    @Delete("DELETE FROM MEMBERSHIPS")
+    int deleteAll();
+
     @TableCreator
     @Update("CREATE TABLE IF NOT EXISTS MEMBERSHIPS(ID INT AUTO_INCREMENT PRIMARY KEY NOT NULL, " +
             "USER_ID INT, GROUP_ID INT)")

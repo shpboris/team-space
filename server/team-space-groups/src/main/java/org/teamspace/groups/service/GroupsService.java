@@ -16,4 +16,6 @@ public interface GroupsService {
     Group create(Group group);
     Group update(Group group);
     void delete(Group group);
+    List<Group> importGroups(List<Group> groups);
+    void deleteAllGroups();
 }

@@ -7,7 +7,11 @@ import org.teamspace.groups.dao.GroupsDao;
 import org.teamspace.groups.domain.Group;
 import org.teamspace.groups.service.GroupsService;
 
-import java.util.List;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.teamspace.persistence.common.CommonConstants.TX_MANAGER;
 
@@ -18,40 +22,64 @@ import static org.teamspace.persistence.common.CommonConstants.TX_MANAGER;
 public class GroupsServiceImpl implements GroupsService{
 
     @Autowired
-    private GroupsDao usersDao;
+    private GroupsDao groupsDao;
 
     @Override
     public List<Group> findAll() {
-        return usersDao.findAll();
+        return groupsDao.findAll();
     }
 
     @Override
     public Group findOne(Integer id) {
-        return usersDao.findOne(id);
+        return groupsDao.findOne(id);
     }
 
     @Override
     public Group findOneByName(String name) {
-        return usersDao.findOneByName(name);
+        return groupsDao.findOneByName(name);
     }
 
     @Override
     @Transactional(TX_MANAGER)
     public Group create(Group group) {
-        usersDao.create(group);
-        return usersDao.findOneByName(group.getName());
+        groupsDao.create(group);
+        return groupsDao.findOneByName(group.getName());
     }
 
     @Override
     @Transactional(TX_MANAGER)
     public Group update(Group group) {
-        usersDao.update(group);
-        return usersDao.findOneByName(group.getName());
+        groupsDao.update(group);
+        return groupsDao.findOneByName(group.getName());
     }
 
     @Override
     @Transactional(TX_MANAGER)
     public void delete(Group group) {
-        usersDao.delete(group);
+        groupsDao.delete(group);
     }
+
+    @Override
+    @Transactional(TX_MANAGER)
+    public List<Group> importGroups(List<Group> groups) {
+        List<Group> createdGroupsList = new ArrayList<>();
+        Map<String, Group> existingGroups = findAll()
+                .stream().collect(Collectors.toMap(Group::getName, Function.identity()));
+        for(Group currGroup : groups){
+            if(existingGroups.get(currGroup.getName()) != null){
+                throw new WebApplicationException(Response.Status.CONFLICT);
+            }
+            Group createdGroup = create(currGroup);
+            createdGroupsList.add(createdGroup);
+        }
+        return createdGroupsList;
+    }
+
+    @Override
+    @Transactional(TX_MANAGER)
+    public void deleteAllGroups(){
+        groupsDao.deleteAll();
+    }
+
+
 }

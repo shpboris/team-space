@@ -7,6 +7,9 @@ import org.teamspace.membership.dao.MembershipsDao;
 import org.teamspace.membership.domain.Membership;
 import org.teamspace.membership.service.MembershipsService;
 
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.teamspace.persistence.common.CommonConstants.TX_MANAGER;
@@ -46,6 +49,35 @@ public class MembershipsServiceImpl implements MembershipsService{
     @Transactional(TX_MANAGER)
     public void delete(Membership membership) {
         membershipsDao.delete(membership);
+    }
+
+    @Override
+    @Transactional(TX_MANAGER)
+    public List<Membership> importMemberships(List<Membership> memberships) {
+        List<Membership> createdMembershipsList = new ArrayList<>();
+        List<Membership> existingMemberships = findAll();
+        for(Membership currMembership : memberships){
+            boolean isMembershipExists = existingMemberships.stream().anyMatch(existingMembership -> {
+                if(existingMembership.getUser().getUsername().equals(currMembership.getUser().getUsername()) &&
+                        existingMembership.getGroup().getName().equals(currMembership.getGroup().getName())){
+                    return true;
+                }
+                return false;
+            });
+
+            if(isMembershipExists){
+                throw new WebApplicationException(Response.Status.CONFLICT);
+            }
+            Membership createdMembership = create(currMembership);
+            createdMembershipsList.add(createdMembership);
+        }
+        return createdMembershipsList;
+    }
+
+    @Override
+    @Transactional(TX_MANAGER)
+    public void deleteAllMemberships(){
+        membershipsDao.deleteAll();
     }
 
 }

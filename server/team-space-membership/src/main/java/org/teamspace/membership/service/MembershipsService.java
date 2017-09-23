@@ -13,4 +13,6 @@ public interface MembershipsService {
     Membership findOneByUserIdAndGroupId(Integer userId, Integer groupId);
     Membership create(Membership Membership);
     void delete(Membership Membership);
+    List<Membership> importMemberships(List<Membership> memberships);
+    void deleteAllMemberships();
 }
