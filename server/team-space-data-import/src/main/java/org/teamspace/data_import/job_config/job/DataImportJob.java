@@ -1,7 +1,6 @@
 package org.teamspace.data_import.job_config.job;
 
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.Step;
+import org.springframework.batch.core.*;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.job.builder.FlowBuilder;
@@ -11,8 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.*;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.teamspace.batch.InfrastructureConfigurationImpl;
+import org.teamspace.data_import.job_config.deciders.ReportCompletionExecutionDecider;
 import org.teamspace.data_import.job_config.listener.DataImportJobListener;
 import org.teamspace.data_import.job_config.tasks.*;
+
+import static org.teamspace.data_import.constants.DataImportConstants.EXECUTE_REPORT_COMPLETION;
+import static org.teamspace.data_import.constants.DataImportConstants.SKIP_REPORT_COMPLETION;
 
 /**
  * Created by shpilb on 08/09/2017.
@@ -33,7 +36,17 @@ public class DataImportJob {
                 .listener(dataImportJobListener())
                 .start(dataReaderStep())
                 .next(dataWriterStep())
+                .next(reportCompletionJoinedStep())
                 .build();
+    }
+
+    @Bean
+    public Flow reportCompletionJoinedFlow(){
+        ReportCompletionExecutionDecider reportCompletionExecutionDecider = new ReportCompletionExecutionDecider();
+        Flow dataReaderSplitFlow = new FlowBuilder<Flow>("reportCompletionFlow")
+                .start(reportCompletionExecutionDecider).on(EXECUTE_REPORT_COMPLETION).to(reportCompletionStep())
+                .from(reportCompletionExecutionDecider).on(SKIP_REPORT_COMPLETION).end(BatchStatus.COMPLETED.toString()).build();
+        return dataReaderSplitFlow;
     }
 
     @Bean
@@ -60,6 +73,13 @@ public class DataImportJob {
     public Flow membershipsDataReaderFlow(){
         Flow membershipsDataReaderFlow = new FlowBuilder<Flow>("membershipsDataReaderFlow").from(membershipsDataReaderStep()).end();
         return membershipsDataReaderFlow;
+    }
+
+    @Bean
+    public Step reportCompletionJoinedStep(){
+        return stepBuilders.get("reportCompletionJoinedStep")
+                .flow(reportCompletionJoinedFlow())
+                .build();
     }
 
     @Bean
@@ -98,6 +118,13 @@ public class DataImportJob {
     }
 
     @Bean
+    public Step reportCompletionStep(){
+        return stepBuilders.get("reportCompletionStep")
+                .tasklet(reportCompletionTasklet())
+                .build();
+    }
+
+    @Bean
     public Tasklet usersDataReaderTasklet() {
         return new UsersDataReaderTasklet();
     }
@@ -115,6 +142,11 @@ public class DataImportJob {
     @Bean
     public Tasklet dataWriterTasklet() {
         return new DataWriterTasklet();
+    }
+
+    @Bean
+    public Tasklet reportCompletionTasklet() {
+        return new ReportCompletionTasklet();
     }
 
     @Bean

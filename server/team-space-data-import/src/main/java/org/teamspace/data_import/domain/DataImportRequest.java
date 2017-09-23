@@ -8,5 +8,6 @@ import lombok.Data;
 @Data
 public class DataImportRequest {
     private boolean shouldPerformCleanup;
+    private boolean shouldReportCompletion;
     private Long jobId;
 }

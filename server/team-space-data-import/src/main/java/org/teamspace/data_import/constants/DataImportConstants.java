@@ -7,6 +7,9 @@ public class DataImportConstants {
     public static final String USERS_FILE_NAME = "users.json";
     public static final String GROUPS_FILE_NAME = "groups.json";
     public static final String MEMBERSHIP_FILE_NAME = "membership.json";
+    public static final String IMPORT_REPORT_FILE_NAME = "import-report.json";
+    public static final String EXECUTE_REPORT_COMPLETION = "EXECUTE_REPORT_COMPLETION";
+    public static final String SKIP_REPORT_COMPLETION = "SKIP_REPORT_COMPLETION";
     public static final String USERS_DATA_JOB_KEY = "usersDataJobKey";
     public static final String GROUPS_DATA_JOB_KEY = "groupsDataJobKey";
     public static final String MEMBERSHIP_DATA_JOB_KEY = "membershipDataJobKey";
