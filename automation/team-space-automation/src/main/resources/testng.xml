@@ -10,4 +10,9 @@
             <class name="org.teamspace.client.api.AuthenticationTest"/>
         </classes>
     </test>
+    <test name="data import">
+        <classes>
+            <class name="org.teamspace.client.api.DataImportTest"/>
+        </classes>
+    </test>
 </suite>

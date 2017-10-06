@@ -11,6 +11,7 @@ import org.teamspace.data_import.domain.DataImportRequest;
 import org.teamspace.data_import.domain.DataImportResult;
 import org.teamspace.data_import.job_config.parameters_registry.JobParametersRegistry;
 
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -53,7 +54,8 @@ public class DataImportResource {
             String jobParameterValue = getJobParameterValue();
             updateJobParameterRegistry(jobParameterValue, dataImportRequest);
             Long jobId = jobOperator.start(DATA_IMPORT_JOB_NAME, getJobParametersStr(jobParameterValue));
-            dataImportResult.setJobId(jobId);
+            dataImportResult.setJobInstanceId(jobId);
+            dataImportResult.setJobExecutionId(jobId);
             dataImportResult.setStatus(BatchStatus.STARTING.toString());
         } catch (Exception e) {
             log.error("Failed to import data", e);
@@ -74,7 +76,8 @@ public class DataImportResource {
                     Comparator<JobExecution> comparator = (e1, e2) -> e1.getStartTime().compareTo(e2.getStartTime());
                     JobExecution lastJobExecution = jobExplorer.getJobExecutions(jobInstance).stream().max(comparator).get();
                     DataImportResult dataImportResult = new DataImportResult();
-                    dataImportResult.setJobId(lastJobExecution.getId());
+                    dataImportResult.setJobInstanceId(jobInstance.getId());
+                    dataImportResult.setJobExecutionId(lastJobExecution.getId());
                     dataImportResult.setStatus(lastJobExecution.getStatus().toString());
                     if(lastJobExecution.isRunning()) {
                         lastJobExecution.getStepExecutions().stream()
@@ -95,11 +98,15 @@ public class DataImportResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "stop data import", response = DataImportResult.class)
-    @Path("/stop")
-    public Response stop(@ApiParam(name = "dataImportRequest", required = true) DataImportRequest dataImportRequest) {
+    @Path("/stop/{executionId}")
+    public Response stop(@NotNull @ApiParam(name="executionId", required = true)
+                             @PathParam("executionId") Long executionId) {
         DataImportResult dataImportResult = new DataImportResult();
         try {
-            jobOperator.stop(dataImportRequest.getJobId());
+            jobOperator.stop(executionId);
+            JobExecution jobExecution = jobExplorer.getJobExecution(executionId);
+            dataImportResult.setJobInstanceId(jobExecution.getJobInstance().getId());
+            dataImportResult.setJobExecutionId(executionId);
             dataImportResult.setStatus(BatchStatus.STOPPING.toString());
         } catch (Exception e) {
             log.error("Failed to stop data import", e);
@@ -110,11 +117,15 @@ public class DataImportResource {
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "restart data import", response = DataImportResult.class)
-    @Path("/restart")
-    public Response restart(@ApiParam(name = "dataImportRequest", required = true) DataImportRequest dataImportRequest) {
+    @Path("/restart/{executionId}")
+    public Response restart(@NotNull @ApiParam(name="executionId", required = true)
+                                @PathParam("executionId") Long executionId) {
         DataImportResult dataImportResult = new DataImportResult();
         try {
-            jobOperator.restart(dataImportRequest.getJobId());
+            Long newExecutionId = jobOperator.restart(executionId);
+            JobExecution jobExecution = jobExplorer.getJobExecution(newExecutionId);
+            dataImportResult.setJobInstanceId(jobExecution.getJobInstance().getId());
+            dataImportResult.setJobExecutionId(newExecutionId);
             dataImportResult.setStatus(BatchStatus.STARTING.toString());
         } catch (Exception e) {
             log.error("Failed to restart data import", e);

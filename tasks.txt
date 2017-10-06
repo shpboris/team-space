@@ -31,14 +31,13 @@ Create RPM package for team-space app and use it in deploy
 14.
 Add create RDS flow
 
-15.
-Spring batch - complete simple business flow and test start/fail/restart/complete scenarios.
-Add WF listener. Check passing parameters on job execution context vs custom save to DB.
-16.
-Spring batch - configure number of parallel tasks
+
 17.
-Spring batch - add flows, conditions, item reader/writer/processor
+Spring batch - add item reader/writer/processor
 18.
-Add tests to WF
+Add tests to WF for simple flow, transactions and job start/restart, fail etc.
+19.
+Clean WF steps creation, move JSON logic to Util class, clean REST API parameters,
+add API to get group users and user groups (through some report API ?).
 
 
