@@ -65,6 +65,14 @@ public class MembershipsResource {
         return status(Response.Status.NO_CONTENT).build();
     }
 
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "delete all membership", response = Response.class)
+    public Response deleteAll() {
+        membershipsService.deleteAllMemberships();
+        return status(Response.Status.NO_CONTENT).build();
+    }
+
 
     private Membership findMembershipById(Integer id){
         Membership membership = membershipsService.findOne(id);

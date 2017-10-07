@@ -78,6 +78,14 @@ public class UserResource {
         return status(Response.Status.NO_CONTENT).build();
     }
 
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "delete non previleged users", response = Response.class)
+    public Response deleteNonPrevilegedUsers() {
+        usersService.deleteNonAdminUsers();
+        return status(Response.Status.NO_CONTENT).build();
+    }
+
     @GET
     @Path("/current")
     @PermitAll

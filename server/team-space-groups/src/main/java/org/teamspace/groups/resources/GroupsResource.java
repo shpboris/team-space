@@ -77,6 +77,14 @@ public class GroupsResource {
         return status(Response.Status.NO_CONTENT).build();
     }
 
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "delete all groups", response = Response.class)
+    public Response deleteAll() {
+        groupsService.deleteAllGroups();
+        return status(Response.Status.NO_CONTENT).build();
+    }
+
 
     private Group findGroupById(Integer id){
         Group group = groupsService.findOne(id);

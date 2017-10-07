@@ -1,8 +1,10 @@
 package org.teamspace.client.api;
 
+import lombok.extern.slf4j.Slf4j;
+import org.teamspace.client.ApiException;
 import org.teamspace.client.common.BaseTest;
 import org.teamspace.client.model.*;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import java.util.List;
 
@@ -13,10 +15,21 @@ import static org.testng.AssertJUnit.assertTrue;
 /**
  * Created by shpilb on 06/10/2017.
  */
+@Slf4j
 public class DataImportTest extends BaseTest {
 
     public static final Long IMPORT_JOB_TIME_TO_COMPLETE = 3000l;
     public static final Long IMPORT_JOB_TIME_TO_COMPLETE_STEP = 2000l;
+
+    @BeforeMethod
+    public void setUp() throws Exception{
+        cleanUpImportData();
+    }
+
+    @AfterMethod
+    public void tearDown() throws Exception{
+        cleanUpImportData();
+    }
 
     @Test()
     public void testSimpleImport() throws Exception{
@@ -30,6 +43,55 @@ public class DataImportTest extends BaseTest {
 
         //wait for job completion
         Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE);
+
+        //verify data
+        verifyDataAfterImport();
+    }
+
+    @Test()
+    public void testImportFailure() throws Exception {
+
+        //create group with conflicting id equals to 2 - import flow will use it also and fail
+        Group group = new Group();
+        group.setId(2);
+        group.setName("group2Name");
+        GroupApi groupApi = new GroupApi(getApiClient());
+        groupApi.create(group);
+
+        //run import flow that is supposed to fail
+        DataImportApi dataImportApi = new DataImportApi(getApiClient());
+        DataImportRequest dataImportRequest = new DataImportRequest();
+        dataImportRequest.setShouldReportCompletion(true);
+        dataImportRequest.setShouldPerformCleanup(false);
+        DataImportResult dataImportResult = dataImportApi.create(dataImportRequest);
+
+        //verify that import transaction was rolled back and no data added to DB
+        UserApi userApi = new UserApi(getApiClient());
+        assertEquals(userApi.findAll().size(), 1);
+        GroupApi groupsApi = new GroupApi(getApiClient());
+        assertEquals(groupApi.findAll().size(), 1);
+        MembershipApi membershipApi = new MembershipApi(getApiClient());
+        assertEquals(membershipApi.findAll().size(), 0);
+
+
+        //verify job failed
+        Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE_STEP);
+        DataImportResult returnedImportResult = getJobExecution(dataImportApi, dataImportResult.getJobExecutionId());
+        assertEquals(returnedImportResult.getRunningSteps().size(), 0);
+        assertEquals(returnedImportResult.getStatus(), "FAILED");
+
+        //clean up import data to prevent additional failure
+        cleanUpImportData();
+
+        //restart the flow
+        DataImportResult newImportResult = dataImportApi.restart(returnedImportResult.getJobExecutionId());
+        assertNotSame(returnedImportResult.getJobExecutionId(), newImportResult.getJobExecutionId());
+
+        //wait for job to finish and verify completion
+        Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE);
+        newImportResult = getJobExecution(dataImportApi, newImportResult.getJobExecutionId());
+        assertEquals(newImportResult.getRunningSteps().size(), 0);
+        assertEquals(newImportResult.getStatus(), "COMPLETED");
 
         //verify data
         verifyDataAfterImport();
@@ -73,6 +135,7 @@ public class DataImportTest extends BaseTest {
         assertEquals(returnedImportResult.getRunningSteps().size(), 0);
         assertEquals(returnedImportResult.getStatus(), "COMPLETED");
 
+        //verify data
         verifyDataAfterImport();
     }
 
@@ -133,7 +196,28 @@ public class DataImportTest extends BaseTest {
         assertEquals(newImportResult.getRunningSteps().size(), 0);
         assertEquals(newImportResult.getStatus(), "COMPLETED");
 
+        //verify data
         verifyDataAfterImport();
+    }
+
+    private void verifyCleanDbData() throws Exception{
+        UserApi userApi = new UserApi(getApiClient());
+        assertEquals(1, userApi.findAll().size());
+
+        GroupApi groupApi = new GroupApi(getApiClient());
+        assertEquals(0, groupApi.findAll().size());
+
+        MembershipApi membershipApi = new MembershipApi(getApiClient());
+        assertEquals(0, membershipApi.findAll().size());
+    }
+
+    private void cleanUpImportData() throws Exception{
+        MembershipApi membershipApi = new MembershipApi(getApiClient());
+        membershipApi.deleteAll();
+        UserApi userApi = new UserApi(getApiClient());
+        userApi.deleteNonPrevilegedUsers();
+        GroupApi groupApi = new GroupApi(getApiClient());
+        groupApi.deleteAll();
     }
 
     private void verifyDataAfterImport() throws Exception{
