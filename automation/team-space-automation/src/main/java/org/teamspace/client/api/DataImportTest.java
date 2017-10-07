@@ -7,6 +7,8 @@ import org.testng.annotations.Test;
 import java.util.List;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotSame;
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
  * Created by shpilb on 06/10/2017.
@@ -26,9 +28,115 @@ public class DataImportTest extends BaseTest {
         dataImportRequest.setShouldPerformCleanup(true);
         dataImportApi.create(dataImportRequest);
 
-        //wait until WF is done
+        //wait for job completion
         Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE);
 
+        //verify data
+        verifyDataAfterImport();
+    }
+
+
+    @Test()
+    public void testImportWithControlledProgress() throws Exception{
+
+        //run import flow
+        DataImportApi dataImportApi = new DataImportApi(getApiClient());
+        DataImportRequest dataImportRequest = new DataImportRequest();
+        dataImportRequest.setShouldReportCompletion(true);
+        dataImportRequest.setShouldPerformCleanup(true);
+        dataImportRequest.setForceControlledProgress(true);
+        DataImportResult dataImportResult = dataImportApi.create(dataImportRequest);
+
+        //test users, groups and membership reader steps started in parallel
+        Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE_STEP);
+        DataImportResult returnedImportResult = getJobExecution(dataImportApi, dataImportResult.getJobExecutionId());
+        verifyStepRunning(returnedImportResult, "usersDataReaderStep");
+        verifyStepRunning(returnedImportResult, "groupsDataReaderStep");
+        verifyStepRunning(returnedImportResult, "membershipsDataReaderStep");
+
+        //allow progress and test that data writer step started
+        dataImportApi.allowProgress(returnedImportResult.getJobExecutionId());
+        Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE_STEP);
+        returnedImportResult = getJobExecution(dataImportApi, dataImportResult.getJobExecutionId());
+        verifyStepRunning(returnedImportResult, "dataWriterStep");
+
+        //allow progress and test that report completion step started
+        dataImportApi.allowProgress(returnedImportResult.getJobExecutionId());
+        Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE_STEP);
+        returnedImportResult = getJobExecution(dataImportApi, dataImportResult.getJobExecutionId());
+        verifyStepRunning(returnedImportResult, "reportCompletionStep");
+
+        //allow progress and verify job completion
+        dataImportApi.allowProgress(returnedImportResult.getJobExecutionId());
+        Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE_STEP);
+        returnedImportResult = getJobExecution(dataImportApi, dataImportResult.getJobExecutionId());
+        assertEquals(returnedImportResult.getRunningSteps().size(), 0);
+        assertEquals(returnedImportResult.getStatus(), "COMPLETED");
+
+        verifyDataAfterImport();
+    }
+
+    @Test()
+    public void testImportStopAndRestartWithControlledProgress() throws Exception{
+        //run import flow
+        DataImportApi dataImportApi = new DataImportApi(getApiClient());
+        DataImportRequest dataImportRequest = new DataImportRequest();
+        dataImportRequest.setShouldReportCompletion(true);
+        dataImportRequest.setShouldPerformCleanup(true);
+        dataImportRequest.setForceControlledProgress(true);
+        DataImportResult dataImportResult = dataImportApi.create(dataImportRequest);
+
+        //test users, groups and membership reader steps started in parallel
+        Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE_STEP);
+        DataImportResult returnedImportResult = getJobExecution(dataImportApi, dataImportResult.getJobExecutionId());
+        verifyStepRunning(returnedImportResult, "usersDataReaderStep");
+        verifyStepRunning(returnedImportResult, "groupsDataReaderStep");
+        verifyStepRunning(returnedImportResult, "membershipsDataReaderStep");
+
+        //allow progress and test that data writer step started
+        dataImportApi.allowProgress(returnedImportResult.getJobExecutionId());
+        Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE_STEP);
+        returnedImportResult = getJobExecution(dataImportApi, dataImportResult.getJobExecutionId());
+        verifyStepRunning(returnedImportResult, "dataWriterStep");
+
+        //stop the flow and verify that job execution status changed to STOPPING, data writer step is still running
+        dataImportApi.stop(returnedImportResult.getJobExecutionId());
+        Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE_STEP);
+        returnedImportResult = getJobExecution(dataImportApi, dataImportResult.getJobExecutionId());
+        verifyStepRunning(returnedImportResult, "dataWriterStep");
+        assertEquals(returnedImportResult.getStatus(), "STOPPING");
+
+        //allow progress to finish data writer step and test that job execution status changed to STOPPED
+        dataImportApi.allowProgress(returnedImportResult.getJobExecutionId());
+        Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE_STEP);
+        returnedImportResult = getJobExecution(dataImportApi, dataImportResult.getJobExecutionId());
+        assertEquals(returnedImportResult.getStatus(), "STOPPED");
+
+        //restart the flow and verify that new execution started and data writer step is executed again
+        DataImportResult newImportResult = dataImportApi.restart(returnedImportResult.getJobExecutionId());
+        assertNotSame(returnedImportResult.getJobExecutionId(), newImportResult.getJobExecutionId());
+        Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE_STEP);
+        newImportResult = getJobExecution(dataImportApi, newImportResult.getJobExecutionId());
+        verifyStepRunning(newImportResult, "dataWriterStep");
+        assertTrue(newImportResult.getStatus().equals("STARTING") || newImportResult.getStatus().equals("STARTED"));
+
+        //allow progress and test that report completion step started
+        dataImportApi.allowProgress(newImportResult.getJobExecutionId());
+        Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE_STEP);
+        newImportResult = getJobExecution(dataImportApi, newImportResult.getJobExecutionId());
+        verifyStepRunning(newImportResult, "reportCompletionStep");
+
+        //allow progress and verify job completion
+        dataImportApi.allowProgress(newImportResult.getJobExecutionId());
+        Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE_STEP);
+        newImportResult = getJobExecution(dataImportApi, newImportResult.getJobExecutionId());
+        assertEquals(newImportResult.getRunningSteps().size(), 0);
+        assertEquals(newImportResult.getStatus(), "COMPLETED");
+
+        verifyDataAfterImport();
+    }
+
+    private void verifyDataAfterImport() throws Exception{
         //test users
         UserApi userApi = new UserApi(getApiClient());
         List<User> users = userApi.findAll();
@@ -55,84 +163,20 @@ public class DataImportTest extends BaseTest {
         assertEquals(membership.getUser().getFirstName(), "user3FirstName");
     }
 
-
-    @Test()
-    public void testImportWithControlledProgress() throws Exception{
-
-        //run import flow
-        DataImportApi dataImportApi = new DataImportApi(getApiClient());
-        DataImportRequest dataImportRequest = new DataImportRequest();
-        dataImportRequest.setShouldReportCompletion(true);
-        dataImportRequest.setShouldPerformCleanup(true);
-        dataImportRequest.setForceControlledProgress(true);
-        DataImportResult dataImportResult = dataImportApi.create(dataImportRequest);
-
-        //test users. groups, membership reader steps started in parallel
-        Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE_STEP);
-        DataImportResult returnedImportResult = dataImportApi.findAll()
+    private DataImportResult getJobExecution(DataImportApi dataImportApi, Long executionId) throws Exception{
+        DataImportResult importResult = dataImportApi.findAll()
                 .stream()
-                .filter(importRes -> importRes.getJobExecutionId().equals(dataImportResult.getJobExecutionId()))
+                .filter(importRes -> importRes.getJobExecutionId().equals(executionId))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Couldn't find relevant import result"));
+                .orElseThrow(() -> new RuntimeException("Couldn't find relevant import result by execution id"));
+        return importResult;
+    }
 
-        returnedImportResult.getRunningSteps()
+    private void verifyStepRunning(DataImportResult dataImportResult, String stepName){
+        dataImportResult.getRunningSteps()
                 .stream()
-                .filter(step -> step.equals("usersDataReaderStep"))
+                .filter(step -> step.equals(stepName))
                 .findAny()
-                .orElseThrow(() -> new RuntimeException("usersDataReaderStep wasn't started"));
-
-        returnedImportResult.getRunningSteps()
-                .stream()
-                .filter(step -> step.equals("groupsDataReaderStep"))
-                .findAny()
-                .orElseThrow(() -> new RuntimeException("groupsDataReaderStep wasn't started"));
-
-        returnedImportResult.getRunningSteps()
-                .stream()
-                .filter(step -> step.equals("membershipsDataReaderStep"))
-                .findAny()
-                .orElseThrow(() -> new RuntimeException("membershipsDataReaderStep wasn't started"));
-
-        //allow progress and test that data writer step started
-        dataImportApi.allowProgress(returnedImportResult.getJobExecutionId());
-        Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE_STEP);
-        returnedImportResult = dataImportApi.findAll()
-                .stream()
-                .filter(importRes -> importRes.getJobExecutionId().equals(dataImportResult.getJobExecutionId()))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Couldn't find relevant import result"));
-
-        returnedImportResult.getRunningSteps()
-                .stream()
-                .filter(step -> step.equals("dataWriterStep"))
-                .findAny()
-                .orElseThrow(() -> new RuntimeException("dataWriterStep wasn't started"));
-
-        //allow progress and test that report completion step started
-        dataImportApi.allowProgress(returnedImportResult.getJobExecutionId());
-        Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE_STEP);
-        returnedImportResult = dataImportApi.findAll()
-                .stream()
-                .filter(importRes -> importRes.getJobExecutionId().equals(dataImportResult.getJobExecutionId()))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Couldn't find relevant import result"));
-
-        returnedImportResult.getRunningSteps()
-                .stream()
-                .filter(step -> step.equals("reportCompletionStep"))
-                .findAny()
-                .orElseThrow(() -> new RuntimeException("reportCompletionStep wasn't started"));
-
-        //allow progress and verify job completion
-        dataImportApi.allowProgress(returnedImportResult.getJobExecutionId());
-        Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE_STEP);
-        returnedImportResult = dataImportApi.findAll()
-                .stream()
-                .filter(importRes -> importRes.getJobExecutionId().equals(dataImportResult.getJobExecutionId()))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Couldn't find relevant import result"));
-
-        assertEquals(returnedImportResult.getRunningSteps().size(), 0);
-        assertEquals(returnedImportResult.getStatus(), "COMPLETED");
+                .orElseThrow(() -> new RuntimeException(stepName + " wasn't started"));
     }
 }
