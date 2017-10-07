@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
-import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.teamspace.groups.domain.Group;
@@ -22,13 +21,13 @@ import static org.teamspace.data_import.constants.DataImportConstants.GROUPS_FIL
  * Created by shpilb on 08/09/2017.
  */
 @Slf4j
-public class GroupsDataReaderTasklet implements Tasklet {
+public class GroupsDataReaderTasklet extends AbstractTask {
 
     @Value("${dataImportDir}")
     private String dataImportDir;
 
     @Override
-    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
+    public RepeatStatus innerExecute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
         log.info("Started reading groups data from file");
         Path groupsDataFilePath = Paths.get(dataImportDir, GROUPS_FILE_NAME);
         String groupsDataStr = new String(Files.readAllBytes(groupsDataFilePath), StandardCharsets.UTF_8);

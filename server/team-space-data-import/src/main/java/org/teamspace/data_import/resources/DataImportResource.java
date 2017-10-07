@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.teamspace.data_import.domain.DataImportRequest;
 import org.teamspace.data_import.domain.DataImportResult;
 import org.teamspace.data_import.job_config.parameters_registry.JobParametersRegistry;
+import org.teamspace.data_import.job_config.progress_manager.JobProgressManager;
 
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
@@ -42,6 +43,9 @@ public class DataImportResource {
     @Autowired
     private JobParametersRegistry jobParametersRegistry;
 
+    @Autowired
+    private JobProgressManager jobProgressManager;
+
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -53,9 +57,10 @@ public class DataImportResource {
         try {
             String jobParameterValue = getJobParameterValue();
             updateJobParameterRegistry(jobParameterValue, dataImportRequest);
-            Long jobId = jobOperator.start(DATA_IMPORT_JOB_NAME, getJobParametersStr(jobParameterValue));
-            dataImportResult.setJobInstanceId(jobId);
-            dataImportResult.setJobExecutionId(jobId);
+            Long executionId = jobOperator.start(DATA_IMPORT_JOB_NAME, getJobParametersStr(jobParameterValue));
+            JobExecution jobExecution = jobExplorer.getJobExecution(executionId);
+            dataImportResult.setJobInstanceId(jobExecution.getJobInstance().getId());
+            dataImportResult.setJobExecutionId(jobExecution.getId());
             dataImportResult.setStatus(BatchStatus.STARTING.toString());
         } catch (Exception e) {
             log.error("Failed to import data", e);
@@ -79,12 +84,14 @@ public class DataImportResource {
                     dataImportResult.setJobInstanceId(jobInstance.getId());
                     dataImportResult.setJobExecutionId(lastJobExecution.getId());
                     dataImportResult.setStatus(lastJobExecution.getStatus().toString());
+                    List<String> runningSteps = new ArrayList<>();
                     if(lastJobExecution.isRunning()) {
                         lastJobExecution.getStepExecutions().stream()
                                 .filter(s -> s.getStatus().equals(BatchStatus.STARTED)
                                         || s.getStatus().equals(BatchStatus.STARTING))
-                                .forEach(s -> dataImportResult.setStep(s.getStepName()));
+                                .forEach(s -> runningSteps.add(s.getStepName()));
                     }
+                    dataImportResult.setRunningSteps(runningSteps);
                     dataImportResults.add(dataImportResult);
                 }
 
@@ -129,6 +136,45 @@ public class DataImportResource {
             dataImportResult.setStatus(BatchStatus.STARTING.toString());
         } catch (Exception e) {
             log.error("Failed to restart data import", e);
+        }
+        return Response.status(Response.Status.OK).entity(dataImportResult).build();
+    }
+
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @ApiOperation(value = "allow progress", response = DataImportResult.class)
+    @Path("/allow-progress/{executionId}")
+    public Response allowProgress(@NotNull @ApiParam(name="executionId", required = true)
+                            @PathParam("executionId") Long executionId) {
+        DataImportResult dataImportResult = new DataImportResult();
+        try {
+            JobExecution jobExecution = jobExplorer.getJobExecution(executionId);
+
+            if(!jobExecution.isRunning()){
+                throw new WebApplicationException("The job execution is not running",
+                        Response.Status.BAD_REQUEST);
+            }
+            DataImportRequest dataImportRequest =
+                    (DataImportRequest)jobExecution.getExecutionContext().get(CUSTOM_PARAMETERS_JOB_KEY);
+            if(!dataImportRequest.isForceControlledProgress()){
+                throw new WebApplicationException("The job execution is not controlled",
+                        Response.Status.BAD_REQUEST);
+            }
+
+            String jobKey = jobExecution.getJobParameters().getString(CUSTOM_PARAMETERS_JOB_KEY);
+            jobProgressManager.provideProgressPermission(jobKey);
+
+            dataImportResult.setJobInstanceId(jobExecution.getJobInstance().getId());
+            dataImportResult.setJobExecutionId(executionId);
+            List<String> runningSteps = new ArrayList<>();
+            jobExecution.getStepExecutions().stream()
+                    .filter(s -> s.getStatus().equals(BatchStatus.STARTED)
+                            || s.getStatus().equals(BatchStatus.STARTING))
+                    .forEach(s -> runningSteps.add(s.getStepName()));
+            dataImportResult.setRunningSteps(runningSteps);
+            dataImportResult.setStatus(BatchStatus.STARTED.toString());
+        } catch (Exception e) {
+            log.error("Failed to allow progress", e);
         }
         return Response.status(Response.Status.OK).entity(dataImportResult).build();
     }

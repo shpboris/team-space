@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
-import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +27,7 @@ import static org.teamspace.data_import.constants.DataImportConstants.*;
  * Created by shpilb on 08/09/2017.
  */
 @Slf4j
-public class ReportCompletionTasklet implements Tasklet {
+public class ReportCompletionTasklet extends AbstractTask {
 
     @Value("${dataImportDir}")
     private String dataImportDir;
@@ -37,7 +36,7 @@ public class ReportCompletionTasklet implements Tasklet {
     private DatabaseImportService databaseImportService;
 
     @Override
-    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
+    public RepeatStatus innerExecute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
         log.info("Started report completion");
         JobExecution jobExecution = chunkContext.getStepContext().getStepExecution().getJobExecution();
         Instant now = Instant.now();

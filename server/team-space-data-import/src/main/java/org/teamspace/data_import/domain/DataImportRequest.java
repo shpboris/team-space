@@ -9,4 +9,5 @@ import lombok.Data;
 public class DataImportRequest {
     private boolean shouldPerformCleanup;
     private boolean shouldReportCompletion;
+    private boolean forceControlledProgress = false;
 }
