@@ -21,7 +21,7 @@ import static org.teamspace.data_import.constants.DataImportConstants.MEMBERSHIP
  * Created by shpilb on 08/09/2017.
  */
 @Slf4j
-public class MembershipDataReaderTasklet extends AbstractTask {
+public class MembershipsDataReaderTasklet extends AbstractTask {
 
     @Value("${dataImportDir}")
     private String dataImportDir;

@@ -41,12 +41,10 @@ public class DataImportJob {
     }
 
     @Bean
-    public Flow reportCompletionJoinedFlow(){
-        ReportCompletionExecutionDecider reportCompletionExecutionDecider = new ReportCompletionExecutionDecider();
-        Flow dataReaderSplitFlow = new FlowBuilder<Flow>("reportCompletionFlow")
-                .start(reportCompletionExecutionDecider).on(EXECUTE_REPORT_COMPLETION).to(reportCompletionStep())
-                .from(reportCompletionExecutionDecider).on(SKIP_REPORT_COMPLETION).end(BatchStatus.COMPLETED.toString()).build();
-        return dataReaderSplitFlow;
+    public Step dataReaderStep(){
+        return stepBuilders.get("dataReaderStep")
+                .flow(dataReaderFlow())
+                .build();
     }
 
     @Bean
@@ -54,6 +52,29 @@ public class DataImportJob {
         Flow dataReaderSplitFlow = new FlowBuilder<Flow>("dataReaderFlow")
                 .split(new SimpleAsyncTaskExecutor())
                 .add(usersDataReaderFlow(), groupsDataReaderFlow(), membershipsDataReaderFlow()).build();
+        return dataReaderSplitFlow;
+    }
+
+    @Bean
+    public Step dataWriterStep(){
+        return stepBuilders.get("dataWriterStep")
+                .tasklet(dataWriterTasklet())
+                .build();
+    }
+
+    @Bean
+    public Step reportCompletionJoinedStep(){
+        return stepBuilders.get("reportCompletionJoinedStep")
+                .flow(reportCompletionJoinedFlow())
+                .build();
+    }
+
+    @Bean
+    public Flow reportCompletionJoinedFlow(){
+        ReportCompletionExecutionDecider reportCompletionExecutionDecider = new ReportCompletionExecutionDecider();
+        Flow dataReaderSplitFlow = new FlowBuilder<Flow>("reportCompletionFlow")
+                .start(reportCompletionExecutionDecider).on(EXECUTE_REPORT_COMPLETION).to(reportCompletionStep())
+                .from(reportCompletionExecutionDecider).on(SKIP_REPORT_COMPLETION).end(BatchStatus.COMPLETED.toString()).build();
         return dataReaderSplitFlow;
     }
 
@@ -73,20 +94,6 @@ public class DataImportJob {
     public Flow membershipsDataReaderFlow(){
         Flow membershipsDataReaderFlow = new FlowBuilder<Flow>("membershipsDataReaderFlow").from(membershipsDataReaderStep()).end();
         return membershipsDataReaderFlow;
-    }
-
-    @Bean
-    public Step reportCompletionJoinedStep(){
-        return stepBuilders.get("reportCompletionJoinedStep")
-                .flow(reportCompletionJoinedFlow())
-                .build();
-    }
-
-    @Bean
-    public Step dataReaderStep(){
-        return stepBuilders.get("dataReaderStep")
-                .flow(dataReaderFlow())
-                .build();
     }
 
     @Bean
@@ -111,13 +118,6 @@ public class DataImportJob {
     }
 
     @Bean
-    public Step dataWriterStep(){
-        return stepBuilders.get("dataWriterStep")
-                .tasklet(dataWriterTasklet())
-                .build();
-    }
-
-    @Bean
     public Step reportCompletionStep(){
         return stepBuilders.get("reportCompletionStep")
                 .tasklet(reportCompletionTasklet())
@@ -136,7 +136,7 @@ public class DataImportJob {
 
     @Bean
     public Tasklet membershipDataReaderTasklet() {
-        return new MembershipDataReaderTasklet();
+        return new MembershipsDataReaderTasklet();
     }
 
     @Bean

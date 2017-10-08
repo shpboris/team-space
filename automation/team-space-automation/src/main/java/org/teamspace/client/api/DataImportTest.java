@@ -1,16 +1,13 @@
 package org.teamspace.client.api;
 
 import lombok.extern.slf4j.Slf4j;
-import org.teamspace.client.ApiException;
 import org.teamspace.client.common.BaseTest;
 import org.teamspace.client.model.*;
 import org.testng.annotations.*;
 
 import java.util.List;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertNotSame;
-import static org.testng.AssertJUnit.assertTrue;
+import static org.testng.AssertJUnit.*;
 
 /**
  * Created by shpilb on 06/10/2017.
@@ -144,7 +141,7 @@ public class DataImportTest extends BaseTest {
         //run import flow
         DataImportApi dataImportApi = new DataImportApi(getApiClient());
         DataImportRequest dataImportRequest = new DataImportRequest();
-        dataImportRequest.setShouldReportCompletion(true);
+        dataImportRequest.setShouldReportCompletion(false);
         dataImportRequest.setShouldPerformCleanup(true);
         dataImportRequest.setForceControlledProgress(true);
         DataImportResult dataImportResult = dataImportApi.create(dataImportRequest);
@@ -183,13 +180,7 @@ public class DataImportTest extends BaseTest {
         verifyStepRunning(newImportResult, "dataWriterStep");
         assertTrue(newImportResult.getStatus().equals("STARTING") || newImportResult.getStatus().equals("STARTED"));
 
-        //allow progress and test that report completion step started
-        dataImportApi.allowProgress(newImportResult.getJobExecutionId());
-        Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE_STEP);
-        newImportResult = getJobExecution(dataImportApi, newImportResult.getJobExecutionId());
-        verifyStepRunning(newImportResult, "reportCompletionStep");
-
-        //allow progress and verify job completion
+        //allow progress and verify job completion - report completion is turned off for this test
         dataImportApi.allowProgress(newImportResult.getJobExecutionId());
         Thread.sleep(IMPORT_JOB_TIME_TO_COMPLETE_STEP);
         newImportResult = getJobExecution(dataImportApi, newImportResult.getJobExecutionId());
