@@ -32,6 +32,11 @@
             <artifactId>team-space-membership</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.team-space.server.infra</groupId>
+            <artifactId>team-space-commons</artifactId>
+            <version>${project.version}</version>
+        </dependency>
     </dependencies>
 
 

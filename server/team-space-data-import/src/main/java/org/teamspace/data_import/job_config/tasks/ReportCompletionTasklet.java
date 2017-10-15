@@ -1,7 +1,6 @@
 package org.teamspace.data_import.job_config.tasks;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepContribution;
@@ -10,6 +9,7 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.teamspace.auth.domain.User;
+import org.teamspace.commons.utils.JsonUtil;
 import org.teamspace.data_import.domain.ReportCompletionSummary;
 import org.teamspace.data_import.service.DatabaseImportService;
 import org.teamspace.groups.domain.Group;
@@ -54,15 +54,14 @@ public class ReportCompletionTasklet extends AbstractTask {
         List<ReportCompletionSummary> reportCompletionSummaryList = new ArrayList<>();
         Path importReportDataFilePath = Paths.get(dataImportDir, IMPORT_REPORT_FILE_NAME);
         String importReportDataStr = null;
-        ObjectMapper mapper = new ObjectMapper();
         if(Files.exists(importReportDataFilePath)) {
             importReportDataStr = new String(Files.readAllBytes(importReportDataFilePath), StandardCharsets.UTF_8);
-            reportCompletionSummaryList = mapper.readValue(importReportDataStr, new TypeReference<List<ReportCompletionSummary>>() {});
+            reportCompletionSummaryList = JsonUtil.fromJson(importReportDataStr, new TypeReference<List<ReportCompletionSummary>>() {});
         } else {
             Files.createFile(importReportDataFilePath);
         }
         reportCompletionSummaryList.add(reportCompletionSummary);
-        importReportDataStr = mapper.writeValueAsString(reportCompletionSummaryList);
+        importReportDataStr = JsonUtil.toJson(reportCompletionSummaryList);
         Files.write(importReportDataFilePath, importReportDataStr.getBytes(StandardCharsets.UTF_8));
     }
 

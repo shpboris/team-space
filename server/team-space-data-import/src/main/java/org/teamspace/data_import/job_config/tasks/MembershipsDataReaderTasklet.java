@@ -1,13 +1,13 @@
 package org.teamspace.data_import.job_config.tasks;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Value;
+import org.teamspace.commons.utils.JsonUtil;
 import org.teamspace.membership.domain.Membership;
 
 import java.nio.charset.StandardCharsets;
@@ -31,8 +31,7 @@ public class MembershipsDataReaderTasklet extends AbstractTask {
         log.info("Started reading membership data from file");
         Path membershipDataFilePath = Paths.get(dataImportDir, MEMBERSHIP_FILE_NAME);
         String membershipDataStr = new String(Files.readAllBytes(membershipDataFilePath), StandardCharsets.UTF_8);
-        ObjectMapper mapper = new ObjectMapper();
-        List<Membership> membershipList = mapper.readValue(membershipDataStr, new TypeReference<List<Membership>>(){});
+        List<Membership> membershipList = JsonUtil.fromJson(membershipDataStr, new TypeReference<List<Membership>>(){});
         JobExecution jobExecution = chunkContext.getStepContext().getStepExecution().getJobExecution();
         jobExecution.getExecutionContext().put(MEMBERSHIP_DATA_JOB_KEY, membershipList);
         log.info("Finished reading membership data from file");

@@ -17,6 +17,7 @@
         <module>team-space-persistence</module>
         <module>team-space-test</module>
         <module>team-space-batch</module>
+        <module>team-space-commons</module>
     </modules>
 
 
