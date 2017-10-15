@@ -34,17 +34,10 @@ public class DataImportJob {
     public Job dataImportJob(){
         return jobBuilders.get("dataImportJob")
                 .listener(dataImportJobListener())
-                .start(dataReaderStep())
-                .next(dataWriterStep())
-                .next(reportCompletionJoinedStep())
-                .build();
-    }
-
-    @Bean
-    public Step dataReaderStep(){
-        return stepBuilders.get("dataReaderStep")
-                .flow(dataReaderFlow())
-                .build();
+                .start(dataReaderFlow())
+                .next(dataWriterFlow())
+                .next(reportCompletionFlow())
+                .build().build();
     }
 
     @Bean
@@ -56,26 +49,18 @@ public class DataImportJob {
     }
 
     @Bean
-    public Step dataWriterStep(){
-        return stepBuilders.get("dataWriterStep")
-                .tasklet(dataWriterTasklet())
-                .build();
+    public Flow dataWriterFlow(){
+        Flow dataWriterFlow = new FlowBuilder<Flow>("dataWriterFlow").from(dataWriterStep()).end();
+        return dataWriterFlow;
     }
 
     @Bean
-    public Step reportCompletionJoinedStep(){
-        return stepBuilders.get("reportCompletionJoinedStep")
-                .flow(reportCompletionJoinedFlow())
-                .build();
-    }
-
-    @Bean
-    public Flow reportCompletionJoinedFlow(){
+    public Flow reportCompletionFlow(){
         ReportCompletionExecutionDecider reportCompletionExecutionDecider = new ReportCompletionExecutionDecider();
-        Flow dataReaderSplitFlow = new FlowBuilder<Flow>("reportCompletionFlow")
+        Flow reportCompletionFlowWithDecider = new FlowBuilder<Flow>("reportCompletionFlowWithDecider")
                 .start(reportCompletionExecutionDecider).on(EXECUTE_REPORT_COMPLETION).to(reportCompletionStep())
                 .from(reportCompletionExecutionDecider).on(SKIP_REPORT_COMPLETION).end(BatchStatus.COMPLETED.toString()).build();
-        return dataReaderSplitFlow;
+        return reportCompletionFlowWithDecider;
     }
 
     @Bean
@@ -114,6 +99,13 @@ public class DataImportJob {
     public Step membershipsDataReaderStep(){
         return stepBuilders.get("membershipsDataReaderStep")
                 .tasklet(membershipDataReaderTasklet())
+                .build();
+    }
+
+    @Bean
+    public Step dataWriterStep(){
+        return stepBuilders.get("dataWriterStep")
+                .tasklet(dataWriterTasklet())
                 .build();
     }
 
