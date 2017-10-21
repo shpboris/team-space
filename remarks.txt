@@ -38,6 +38,9 @@ mysql -u ts -h ip-10-0-1-247.eu-central-1.compute.internal teamspace -pts111
 Options are -u, -h, -p. Pay attention password (ts111) should follow -p without space.
 Database name (teamspace) just follows the host without any special option.
 
+1.7)
+Swagger UI can be accessed at http://localhost:80/api-doc
+
 
 2.
 Automation
@@ -63,3 +66,45 @@ Deploy
 3.1
 To run deploy application:
 java -jar team-space-deploy-server-1.5.2.RELEASE.jar
+
+3.2
+Swagger UI can be accessed on http://localhost:9999/rest/swagger-ui.html
+
+3.3
+Deploy request body examples
+
+1.
+Oregon
+
+{
+  "artifactName": "team-space",
+  "envTag": "TS1",
+  "region": "us-west-2",
+"user" : "ts",
+"password" : "ts111222",
+"dbMode" : "RDS"
+}
+
+2.
+Frankfurt
+
+{
+  "artifactName": "team-space",
+  "envTag": "TS2",
+  "region": "eu-central-1",
+"user" : "ts",
+"password" : "ts111222",
+"dbMode" : "MYSQL"
+}
+
+3.
+Ohio
+
+{
+  "artifactName": "team-space",
+  "envTag": "TS4",
+"region": "us-east-2",
+"user" : "ts",
+"password" : "ts111222",
+"dbMode" : "H2"
+}"

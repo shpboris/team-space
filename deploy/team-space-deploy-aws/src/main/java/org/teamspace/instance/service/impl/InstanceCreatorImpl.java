@@ -107,7 +107,6 @@ public class InstanceCreatorImpl implements InstanceCreator {
             String privateDns = getDbPrivateDnsFromStackOutput(stackName);
             log.debug("RDS instance private DNS is {}", privateDns);
             createInstanceRequest.setDbInstancePrivateDns(privateDns);
-
             createInstanceResponse.setDbInstancePrivateDns(privateDns);
         } catch (Exception e){
             throw new RuntimeException("Stack creation failed", e);

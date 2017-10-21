@@ -9,6 +9,13 @@ Add groups module and implement some join logic between users and groups
 Add performance tests vs MySql DB
 8.
 Add Spring Profiles
+17.
+Spring batch - add item reader/writer/processor
+19.
+Spring batch -
+clean REST API parameters,
+move logic from import resource to import service,
+add API to get group users and user groups (through some report API ?)
 
 *********** deployer app *************
 
@@ -31,17 +38,12 @@ Create RPM package for team-space app and use it in deploy
 14.
 Add create RDS flow
 
-17.
-Spring batch - add item reader/writer/processor
-19.
-Spring batch -
-move JSON logic to Util class, clean REST API parameters,
-move logic from import resource to import service,
-add API to get group users and user groups (through some report API ?)
-
-
 20.
 Add enterprise mode deployment with auto scale, load balancer and instance creation through cloud formation template.
+
+21.
+Use maven assembly plugin to produce automatically deployable artifact for
+team space project - team-space.tar.gz
 
 
 
