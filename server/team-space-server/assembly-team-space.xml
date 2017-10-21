@@ -1,0 +1,46 @@
+<assembly>
+    <id>team-space</id>
+    <formats>
+        <format>tar.gz</format>
+    </formats>
+
+    <includeBaseDirectory>false</includeBaseDirectory>
+
+    <fileSets>
+        <fileSet>
+            <directory>target</directory>
+            <outputDirectory>team-space</outputDirectory>
+            <includes>
+                <include>team-space-server-1.0-SNAPSHOT.jar</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>target/classes/keys</directory>
+            <outputDirectory>team-space/keys</outputDirectory>
+            <includes>
+                <include>*.*</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>target/classes/data-import</directory>
+            <outputDirectory>team-space/data-import</outputDirectory>
+            <includes>
+                <include>*.*</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>target/classes/systemd</directory>
+            <outputDirectory>team-space</outputDirectory>
+            <includes>
+                <include>*</include>
+            </includes>
+        </fileSet>
+        <fileSet>
+            <directory>target/classes</directory>
+            <outputDirectory>team-space</outputDirectory>
+            <includes>
+                <include>config.yml</include>
+            </includes>
+        </fileSet>
+    </fileSets>
+</assembly>

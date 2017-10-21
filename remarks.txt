@@ -73,7 +73,7 @@ Swagger UI can be accessed on http://localhost:9999/rest/swagger-ui.html
 3.3
 Deploy request body examples
 
-1.
+3.3.1
 Oregon
 
 {
@@ -85,7 +85,7 @@ Oregon
 "dbMode" : "RDS"
 }
 
-2.
+3.3.2
 Frankfurt
 
 {
@@ -97,7 +97,7 @@ Frankfurt
 "dbMode" : "MYSQL"
 }
 
-3.
+3.3.3
 Ohio
 
 {
@@ -107,4 +107,23 @@ Ohio
 "user" : "ts",
 "password" : "ts111222",
 "dbMode" : "H2"
-}"
+}
+
+4.
+The deployable artifact team-space.tar.gz will be created by Maven assembly plugin
+when Maven "package" goal is performed on team-space-server project.
+The location of the resulting artifact will
+be C:\team-space\server\team-space-server\target\team-space.tar.gz. That is exactly where
+TeamSpaceDeployApplication expects it to be - so NO additional copying is required. Just run deploy.
+
+The content of team-space.tar.gz should be:
+
+    -data-import                                -- includes JSON files for Spring Batch to import
+    -keys                                       -- SSH related keys
+    -config.yml                                 -- dropwizard config
+    -setup.sh                                   -- team space custom script
+    -team-space                                 -- systemd env vars
+    -team-space.service                         -- systemd unit
+    -team-space-server-1.0-SNAPSHOT.jar         -- JAR file
+
+
