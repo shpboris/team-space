@@ -39,7 +39,7 @@ Options are -u, -h, -p. Pay attention password (ts111) should follow -p without 
 Database name (teamspace) just follows the host without any special option.
 
 1.7)
-Swagger UI can be accessed at http://localhost:80/api-doc
+Swagger UI can be accessed at http://localhost:80/api-doc or https://localhost:443/api-doc
 
 
 2.

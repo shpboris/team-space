@@ -13,8 +13,7 @@ Add Spring Profiles
 Spring batch - add item reader/writer/processor
 19.
 Spring batch -
-clean REST API parameters,
-move logic from import resource to import service,
+add more validations for advanced scenarios (like restart/stop not existing job ...)
 add API to get group users and user groups (through some report API ?)
 
 *********** deployer app *************
