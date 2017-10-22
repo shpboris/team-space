@@ -1,4 +1,5 @@
-KEYSTORE="-Ddw.server.applicationConnectors[1].keyStorePath=/home/ts/team-space/keys/keystore.jks"
+JKS_KEYSTORE="-Ddw.server.applicationConnectors[1].keyStorePath=/home/ts/team-space/keys/keystore.jks"
+P12_KEYSTORE="-Ddw.server.applicationConnectors[2].keyStorePath=/home/ts/team-space/keys/keystore.p12"
 TS_JAR="/home/ts/team-space/team-space-server-1.0-SNAPSHOT.jar"
 JAVA_OPTS="-Xms512m -Xmx1024m"
 DATA_IMPORT_DIR="-DdataImportDir=/home/ts/team-space/data-import"
