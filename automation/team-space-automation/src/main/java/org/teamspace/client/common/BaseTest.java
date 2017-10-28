@@ -8,6 +8,7 @@ import org.teamspace.client.common.config.ConfigurationManager;
 import org.teamspace.client.config.CommonConfig;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -22,6 +23,8 @@ public class BaseTest {
         apiClient.setVerifyingSsl(false);
         apiClient.setBasePath(commonConfig.getBasePath());
         apiClient.setConnectTimeout(commonConfig.getTimeout() * 1000);
+        //prevents read timeout failures - especially relevant for debugging
+        apiClient.getHttpClient().setReadTimeout(commonConfig.getTimeout(), TimeUnit.SECONDS);
 
         AuthenticationApi authenticationApi = new AuthenticationApi(apiClient);
         try {
