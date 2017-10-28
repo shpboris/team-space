@@ -39,8 +39,11 @@ public interface GroupsDao {
     @Delete("DELETE FROM GROUPS")
     int deleteAll();
 
-    @TableCreator
-    @Update("CREATE TABLE IF NOT EXISTS GROUPS(ID INT AUTO_INCREMENT PRIMARY KEY NOT NULL, " +
-            "NAME VARCHAR(50) NOT NULL)")
+    @TableCreator(creationOrder = 1)
+    @Update("CREATE TABLE IF NOT EXISTS GROUPS(" +
+            "ID INT AUTO_INCREMENT PRIMARY KEY NOT NULL, " +
+            "NAME VARCHAR(50) NOT NULL, " +
+            "CONSTRAINT NAME_UC UNIQUE (NAME))"
+    )
     void createTable();
 }

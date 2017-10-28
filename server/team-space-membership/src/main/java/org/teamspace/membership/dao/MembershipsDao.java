@@ -1,7 +1,7 @@
 package org.teamspace.membership.dao;
 
 import org.apache.ibatis.annotations.*;
-import org.teamspace.membership.domain.*;
+import org.teamspace.membership.domain.Membership;
 import org.teamspace.persistence.common.Dao;
 import org.teamspace.persistence.common.TableCreator;
 
@@ -13,7 +13,7 @@ import java.util.List;
 @Dao
 public interface MembershipsDao {
 
-    public static String MEMBERSHIPS_BASIC_SELECT =
+    String MEMBERSHIPS_BASIC_SELECT =
             "SELECT " +
                     "U.ID AS USER_ID, " +
                     "U.USERNAME, " +
@@ -28,6 +28,8 @@ public interface MembershipsDao {
                     "USERS U " +
                     "JOIN MEMBERSHIPS M ON U.ID = M.USER_ID " +
                     "JOIN GROUPS G ON M.GROUP_ID = G.ID";
+
+    String MEMBERSHIPS_RAW_SELECT = "SELECT ID, USER_ID, GROUP_ID FROM MEMBERSHIPS";
 
     @Insert("INSERT INTO MEMBERSHIPS (ID, USER_ID, GROUP_ID) VALUES(#{id}, #{user.id}, #{group.id})")
     int create(Membership membership);
@@ -46,6 +48,14 @@ public interface MembershipsDao {
     })
     List<Membership> findAll();
 
+    @Select(MEMBERSHIPS_RAW_SELECT)
+    @Results(id = "membershipRawResult", value = {
+            @Result(property = "id", column = "MEMBERSHIP_ID"),
+            @Result(property = "user.id", column = "USER_ID"),
+            @Result(property = "group.id", column = "GROUP_ID")
+    })
+    List<Membership> findAllRaw();
+
     @Select(MEMBERSHIPS_BASIC_SELECT + " WHERE M.ID = #{id}")
     @ResultMap("membershipResult")
     Membership findOne(Integer id);
@@ -60,8 +70,18 @@ public interface MembershipsDao {
     @Delete("DELETE FROM MEMBERSHIPS")
     int deleteAll();
 
-    @TableCreator
-    @Update("CREATE TABLE IF NOT EXISTS MEMBERSHIPS(ID INT AUTO_INCREMENT PRIMARY KEY NOT NULL, " +
-            "USER_ID INT, GROUP_ID INT)")
+    @TableCreator(creationOrder = 2)
+    @Update("CREATE TABLE IF NOT EXISTS MEMBERSHIPS(" +
+            "ID INT AUTO_INCREMENT PRIMARY KEY NOT NULL, " +
+            "USER_ID INT, " +
+            "GROUP_ID INT, " +
+            "CONSTRAINT USER_GROUP_UC UNIQUE (USER_ID, GROUP_ID), " +
+            "FOREIGN KEY (USER_ID) REFERENCES USERS (ID) " +
+                " ON DELETE CASCADE " +
+                " ON UPDATE CASCADE, " +
+            "FOREIGN KEY (GROUP_ID) REFERENCES GROUPS (ID) " +
+                " ON DELETE CASCADE " +
+                " ON UPDATE CASCADE)"
+            )
     void createTable();
 }
