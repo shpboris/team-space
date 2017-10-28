@@ -1,7 +1,10 @@
 package org.teamspace.membership.resources;
 
 import io.swagger.annotations.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 import org.teamspace.membership.domain.Membership;
 import org.teamspace.membership.service.MembershipsService;
@@ -24,6 +27,7 @@ import static javax.ws.rs.core.Response.status;
 @Produces(MediaType.APPLICATION_JSON)
 @PermitAll
 @Component
+@Slf4j
 public class MembershipsResource {
 
     @Autowired
@@ -58,7 +62,29 @@ public class MembershipsResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "create membership", response = Membership.class)
     public Response create(@ApiParam(name = "Membership", required = true) Membership membership) {
-        Membership createdMembership = membershipsService.create(membership);
+        if(!isValidMembership(membership)){
+            throw new WebApplicationException("Membership should have not empty references to group and user",
+                    Response.Status.BAD_REQUEST);
+        }
+        Membership createdMembership = null;
+        try {
+            createdMembership = membershipsService.create(membership);
+        } catch (DuplicateKeyException e){
+            String errMsg = String.format("Membership for user: %s and group: %s already exists",
+                    membership.getUser().getId(), membership.getGroup().getId());
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.BAD_REQUEST);
+        } catch (DataIntegrityViolationException e){
+            String errMsg = String.format("Membership should point to valid existing user and group");
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.BAD_REQUEST);
+        } catch (Exception e){
+            String errMsg = String.format("Unexpected error occurred when creating membership" +
+                            " for user: %s and group: %s",
+                    membership.getUser().getId(), membership.getGroup().getId());
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
         return Response.status(Response.Status.CREATED).entity(createdMembership).build();
     }
 
@@ -85,9 +111,17 @@ public class MembershipsResource {
     private Membership findMembershipById(Integer id){
         Membership membership = membershipsService.findOne(id);
         if(membership == null){
-            throw new WebApplicationException("membership with ID " + id + " wasn't found ", Response.Status.NOT_FOUND);
+            throw new WebApplicationException("Membership with ID " + id + " wasn't found", Response.Status.NOT_FOUND);
         }
         return membership;
+    }
+
+    private boolean isValidMembership(Membership membership){
+        return membership != null
+                && membership.getUser() != null
+                && membership.getGroup() != null
+                && membership.getUser().getId() != null
+                && membership.getGroup().getId() != null;
     }
 
 }

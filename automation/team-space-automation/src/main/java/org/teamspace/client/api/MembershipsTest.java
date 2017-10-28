@@ -4,13 +4,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.teamspace.client.ApiException;
 import org.teamspace.client.common.BaseTest;
 import org.teamspace.client.common.config.ConfigurationManager;
+import org.teamspace.client.common.domain.ApiResponseBody;
+import org.teamspace.client.common.utils.ApiExceptionUtils;
 import org.teamspace.client.config.CommonConfig;
 import org.teamspace.client.model.*;
 import org.testng.annotations.*;
 
+import java.io.IOException;
 import java.util.List;
 
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertNotNull;
 import static org.testng.AssertJUnit.assertTrue;
 
 /**
@@ -155,6 +159,89 @@ public class MembershipsTest extends BaseTest{
         userApi.deleteNonPrevilegedUsers();
         membershipList = membershipApi.findAllRaw();
         assertEquals(membershipList.size(), 0);
+    }
+
+    @Test()
+    public void testCreateMembershipNegativeScenario() throws ApiException, IOException {
+        UserApi userApi = new UserApi(getApiClient());
+        GroupApi groupApi = new GroupApi(getApiClient());
+        MembershipApi membershipApi = new MembershipApi(getApiClient());
+
+        //create 3 users
+        User user1 = getUser("u1", "p1", "f1", "l1");
+        user1 = userApi.create(user1);
+        assertEquals(user1.getUsername(), "u1");
+
+        //create 2 groups
+        Group group1 = getGroup("g1");
+        group1 = groupApi.create(group1);
+        assertEquals(group1.getName(), "g1");
+
+        //match users 1 to group 1 twice
+        ApiResponseBody apiResponseBody = null;
+        Membership membership1 = getMembership(user1, group1);
+        Membership membership2 = getMembership(user1, group1);
+
+        try {
+            membership1 = membershipApi.create(membership1);
+            membership2 = membershipApi.create(membership2);
+        } catch (ApiException e){
+            apiResponseBody = ApiExceptionUtils.fromJson(e.getResponseBody());
+            log.error(e.getMessage(), e);
+        }
+        assertNotNull(apiResponseBody);
+        assertEquals(apiResponseBody.getCode(), "400");
+        String errMsg = String.format("Membership for user: %s and group: %s already exists", user1.getId(), group1.getId());
+        assertEquals(apiResponseBody.getMessage(), errMsg);
+
+
+        //test not existing user id
+        apiResponseBody = null;
+        //this user is not created yet and has no id - hence not valid
+        User notValidUser = getUser("u1", "p1", "f1", "l1");
+        Membership failedMembership = getMembership(notValidUser, group1);
+        try {
+            failedMembership = membershipApi.create(failedMembership);
+        } catch (ApiException e){
+            apiResponseBody = ApiExceptionUtils.fromJson(e.getResponseBody());
+            log.error(e.getMessage(), e);
+        }
+        assertNotNull(apiResponseBody);
+        assertEquals(apiResponseBody.getCode(), "400");
+        assertEquals(apiResponseBody.getMessage(), "Membership should have not empty references to group and user");
+
+
+        //test group equals to null
+        apiResponseBody = null;
+        failedMembership = getMembership(user1, null);
+        try {
+            failedMembership = membershipApi.create(failedMembership);
+        } catch (ApiException e){
+            apiResponseBody = ApiExceptionUtils.fromJson(e.getResponseBody());
+            log.error(e.getMessage(), e);
+        }
+        assertNotNull(apiResponseBody);
+        assertEquals(apiResponseBody.getCode(), "400");
+        assertEquals(apiResponseBody.getMessage(), "Membership should have not empty references to group and user");
+
+
+        //test user and group having not existing id's
+        apiResponseBody = null;
+        notValidUser = getUser("u1", "p1", "f1", "l1");
+        notValidUser.setId(7);
+        Group notValidGroup = getGroup("g1");
+        notValidGroup.setId(8);
+        failedMembership = getMembership(notValidUser, notValidGroup);
+        try {
+            failedMembership = membershipApi.create(failedMembership);
+        } catch (ApiException e){
+            apiResponseBody = ApiExceptionUtils.fromJson(e.getResponseBody());
+            log.error(e.getMessage(), e);
+        }
+        assertNotNull(apiResponseBody);
+        assertEquals(apiResponseBody.getCode(), "400");
+        assertEquals(apiResponseBody.getMessage(), "Membership should point to valid existing user and group");
+
     }
 
     private User getUser(String username, String password, String firstName, String lastName){

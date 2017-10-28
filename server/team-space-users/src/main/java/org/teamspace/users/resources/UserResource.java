@@ -2,7 +2,10 @@ package org.teamspace.users.resources;
 
 import io.dropwizard.auth.Auth;
 import io.swagger.annotations.*;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 import org.teamspace.auth.domain.User;
 import org.teamspace.users.service.UsersService;
@@ -25,6 +28,7 @@ import static javax.ws.rs.core.Response.status;
 @Produces(MediaType.APPLICATION_JSON)
 @PermitAll
 @Component
+@Slf4j
 public class UserResource {
 
     @Autowired
@@ -51,7 +55,22 @@ public class UserResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "create user", response = User.class)
     public Response create(@ApiParam(name = "user", required = true) User user) {
-        User createdUser = usersService.create(user);
+        if(!isValidUser(user)){
+            throw new WebApplicationException("User properties can't be empty",
+                    Response.Status.BAD_REQUEST);
+        }
+        User createdUser = null;
+        try {
+            createdUser = usersService.create(user);
+        } catch (DuplicateKeyException e){
+            String errMsg = String.format("User with username: %s already exists", user.getUsername());
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.BAD_REQUEST);
+        } catch (Exception e){
+            String errMsg = String.format("Unexpected error occurred when creating user: %s", user.getUsername());
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
         return Response.status(Response.Status.CREATED).entity(createdUser).build();
     }
 
@@ -61,9 +80,24 @@ public class UserResource {
     @ApiOperation(value = "update user", response = User.class)
     public Response update(@NotNull @ApiParam(name="id", required = true)
                                @PathParam("id") Integer id, @ApiParam(name = "user", required = true) User user) {
+        if(!isValidUser(user)){
+            throw new WebApplicationException("User properties can't be empty",
+                    Response.Status.BAD_REQUEST);
+        }
         findUserById(id);
         user.setId(id);
-        User updatedUser = usersService.update(user);
+        User updatedUser = null;
+        try {
+            usersService.update(user);
+        } catch (DuplicateKeyException e){
+            String errMsg = String.format("User with username: %s already exists", user.getUsername());
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.BAD_REQUEST);
+        } catch (Exception e){
+            String errMsg = String.format("Unexpected error occurred when creating user: %s", user.getUsername());
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
         return Response.status(Response.Status.OK).entity(updatedUser).build();
     }
 
@@ -104,11 +138,18 @@ public class UserResource {
         return Response.status(Response.Status.CREATED).entity(createdUsersList).build();
     }
 
+    private boolean isValidUser(User user){
+        return StringUtils.isNotBlank(user.getUsername())
+                && StringUtils.isNotBlank(user.getPassword())
+                && StringUtils.isNotBlank(user.getFirstName())
+                && StringUtils.isNotBlank(user.getLastName())
+                && StringUtils.isNotBlank(user.getRole());
+    }
 
     private User findUserById(Integer id){
         User user = usersService.findOne(id);
         if(user == null){
-            throw new WebApplicationException("User with ID " + id + " wasn't found ", Response.Status.NOT_FOUND);
+            throw new WebApplicationException("User with ID " + id + " wasn't found", Response.Status.NOT_FOUND);
         }
         return user;
     }

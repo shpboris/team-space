@@ -1,7 +1,10 @@
 package org.teamspace.groups.resources;
 
 import io.swagger.annotations.*;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 import org.teamspace.groups.domain.Group;
 import org.teamspace.groups.service.GroupsService;
@@ -24,6 +27,7 @@ import static javax.ws.rs.core.Response.status;
 @Produces(MediaType.APPLICATION_JSON)
 @PermitAll
 @Component
+@Slf4j
 public class GroupsResource {
 
     @Autowired
@@ -50,7 +54,22 @@ public class GroupsResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "create group", response = Group.class)
     public Response create(@ApiParam(name = "group", required = true) Group group) {
-        Group createdGroup = groupsService.create(group);
+        Group createdGroup = null;
+        if(StringUtils.isBlank(group.getName())){
+            throw new WebApplicationException("Group name can't be empty",
+                    Response.Status.BAD_REQUEST);
+        }
+        try {
+            createdGroup = groupsService.create(group);
+        } catch (DuplicateKeyException e){
+            String errMsg = String.format("Group with name: %s already exists", group.getName());
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.BAD_REQUEST);
+        } catch (Exception e){
+            String errMsg = String.format("Unexpected error occurred when creating group: %s", group.getName());
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
         return Response.status(Response.Status.CREATED).entity(createdGroup).build();
     }
 
@@ -60,9 +79,20 @@ public class GroupsResource {
     @ApiOperation(value = "update group", response = Group.class)
     public Response update(@NotNull @ApiParam(name="id", required = true)
                                @PathParam("id") Integer id, @ApiParam(name = "group", required = true) Group group) {
+        if(StringUtils.isBlank(group.getName())){
+            throw new WebApplicationException("Group name can't be empty",
+                    Response.Status.BAD_REQUEST);
+        }
         findGroupById(id);
         group.setId(id);
-        Group updatedGroup = groupsService.update(group);
+        Group updatedGroup = null;
+        try {
+            groupsService.update(group);
+        } catch (DuplicateKeyException e){
+            String errMsg = String.format("Group with name: %s already exists", group.getName());
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.BAD_REQUEST);
+        }
         return Response.status(Response.Status.OK).entity(updatedGroup).build();
     }
 
@@ -89,7 +119,7 @@ public class GroupsResource {
     private Group findGroupById(Integer id){
         Group group = groupsService.findOne(id);
         if(group == null){
-            throw new WebApplicationException("Group with ID " + id + " wasn't found ", Response.Status.NOT_FOUND);
+            throw new WebApplicationException("Group with ID " + id + " wasn't found", Response.Status.NOT_FOUND);
         }
         return group;
     }

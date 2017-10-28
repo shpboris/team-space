@@ -6,10 +6,13 @@ import org.teamspace.client.ApiException;
 import org.teamspace.client.api.users.UsersClient;
 import org.teamspace.client.common.BaseTest;
 import org.teamspace.client.common.config.ConfigurationManager;
+import org.teamspace.client.common.domain.ApiResponseBody;
+import org.teamspace.client.common.utils.ApiExceptionUtils;
 import org.teamspace.client.config.CommonConfig;
 import org.teamspace.client.model.User;
 import org.testng.annotations.*;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -32,8 +35,9 @@ public class UsersTest extends BaseTest{
     }
 
     @AfterMethod
-    public void tearDown() {
-
+    public void tearDown() throws ApiException {
+        UserApi userApi = new UserApi(getApiClient());
+        userApi.deleteNonPrevilegedUsers();
     }
     
     @Test()
@@ -74,6 +78,125 @@ public class UsersTest extends BaseTest{
         log.info("current user " + currUser.getUsername());
         log.trace("current user trace" + currUser.getUsername());
         assertEquals(currUser.getUsername(), commonConfig.getUser());
+    }
+
+    @Test()
+    public void testCreateUserNegativeScenario() throws ApiException, IOException {
+
+        UserApi userApi = new UserApi(getApiClient());
+
+        //create user with the same name
+        ApiResponseBody apiResponseBody = null;
+        User user1 = getUser("u1", "p1", "f1", "l1");
+        User user2 = getUser("u1", "p2", "f2", "l2");
+        try {
+            user1 = userApi.create(user1);
+            user2 = userApi.create(user2);
+        } catch (ApiException e){
+            apiResponseBody = ApiExceptionUtils.fromJson(e.getResponseBody());
+            log.error(e.getMessage(), e);
+        }
+        assertNotNull(apiResponseBody);
+        assertEquals(apiResponseBody.getCode(), "400");
+        assertEquals(apiResponseBody.getMessage(), "User with username: u1 already exists");
+
+        //create user with null name
+        apiResponseBody = null;
+        try {
+            user2 = getUser(null, "p2", "f2", "l2");
+            user2 = userApi.create(user2);
+        } catch (ApiException e){
+            apiResponseBody = ApiExceptionUtils.fromJson(e.getResponseBody());
+            log.error(e.getMessage(), e);
+        }
+        assertNotNull(apiResponseBody);
+        assertEquals(apiResponseBody.getCode(), "400");
+        assertEquals(apiResponseBody.getMessage(), "User properties can't be empty");
+
+        //create user with empty name
+        apiResponseBody = null;
+        try {
+            user2 = getUser("  ", "p2", "f2", "l2");
+            user2 = userApi.create(user2);
+        } catch (ApiException e){
+            apiResponseBody = ApiExceptionUtils.fromJson(e.getResponseBody());
+            log.error(e.getMessage(), e);
+        }
+        assertNotNull(apiResponseBody);
+        assertEquals(apiResponseBody.getCode(), "400");
+        assertEquals(apiResponseBody.getMessage(), "User properties can't be empty");
+
+        //verify that only one user was created (also admin exists hence checking for 2)
+        assertEquals(userApi.findAll().size(), 2);
+        assertTrue(userApi.findAll().stream().anyMatch(u -> u.getUsername().equals("u1")));
+    }
+
+    @Test()
+    public void testUpdateUserNegativeScenario() throws ApiException, IOException {
+
+        UserApi userApi = new UserApi(getApiClient());
+
+        //update user with the same name
+        ApiResponseBody apiResponseBody = null;
+        User user1 = getUser("u1", "p1", "f1", "l1");
+        User user2 = getUser("u2", "p2", "f2", "l2");
+        try {
+            user1 = userApi.create(user1);
+            user2 = userApi.create(user2);
+            user2.setUsername("u1");
+            user2 = userApi.update(user2.getId(), user2);
+        } catch (ApiException e){
+            apiResponseBody = ApiExceptionUtils.fromJson(e.getResponseBody());
+            log.error(e.getMessage(), e);
+        }
+        assertNotNull(apiResponseBody);
+        assertEquals(apiResponseBody.getCode(), "400");
+        assertEquals(apiResponseBody.getMessage(), "User with username: u1 already exists");
+
+        //update user with null name
+        apiResponseBody = null;
+        try {
+            user2.setUsername(null);
+            user2 = userApi.update(user2.getId(), user2);
+        } catch (ApiException e){
+            apiResponseBody = ApiExceptionUtils.fromJson(e.getResponseBody());
+            log.error(e.getMessage(), e);
+        }
+        assertNotNull(apiResponseBody);
+        assertEquals(apiResponseBody.getCode(), "400");
+        assertEquals(apiResponseBody.getMessage(), "User properties can't be empty");
+
+        //create user with empty name
+        apiResponseBody = null;
+        try {
+            user2.setUsername("  ");
+            user2 = userApi.update(user2.getId(), user2);
+        } catch (ApiException e){
+            apiResponseBody = ApiExceptionUtils.fromJson(e.getResponseBody());
+            log.error(e.getMessage(), e);
+        }
+        assertNotNull(apiResponseBody);
+        assertEquals(apiResponseBody.getCode(), "400");
+        assertEquals(apiResponseBody.getMessage(), "User properties can't be empty");
+
+        //update not existing group
+        apiResponseBody = null;
+        try {
+            user2.setUsername("u2");
+            user2.setId(7);
+            user2 = userApi.update(user2.getId(), user2);
+        } catch (ApiException e){
+            apiResponseBody = ApiExceptionUtils.fromJson(e.getResponseBody());
+            log.error(e.getMessage(), e);
+        }
+        assertNotNull(apiResponseBody);
+        assertEquals(apiResponseBody.getCode(), "404");
+        assertEquals(apiResponseBody.getMessage(), "User with ID " + 7 + " wasn't found");
+
+        //verify that 2 users and admin with initial correct names remain
+        assertEquals(userApi.findAll().size(), 3);
+        assertTrue(userApi.findAll().stream().anyMatch(u -> u.getUsername().equals("u1")));
+        assertTrue(userApi.findAll().stream().anyMatch(u -> u.getUsername().equals("u2")));
     }
 
     @Test()
