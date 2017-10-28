@@ -29,6 +29,11 @@ public class MembershipsServiceImpl implements MembershipsService{
     }
 
     @Override
+    public List<Membership> findAllRaw() {
+        return membershipsDao.findAllRaw();
+    }
+
+    @Override
     public Membership findOne(Integer id) {
         return membershipsDao.findOne(id);
     }

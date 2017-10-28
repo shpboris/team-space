@@ -28,12 +28,7 @@ public class UsersTest extends BaseTest{
     @BeforeMethod
     public void setUp() throws ApiException{
         UserApi userApi = new UserApi(getApiClient());
-        List<User> allUsers = userApi.findAll();
-        for(User user : allUsers){
-            if(user.getRole().equals(commonConfig.getUserRole())){
-                userApi.delete(user.getId());
-            }
-        }
+        userApi.deleteNonPrevilegedUsers();
     }
 
     @AfterMethod

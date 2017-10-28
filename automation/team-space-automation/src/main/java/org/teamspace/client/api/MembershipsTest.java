@@ -23,6 +23,9 @@ public class MembershipsTest extends BaseTest{
 
     @BeforeMethod
     public void setUp() throws ApiException{
+        MembershipApi membershipApi = new MembershipApi(getApiClient());
+        membershipApi.deleteAll();
+
         GroupApi groupApi = new GroupApi(getApiClient());
         groupApi.deleteAll();
 
@@ -32,6 +35,9 @@ public class MembershipsTest extends BaseTest{
 
     @AfterMethod
     public void tearDown() throws ApiException {
+        MembershipApi membershipApi = new MembershipApi(getApiClient());
+        membershipApi.deleteAll();
+
         GroupApi groupApi = new GroupApi(getApiClient());
         groupApi.deleteAll();
 
@@ -97,20 +103,25 @@ public class MembershipsTest extends BaseTest{
 
         //delete group 1 and verify its memberships were
         //deleted - i.e it is not connected to users 1 and 2
+        //using findAllRaw API to make sure that memberships are REALLY removed from DB
+        //and not just absent in result because of join
         groupApi.delete(group1.getId());
-        membershipList = membershipApi.findAll();
+        membershipList = membershipApi.findAllRaw();
         assertEquals(membershipList.size(), 1);
 
-        res = membershipList.stream().anyMatch(membership -> {
-            return membership.getUser().getUsername().equals("u3")&&
-                    membership.getGroup().getName().equals("g2");
-        });
+        res = false;
+        for(Membership currMembership : membershipList){
+            if(currMembership.getUser().getId().equals(membership3.getUser().getId())
+                    && currMembership.getGroup().getId().equals(membership3.getGroup().getId())){
+                res = true;
+            }
+        }
         assertTrue(res);
 
         //delete user3 and verify its membership was deleted
         //i.e it is not connected to group 2 anymore
         userApi.delete(user3.getId());
-        membershipList = membershipApi.findAll();
+        membershipList = membershipApi.findAllRaw();
         assertEquals(membershipList.size(), 0);
 
         //verify that finally remaining users are only 1 and 2 and remaining group is 2
@@ -142,7 +153,7 @@ public class MembershipsTest extends BaseTest{
 
         //delete all users and verify that memberships are deleted
         userApi.deleteNonPrevilegedUsers();
-        membershipList = membershipApi.findAll();
+        membershipList = membershipApi.findAllRaw();
         assertEquals(membershipList.size(), 0);
     }
 

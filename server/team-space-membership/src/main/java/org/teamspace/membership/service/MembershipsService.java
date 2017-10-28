@@ -9,6 +9,7 @@ import java.util.List;
  */
 public interface MembershipsService {
     List<Membership> findAll();
+    List<Membership> findAllRaw();
     Membership findOne(Integer id);
     Membership findOneByUserIdAndGroupId(Integer userId, Integer groupId);
     Membership create(Membership Membership);

@@ -1,13 +1,23 @@
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
 <suite name="TestAll">
+    <test name="authentication">
+        <classes>
+            <class name="org.teamspace.client.api.AuthenticationTest"/>
+        </classes>
+    </test>
     <test name="users">
         <classes>
             <class name="org.teamspace.client.api.UsersTest"/>
         </classes>
     </test>
-    <test name="authentication">
+    <test name="groups">
         <classes>
-            <class name="org.teamspace.client.api.AuthenticationTest"/>
+            <class name="org.teamspace.client.api.GroupsTest"/>
+        </classes>
+    </test>
+    <test name="memberships">
+        <classes>
+            <class name="org.teamspace.client.api.MembershipsTest"/>
         </classes>
     </test>
     <test name="data import">

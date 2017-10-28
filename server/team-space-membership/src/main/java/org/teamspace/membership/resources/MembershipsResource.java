@@ -37,6 +37,14 @@ public class MembershipsResource {
     }
 
     @GET
+    @Path("/raw")
+    @ApiOperation(value = "find all raw memberships",
+            response = Membership.class, responseContainer = "list")
+    public List<Membership> findAllRaw() {
+        return membershipsService.findAllRaw();
+    }
+
+    @GET
     @Path("/{id}")
     @ApiOperation(value = "find membership",
             response = Membership.class)
