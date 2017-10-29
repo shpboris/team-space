@@ -37,18 +37,26 @@ public class UserResource {
     @GET
     @ApiOperation(value = "find all users",
             response = User.class, responseContainer = "list")
-    public List<User> findAll() {
-        return usersService.findAll();
+    public Response findAll() {
+        List<User> usersList = null;
+        try {
+            usersList = usersService.findAll();
+        } catch (Exception e){
+            String errMsg = "Unexpected error occurred when getting all users";
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        return Response.ok(usersList).build();
     }
 
     @GET
     @Path("/{id}")
     @ApiOperation(value = "find user",
             response = User.class)
-    public User findOne(@NotNull @ApiParam(name="id", required = true)
+    public Response findOne(@NotNull @ApiParam(name="id", required = true)
                             @PathParam("id") Integer id) {
         User user = findUserById(id);
-        return user;
+        return Response.ok(user).build();
     }
 
     @POST
@@ -108,15 +116,27 @@ public class UserResource {
     public Response delete(@NotNull @ApiParam(name="id", required = true)
                                @PathParam("id") Integer id) {
         User user = findUserById(id);
-        usersService.delete(user);
+        try {
+            usersService.delete(user);
+        } catch (Exception e){
+            String errMsg = String.format("Unexpected error occurred when deleting user %s", id);
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
         return status(Response.Status.NO_CONTENT).build();
     }
 
     @DELETE
     @Consumes(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "delete non previleged users", response = Response.class)
+    @ApiOperation(value = "delete non privileged users", response = Response.class)
     public Response deleteNonPrevilegedUsers() {
-        usersService.deleteNonAdminUsers();
+        try {
+            usersService.deleteNonAdminUsers();
+        } catch (Exception e){
+            String errMsg = "Unexpected error occurred when deleting all non privileged users";
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
         return status(Response.Status.NO_CONTENT).build();
     }
 
@@ -125,8 +145,8 @@ public class UserResource {
     @PermitAll
     @ApiOperation(value = "get current user",
             response = User.class)
-    public User getCurrentUser(@Auth User user) {
-        return user;
+    public Response getCurrentUser(@Auth User user) {
+        return Response.status(Response.Status.OK).entity(user).build();
     }
 
     @POST
@@ -134,7 +154,14 @@ public class UserResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "create users", response = User.class, responseContainer = "list")
     public Response importUsers(@ApiParam(name = "user", required = true) List<User> users) {
-        List<User> createdUsersList = usersService.importUsers(users);
+        List<User> createdUsersList = null;
+        try {
+            createdUsersList = usersService.importUsers(users);
+        } catch (Exception e){
+            String errMsg = "Unexpected error occurred when importing users";
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
         return Response.status(Response.Status.CREATED).entity(createdUsersList).build();
     }
 
@@ -147,7 +174,14 @@ public class UserResource {
     }
 
     private User findUserById(Integer id){
-        User user = usersService.findOne(id);
+        User user = null;
+        try {
+            user = usersService.findOne(id);
+        } catch (Exception e){
+            String errMsg = String.format("Unexpected error occurred when getting user %s", id);
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
         if(user == null){
             throw new WebApplicationException("User with ID " + id + " wasn't found", Response.Status.NOT_FOUND);
         }

@@ -36,26 +36,42 @@ public class MembershipsResource {
     @GET
     @ApiOperation(value = "find all memberships",
             response = Membership.class, responseContainer = "list")
-    public List<Membership> findAll() {
-        return membershipsService.findAll();
+    public Response findAll() {
+        List<Membership> membershipList = null;
+        try {
+            membershipList = membershipsService.findAll();
+        } catch (Exception e){
+            String errMsg = "Unexpected error occurred when getting all memberships";
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        return Response.status(Response.Status.OK).entity(membershipList).build();
     }
 
     @GET
     @Path("/raw")
     @ApiOperation(value = "find all raw memberships",
             response = Membership.class, responseContainer = "list")
-    public List<Membership> findAllRaw() {
-        return membershipsService.findAllRaw();
+    public Response findAllRaw() {
+        List<Membership> membershipList = null;
+        try {
+            membershipList = membershipsService.findAllRaw();
+        } catch (Exception e){
+            String errMsg = "Unexpected error occurred when getting all raw memberships";
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        return Response.status(Response.Status.OK).entity(membershipList).build();
     }
 
     @GET
     @Path("/{id}")
     @ApiOperation(value = "find membership",
             response = Membership.class)
-    public Membership findOne(@NotNull @ApiParam(name="id", required = true)
+    public Response findOne(@NotNull @ApiParam(name="id", required = true)
                             @PathParam("id") Integer id) {
         Membership membership = findMembershipById(id);
-        return membership;
+        return Response.status(Response.Status.OK).entity(membership).build();
     }
 
     @POST
@@ -95,7 +111,13 @@ public class MembershipsResource {
     public Response delete(@NotNull @ApiParam(name="id", required = true)
                                @PathParam("id") Integer id) {
         Membership membership = findMembershipById(id);
-        membershipsService.delete(membership);
+        try {
+            membershipsService.delete(membership);
+        } catch (Exception e){
+            String errMsg = String.format("Unexpected error occurred when deleting membership %s", id);
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
         return status(Response.Status.NO_CONTENT).build();
     }
 
@@ -103,13 +125,26 @@ public class MembershipsResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "delete all membership", response = Response.class)
     public Response deleteAll() {
-        membershipsService.deleteAllMemberships();
+        try {
+            membershipsService.deleteAllMemberships();
+        } catch (Exception e){
+            String errMsg = "Unexpected error occurred when deleting all memberships";
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
         return status(Response.Status.NO_CONTENT).build();
     }
 
 
     private Membership findMembershipById(Integer id){
-        Membership membership = membershipsService.findOne(id);
+        Membership membership = null;
+        try {
+            membership = membershipsService.findOne(id);
+        } catch (Exception e){
+            String errMsg = String.format("Unexpected error occurred when getting membership %s", id);
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
         if(membership == null){
             throw new WebApplicationException("Membership with ID " + id + " wasn't found", Response.Status.NOT_FOUND);
         }

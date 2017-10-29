@@ -36,18 +36,26 @@ public class GroupsResource {
     @GET
     @ApiOperation(value = "find all groups",
             response = Group.class, responseContainer = "list")
-    public List<Group> findAll() {
-        return groupsService.findAll();
+    public Response findAll() {
+        List<Group> groupList = null;
+        try {
+            groupList = groupsService.findAll();
+        } catch (Exception e){
+            String errMsg = String.format("Unexpected error occurred when getting all groups");
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        return Response.ok(groupList).build();
     }
 
     @GET
     @Path("/{id}")
     @ApiOperation(value = "find group",
             response = Group.class)
-    public Group findOne(@NotNull @ApiParam(name="id", required = true)
+    public Response findOne(@NotNull @ApiParam(name="id", required = true)
                             @PathParam("id") Integer id) {
         Group group = findGroupById(id);
-        return group;
+        return Response.ok(group).build();
     }
 
     @POST
@@ -103,7 +111,13 @@ public class GroupsResource {
     public Response delete(@NotNull @ApiParam(name="id", required = true)
                                @PathParam("id") Integer id) {
         Group group = findGroupById(id);
-        groupsService.delete(group);
+        try {
+            groupsService.delete(group);
+        } catch (Exception e){
+            String errMsg = String.format("Unexpected error occurred when deleting group %s", id);
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
         return status(Response.Status.NO_CONTENT).build();
     }
 
@@ -111,13 +125,27 @@ public class GroupsResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "delete all groups", response = Response.class)
     public Response deleteAll() {
-        groupsService.deleteAllGroups();
+        try {
+            groupsService.deleteAllGroups();
+        } catch (Exception e){
+            String errMsg = String.format("Unexpected error occurred when deleting all groups");
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
         return status(Response.Status.NO_CONTENT).build();
     }
 
 
     private Group findGroupById(Integer id){
-        Group group = groupsService.findOne(id);
+        Group group = null;
+        try {
+            group = groupsService.findOne(id);
+        }
+        catch (Exception e){
+            String errMsg = String.format("Unexpected error occurred when getting group %s", id);
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
         if(group == null){
             throw new WebApplicationException("Group with ID " + id + " wasn't found", Response.Status.NOT_FOUND);
         }
