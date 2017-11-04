@@ -162,6 +162,94 @@ public class MembershipsTest extends BaseTest{
     }
 
     @Test()
+    public void testUsersAndGroupsMemberships() throws ApiException{
+
+        UserApi userApi = new UserApi(getApiClient());
+        GroupApi groupApi = new GroupApi(getApiClient());
+        MembershipApi membershipApi = new MembershipApi(getApiClient());
+
+        //create 3 users
+        User user1 = getUser("u1", "p1", "f1", "l1");
+        User user2 = getUser("u2", "p2", "f2", "l2");
+        User user3 = getUser("u3", "p3", "f3", "l3");
+        user1 = userApi.create(user1);
+        user2 = userApi.create(user2);
+        user3 = userApi.create(user3);
+        assertEquals(user1.getUsername(), "u1");
+        assertEquals(user2.getUsername(), "u2");
+        assertEquals(user3.getUsername(), "u3");
+
+        //create 3 groups
+        Group group1 = getGroup("g1");
+        Group group2 = getGroup("g2");
+        Group group3 = getGroup("g3");
+        group1 = groupApi.create(group1);
+        group2 = groupApi.create(group2);
+        group3 = groupApi.create(group3);
+        assertEquals(group1.getName(), "g1");
+        assertEquals(group2.getName(), "g2");
+        assertEquals(group3.getName(), "g3");
+
+        //match users 1 to group 1,2 and user 2 to group 2
+        //user 3 doesn't have a match
+        //group 3 doesn't have a match
+        Membership membership1 = getMembership(user1, group1);
+        Membership membership2 = getMembership(user1, group2);
+        Membership membership3 = getMembership(user2, group2);
+        membership1 = membershipApi.create(membership1);
+        membership2 = membershipApi.create(membership2);
+        membership3 = membershipApi.create(membership3);
+
+        //*****************VERIFY USERS MEMBERSHIPS****************
+
+        //verify that we have 3 users + 1 admin and their memberships
+        List<MembershipByUsers> membershipsByUsers = membershipApi.findAllGroupedByUsers();
+        assertEquals(membershipsByUsers.size(), 4);
+
+        //verify user 1 memberships
+        MembershipByUsers user1Membership = membershipsByUsers
+                .stream().filter(m -> m.getUser().getUsername().equals("u1")).findFirst().get();
+        assertEquals(user1Membership.getGroups().size(), 2);
+        assertTrue(user1Membership.getGroups().stream().anyMatch(g -> g.getName().equals("g1")));
+        assertTrue(user1Membership.getGroups().stream().anyMatch(g -> g.getName().equals("g2")));
+
+        //verify user 2 memberships
+        MembershipByUsers user2Membership = membershipsByUsers
+                .stream().filter(m -> m.getUser().getUsername().equals("u2")).findFirst().get();
+        assertEquals(user2Membership.getGroups().size(), 1);
+        assertTrue(user2Membership.getGroups().stream().anyMatch(g -> g.getName().equals("g2")));
+
+        //verify user 3 memberships
+        MembershipByUsers user3Membership = membershipsByUsers
+                .stream().filter(m -> m.getUser().getUsername().equals("u3")).findFirst().get();
+        assertEquals(user3Membership.getGroups().size(), 0);
+
+        //*************VERIFY GROUPS MEMBERSHIPS********************
+
+        //verify that we have 3 groups and their memberships
+        List<MembershipByGroups> membershipsByGroups = membershipApi.findAllGroupedByGroups();
+        assertEquals(membershipsByGroups.size(), 3);
+
+        //verify group 1 memberships
+        MembershipByGroups group1Membership = membershipsByGroups
+                .stream().filter(m -> m.getGroup().getName().equals("g1")).findFirst().get();
+        assertEquals(group1Membership.getUsers().size(), 1);
+        assertTrue(group1Membership.getUsers().stream().anyMatch(u -> u.getUsername().equals("u1")));
+
+        //verify group 2 memberships
+        MembershipByGroups group2Membership = membershipsByGroups
+                .stream().filter(m -> m.getGroup().getName().equals("g2")).findFirst().get();
+        assertEquals(group2Membership.getUsers().size(), 2);
+        assertTrue(group2Membership.getUsers().stream().anyMatch(u -> u.getUsername().equals("u1")));
+        assertTrue(group2Membership.getUsers().stream().anyMatch(g -> g.getUsername().equals("u2")));
+
+        //verify group 3 memberships
+        MembershipByGroups group3Membership = membershipsByGroups
+                .stream().filter(m -> m.getGroup().getName().equals("g3")).findFirst().get();
+        assertEquals(group3Membership.getUsers().size(), 0);
+    }
+
+    @Test()
     public void testCreateMembershipNegativeScenario() throws ApiException, IOException {
         UserApi userApi = new UserApi(getApiClient());
         GroupApi groupApi = new GroupApi(getApiClient());

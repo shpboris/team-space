@@ -1,17 +1,21 @@
 package org.teamspace.membership.service.impl;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.teamspace.auth.domain.User;
+import org.teamspace.groups.domain.Group;
 import org.teamspace.membership.dao.MembershipsDao;
-import org.teamspace.membership.domain.Membership;
+import org.teamspace.membership.domain.*;
 import org.teamspace.membership.service.MembershipsService;
+import org.teamspace.persistence.common.utils.PersistenceUtils;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
+import static java.util.stream.Collectors.*;
 import static org.teamspace.persistence.common.CommonConstants.TX_MANAGER;
 
 /**
@@ -26,6 +30,44 @@ public class MembershipsServiceImpl implements MembershipsService{
     @Override
     public List<Membership> findAll() {
         return membershipsDao.findAll();
+    }
+
+    @Override
+    public List<MembershipByUsers> findAllGroupedByUsers() {
+        List<Membership> memberships = membershipsDao.findAllGroupedByUsers();
+        List<MembershipByUsers> membershipByUsersList = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(memberships)){
+            Map<User, List<Group>> userGroups = memberships
+                    .stream()
+                    .collect(groupingBy(membership -> membership.getUser(),
+                            mapping(membership -> membership.getGroup(), toList())));
+
+            userGroups.keySet()
+                    .stream()
+                    .forEach(user -> {
+                        membershipByUsersList.add(new MembershipByUsers(user,
+                                PersistenceUtils.normalizeJoinedList(userGroups.get(user))));
+                    });
+        }
+        return membershipByUsersList;
+    }
+
+    @Override
+    public List<MembershipByGroups> findAllGroupedByGroups() {
+        List<Membership> memberships = membershipsDao.findAllGroupedByGroups();
+        List<MembershipByGroups> membershipByGroupsList = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(memberships)){
+            Map<Group, List<User>> groupUsers = memberships
+                    .stream()
+                    .collect(groupingBy(membership -> membership.getGroup(),
+                            mapping(membership -> membership.getUser(), toList())));
+
+            groupUsers.keySet()
+                    .stream()
+                    .forEach(group -> membershipByGroupsList.add(new MembershipByGroups(group,
+                            PersistenceUtils.normalizeJoinedList(groupUsers.get(group)))));
+        }
+        return membershipByGroupsList;
     }
 
     @Override

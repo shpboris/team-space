@@ -3,8 +3,6 @@
 Make a full commit flow with Jenkins, Git and integration tests
 3.
 Infra for different databases on top of Mybatis
-4.
-Add groups module and implement some join logic between users and groups
 7.
 Add performance tests vs MySql DB
 8.
@@ -14,7 +12,8 @@ Spring batch - add item reader/writer/processor
 19.
 Spring batch -
 add more validations for advanced scenarios (like restart/stop not existing job ...)
-add API to get group users and user groups (through some report API ?)
+20.
+Configure Mybatis with XML instead of annotations
 
 *********** deployer app *************
 
@@ -34,15 +33,9 @@ Try free certificates from Let's encrypt for HTTPS
 Finalize flow of standard deploy (no scripts) and advanced deploy
 13.
 Create RPM package for team-space app and use it in deploy
-14.
-Add create RDS flow
-
 20.
 Add enterprise mode deployment with auto scale, load balancer and instance creation through cloud formation template.
 
-21.
-Use maven assembly plugin to produce automatically deployable artifact for
-team space project - team-space.tar.gz
 
 
 

@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
-import org.teamspace.membership.domain.Membership;
+import org.teamspace.membership.domain.*;
 import org.teamspace.membership.service.MembershipsService;
 
 import javax.annotation.security.PermitAll;
@@ -42,6 +42,38 @@ public class MembershipsResource {
             membershipList = membershipsService.findAll();
         } catch (Exception e){
             String errMsg = "Unexpected error occurred when getting all memberships";
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        return Response.status(Response.Status.OK).entity(membershipList).build();
+    }
+
+    @GET
+    @ApiOperation(value = "find all memberships grouped by users",
+            response = MembershipByUsers.class, responseContainer = "list")
+    @Path("/groupedByUsers")
+    public Response findAllGroupedByUsers() {
+        List<MembershipByUsers> membershipList = null;
+        try {
+            membershipList = membershipsService.findAllGroupedByUsers();
+        } catch (Exception e){
+            String errMsg = "Unexpected error occurred when getting all memberships grouped by users";
+            log.error(errMsg, e);
+            throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
+        }
+        return Response.status(Response.Status.OK).entity(membershipList).build();
+    }
+
+    @GET
+    @ApiOperation(value = "find all memberships grouped by groups",
+            response = MembershipByGroups.class, responseContainer = "list")
+    @Path("/groupedByGroups")
+    public Response findAllGroupedByGroups() {
+        List<MembershipByGroups> membershipList = null;
+        try {
+            membershipList = membershipsService.findAllGroupedByGroups();
+        } catch (Exception e){
+            String errMsg = "Unexpected error occurred when getting all memberships grouped by groups";
             log.error(errMsg, e);
             throw new WebApplicationException(errMsg, Response.Status.INTERNAL_SERVER_ERROR);
         }

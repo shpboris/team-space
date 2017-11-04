@@ -1,6 +1,6 @@
 package org.teamspace.membership.service;
 
-import org.teamspace.membership.domain.Membership;
+import org.teamspace.membership.domain.*;
 
 import java.util.List;
 
@@ -9,6 +9,8 @@ import java.util.List;
  */
 public interface MembershipsService {
     List<Membership> findAll();
+    List<MembershipByUsers> findAllGroupedByUsers();
+    List<MembershipByGroups> findAllGroupedByGroups();
     List<Membership> findAllRaw();
     Membership findOne(Integer id);
     Membership findOneByUserIdAndGroupId(Integer userId, Integer groupId);
