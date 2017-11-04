@@ -12,5 +12,5 @@ public class DeployRequest {
     private String artifactName;
     private String user;
     private String password;
-    private String dbMode;
+    protected String dbMode;
 }

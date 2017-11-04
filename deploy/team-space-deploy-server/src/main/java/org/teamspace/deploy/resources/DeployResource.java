@@ -17,6 +17,19 @@ public class DeployResource {
 	private DeployService deployService;
 
 	@ApiOperation(value = "execute deploy", response = DeployResponse.class)
+	@RequestMapping(value = "/deployEnterpriseMode", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE,
+			produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<DeployResponse> deploy(@ApiParam(name = "deployEnterpriseModeRequest", required = true)
+												 @RequestBody DeployEnterpriseModeRequest deployEnterpriseModeRequest) {
+		if(deployEnterpriseModeRequest.getRegion() == null){
+			deployEnterpriseModeRequest.setRegion(DeploymentConstants.DEFAULT_REGION_NAME);
+		}
+		DeployResponse deployResponse = deployService.deploy(deployEnterpriseModeRequest);
+		HttpHeaders httpHeaders = new HttpHeaders();
+		return new ResponseEntity<>(deployResponse, httpHeaders, HttpStatus.CREATED);
+	}
+
+	@ApiOperation(value = "execute deploy", response = DeployResponse.class)
 	@RequestMapping(value = "/deploy", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<DeployResponse> deploy(@ApiParam(name = "deployRequest", required = true)

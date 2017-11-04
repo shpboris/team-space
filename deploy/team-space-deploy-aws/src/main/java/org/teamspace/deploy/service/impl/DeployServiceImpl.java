@@ -44,6 +44,19 @@ public class DeployServiceImpl implements DeployService{
     private String artifactsDir;
 
 
+    @Override
+    public DeployResponse deploy(DeployEnterpriseModeRequest deployEnterpriseModeRequest) {
+        log.info("Started deploy to region: {}, env tag: {}, instances count: {}",
+                deployEnterpriseModeRequest.getRegion(),
+                    deployEnterpriseModeRequest.getEnvTag(), deployEnterpriseModeRequest.getInstancesCount());
+
+        log.info("Completed deploy to region: {}, env tag: {}, instances count: {}",
+                deployEnterpriseModeRequest.getRegion(),
+                deployEnterpriseModeRequest.getEnvTag(), deployEnterpriseModeRequest.getInstancesCount());
+
+        return null;
+    }
+
     //connect to instance like that - ssh -i KeyPair.pem centos@54.149.13.100
     //KeyPair location is C:\Users\shpilb\Desktop\ts-key-pair\KeyPair.pem
     @Override
