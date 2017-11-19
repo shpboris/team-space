@@ -28,7 +28,7 @@
     "EnvTag" : {
       "Description" : "Environment tag",
       "Type" : "String",
-      "ConstraintDescription" : "Must logically represnt an environment"
+      "ConstraintDescription" : "Must logically represent an environment"
     }
   },
 
@@ -74,6 +74,7 @@
       "Type" : "AWS::EC2::VPC",
       "Properties" : {
         "CidrBlock" : "10.0.0.0/16",
+        "EnableDnsHostnames" : true,
         "Tags" : [
           {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "VPC" ] ] }}
         ]
@@ -86,6 +87,7 @@
         "VpcId" : { "Ref" : "VPC" },
         "CidrBlock" : "10.0.0.0/24",
         "AvailabilityZone": { "Fn::Select" : [ 0, { "Fn::GetAZs" : "" } ] },
+        "MapPublicIpOnLaunch" : true,
         "Tags" : [
           {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "PUBLIC_SUBNET" ] ]} }
         ]
@@ -107,6 +109,24 @@
          "VpcId" : { "Ref" : "VPC" },
          "InternetGatewayId" : { "Ref" : "InternetGateway" }
        }
+    },
+
+    "NatGateway" : {
+      "DependsOn" : "AttachGateway",
+      "Type" : "AWS::EC2::NatGateway",
+      "Properties" : {
+        "AllocationId" : { "Fn::GetAtt" : ["EIP", "AllocationId"]},
+        "SubnetId" : { "Ref" : "PublicSubnet"},
+        "Tags" : [
+                  {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "NAT_GATEWAY" ] ]} }
+        ]
+      }
+    },
+    "EIP" : {
+      "Type" : "AWS::EC2::EIP",
+      "Properties" : {
+        "Domain" : "vpc"
+      }
     },
 
     "PublicRouteTable" : {
@@ -156,6 +176,15 @@
         "Tags" : [
           {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "PRIVATE_ROUTE_TABLE_AZ1" ] ]} }
         ]
+      }
+    },
+
+    "PrivateRouteToNatGateway" : {
+      "Type" : "AWS::EC2::Route",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "PrivateRouteTableAz1" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "NatGatewayId" : { "Ref" : "NatGateway" }
       }
     },
 
@@ -249,6 +278,7 @@
         "ImageId" : { "Fn::FindInMap" : [ "AWSRegion2AMI", { "Ref" : "AWS::Region" },"CentOS7x8664withUpdatesHVM" ] },
         "UserData" : { "Fn::Base64" : { "Ref" : "UserData" } },
         "SecurityGroups" : [ { "Ref" : "InstanceSecurityGroup" } ],
+        "IamInstanceProfile" : { "Ref" : "InstanceProfile" },
         "InstanceType" : { "Ref" : "InstanceType" }
       }
     },
@@ -256,20 +286,86 @@
     "InstanceSecurityGroup" : {
       "Type" : "AWS::EC2::SecurityGroup",
       "Properties" : {
-        "GroupDescription" : "Enable HTTP access on the configured port",
+        "GroupDescription" : "Enable HTTP/SSH access on the configured ports",
         "VpcId" : { "Ref" : "VPC" },
-        "SecurityGroupIngress" : [ { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0" } ],
+        "SecurityGroupIngress" : [
+            { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0" } ,
+            { "IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : "0.0.0.0/0" }
+        ],
         "Tags" : [
           {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "INSTANCE_SECURITY_GROUP" ] ]} }
         ]
       }
-    }
+    },
+
+    "InstanceRole": {
+         "Type": "AWS::IAM::Role",
+         "Properties": {
+            "RoleName": {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "ROLE" ] ]},
+            "AssumeRolePolicyDocument": {
+               "Version" : "2012-10-17",
+               "Statement": [ {
+                  "Effect": "Allow",
+                  "Principal": {
+                     "Service": [ "ec2.amazonaws.com" ]
+                  },
+                  "Action": [ "sts:AssumeRole" ]
+               } ]
+            },
+            "Path": "/"
+         }
+     },
+
+     "RolePolicies": {
+         "Type": "AWS::IAM::Policy",
+         "Properties": {
+            "PolicyName": {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "POLICY" ] ]},
+            "PolicyDocument": {
+               "Version" : "2012-10-17",
+               "Statement": [ {
+                  "Effect": "Allow",
+                  "Action": "*",
+                  "Resource": "*"
+               } ]
+            },
+            "Roles": [ {
+               "Ref": "InstanceRole"
+            } ]
+         }
+      },
+
+      "InstanceProfile": {
+         "Type": "AWS::IAM::InstanceProfile",
+         "Properties": {
+            "InstanceProfileName": {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "INSTANCE_PROFILE" ] ]},
+            "Path": "/",
+            "Roles": [ {
+               "Ref": "InstanceRole"
+            } ]
+         }
+      },
+
+      "TempInstance" : {
+         "Type" : "AWS::EC2::Instance",
+         "Properties" : {
+      		"AvailabilityZone" : { "Fn::GetAtt" : [ "PublicSubnet", "AvailabilityZone" ] },
+      		  "SubnetId" : { "Ref" : "PublicSubnet" },
+              "ImageId" : { "Fn::FindInMap" : [ "AWSRegion2AMI", { "Ref" : "AWS::Region" },"CentOS7x8664withUpdatesHVM" ] },
+              "UserData" : { "Fn::Base64" : { "Ref" : "UserData" } },
+              "SecurityGroupIds" : [ { "Ref" : "InstanceSecurityGroup" } ],
+              "IamInstanceProfile" : { "Ref" : "InstanceProfile" },
+              "InstanceType" : { "Ref" : "InstanceType" },
+      		"Tags" : [
+                {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "TEMP_INSTANCE" ] ]} }
+              ]
+            }
+      }
   },
 
   "Outputs" : {
-    "URL" : {
-      "Description" : "URL of the website",
-      "Value" :  { "Fn::Join" : [ "", [ "http://", { "Fn::GetAtt" : [ "ElasticLoadBalancer", "DNSName" ]}]]}
+    "SitePublicDNS" : {
+      "Description" : "Public DNS of the website",
+      "Value" :  { "Fn::GetAtt" : [ "ElasticLoadBalancer", "DNSName" ]}
     }
   }
 }
