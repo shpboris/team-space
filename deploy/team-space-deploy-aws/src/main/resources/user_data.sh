@@ -11,9 +11,16 @@ log=/home/$user$/deployer.log
 touch $log
 echo "Started deploy at: "$(date) >> $log
 
+echo "installing wget at: "$(date +"%T") >> $log
 yum -y install wget
+while ! [ -x /usr/bin/wget ]
+do
+    echo "wget is not installed yet at: "$(date +"%T") >> $log
+    sleep 5
+    yum -y install wget
+done
 echo "wget is finally installed: "$(date +"%T") >> $log
-echo "Completed wget install at: "$(date +"%T") >> $log
+
 yum -y install zip unzip
 echo "Completed zip/unzip install at: "$(date +"%T") >> $log
 yum -y install dos2unix
@@ -74,7 +81,6 @@ chmod +x setup.sh
 dos2unix setup.sh
 
 chown -R $user$:$user$ /home/$user$
-sudo su - $user$
 
 
 if [ $DB_MODE == MYSQL ] || [ $DB_MODE == RDS ]
@@ -92,7 +98,7 @@ fi
 
 
 echo "Completed app extraction, ready to run a setup.sh at: "$(date +"%T") >> $log
-sudo ./setup.sh
+./setup.sh
 
 netstat -ln | grep ":80 " 2>&1 > /dev/null
 while [ $? -ne 0 ]
