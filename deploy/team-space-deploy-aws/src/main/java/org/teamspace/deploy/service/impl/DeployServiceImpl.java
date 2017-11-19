@@ -55,13 +55,13 @@ public class DeployServiceImpl implements DeployService{
                     deployEnterpriseModeRequest.getEnvTag(), deployEnterpriseModeRequest.getInstancesCount());
         initAwsContext(deployEnterpriseModeRequest.getRegion());
         uploadArtifact(deployEnterpriseModeRequest.getArtifactName(), deployEnterpriseModeRequest.getEnvTag());
-        enterpriseDeployManager.createEnvironment(deployEnterpriseModeRequest);
+        DeployResponse deployResponse = enterpriseDeployManager.createEnvironment(deployEnterpriseModeRequest);
         destroyAwsContext();
         log.info("Completed enterprise mode deploy to region: {}, env tag: {}, instances count: {}",
                 deployEnterpriseModeRequest.getRegion(),
                 deployEnterpriseModeRequest.getEnvTag(), deployEnterpriseModeRequest.getInstancesCount());
 
-        return null;
+        return deployResponse;
     }
 
     //connect to instance like that - ssh -i KeyPair.pem centos@54.149.13.100
@@ -90,6 +90,17 @@ public class DeployServiceImpl implements DeployService{
                 .getRegion() + " , env tag: " + deployRequest.getEnvTag());
         return new DeployResponse(createInstanceResponse.getAppInstancePublicDns(),
                 createInstanceResponse.getDbInstancePrivateDns());
+    }
+
+    @Override
+    public void undeploy(UndeployEnterpriseModeRequest undeployEnterpriseModeRequest) {
+        log.info("Started enterprise mode undeploy from region: " + undeployEnterpriseModeRequest
+                .getRegion() + " , env tag: " + undeployEnterpriseModeRequest.getEnvTag());
+        initAwsContext(undeployEnterpriseModeRequest.getRegion());
+        enterpriseDeployManager.destroyEnvironment(undeployEnterpriseModeRequest);
+        destroyAwsContext();
+        log.info("Completed enterprise mode undeploy from region: " + undeployEnterpriseModeRequest
+                .getRegion() + " , env tag: " + undeployEnterpriseModeRequest.getEnvTag());
     }
 
     @Override

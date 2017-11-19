@@ -8,17 +8,17 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.teamspace.aws.client.context.AwsContext;
-import org.teamspace.cloud_formation.service.StackCreatorService;
+import org.teamspace.cloud_formation.service.StackManagerService;
 
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 
-import static org.teamspace.commons.constants.DeploymentConstants.CF_STACK_CREATION_WAIT_TIME_MILLISEC;
+import static org.teamspace.commons.constants.DeploymentConstants.*;
 
 @Service
 @Slf4j
-public class StackCreatorServiceImpl implements StackCreatorService {
+public class StackManagerServiceImpl implements StackManagerService {
 
     @Autowired
     private ResourceLoader resourceLoader;
@@ -89,5 +89,51 @@ public class StackCreatorServiceImpl implements StackCreatorService {
         List<Output> stackOutputs = describeStacksResult.getStacks().get(0).getOutputs();
         return stackOutputs.stream()
                 .filter(output -> output.getOutputKey().equals(outputKey)).findFirst().get().getOutputValue();
+    }
+
+    public void deleteStack(String stackName){
+        log.info("Started deletion of stack {}", stackName);
+        DeleteStackRequest deleteStackRequest = new DeleteStackRequest();
+        deleteStackRequest.withStackName(stackName);
+        AwsContext.getCloudFormationClient().deleteStack(deleteStackRequest);
+        log.info("Completed deletion of stack {}", stackName);
+    }
+
+    public Stack waitForStackDeletion(String stackName, int maxRetriesCount) {
+        log.info("Started waiting for stack deletion completion of stack {}", stackName);
+        List<Stack> stacks = null;
+        Stack stack = null;
+        String stackStatus = null;
+        int retriesCount = 0;
+        boolean isStackDeletionCompleted = false;
+        DescribeStacksRequest describeStacksRequest = new DescribeStacksRequest();
+        describeStacksRequest.withStackName(stackName);
+
+        try {
+            while (!isStackDeletionCompleted && retriesCount < maxRetriesCount) {
+                retriesCount++;
+                Thread.sleep(CF_STACK_CREATION_WAIT_TIME_MILLISEC);
+                try {
+                    stacks = AwsContext.getCloudFormationClient().
+                            describeStacks(describeStacksRequest).getStacks();
+                } catch (Exception e) {
+                    log.warn(e.getMessage());
+                    stack = null;
+                    stackStatus = StackStatus.DELETE_COMPLETE.toString();
+                    break;
+                }
+                stack = stacks.get(0);
+                stackStatus = stack.getStackStatus();
+                if (stackStatus.equals(StackStatus.DELETE_FAILED.toString())
+                        || stackStatus.equals(StackStatus.DELETE_COMPLETE.toString())) {
+                    isStackDeletionCompleted = true;
+                }
+                log.debug("Waiting for stack deletion: attempt #{}, stack status is {}", retriesCount, stackStatus);
+            }
+        } catch (Exception e){
+            throw new RuntimeException("Unable to wait for stack deletion completion", e);
+        }
+        log.info("Finished waiting for stack deletion completion of stack {}, stack status is {}", stackName, stackStatus);
+        return stack;
     }
 }

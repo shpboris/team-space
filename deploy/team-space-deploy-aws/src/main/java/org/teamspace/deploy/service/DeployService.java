@@ -8,5 +8,6 @@ import org.teamspace.deploy.domain.*;
 public interface DeployService {
     public DeployResponse deploy(DeployEnterpriseModeRequest deployEnterpriseModeRequest);
     public DeployResponse deploy(DeployRequest deployRequest);
+    public void undeploy(UndeployEnterpriseModeRequest undeployEnterpriseModeRequest);
     public void undeploy(UndeployRequest undeployRequest);
 }

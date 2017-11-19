@@ -8,10 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
-import org.teamspace.cloud_formation.service.StackCreatorService;
+import org.teamspace.cloud_formation.service.StackManagerService;
 import org.teamspace.commons.utils.AwsEntitiesHelperUtil;
 import org.teamspace.deploy.domain.DeployEnterpriseModeRequest;
 import org.teamspace.deploy.domain.DeployResponse;
+import org.teamspace.deploy.domain.UndeployEnterpriseModeRequest;
 import org.teamspace.deploy.domain.UndeployRequest;
 import org.teamspace.enterprise_setup.service.EnterpriseDeployManager;
 
@@ -32,26 +33,30 @@ public class EnterpriseDeployManagerImpl implements EnterpriseDeployManager {
     private ResourceLoader resourceLoader;
 
     @Autowired
-    private StackCreatorService stackCreatorService;
+    private StackManagerService stackManagerService;
 
     @Override
     public DeployResponse createEnvironment(DeployEnterpriseModeRequest deployEnterpriseModeRequest) {
-        String stackName = getStackName(deployEnterpriseModeRequest);
+        String stackName = getStackName(deployEnterpriseModeRequest.getEnvTag());
         List<Parameter> parameters = getStackParameters(deployEnterpriseModeRequest);
-        stackCreatorService.createStack(stackName, ENTERPRISE_MODE_CF_TEMPLATE_CLASSPATH_LOCATION, parameters);
-        Stack stack = stackCreatorService.waitForStackCreation(stackName, ENTERPRISE_MODE_FULL_STACK_CF_MAX_RETRIES);
-        String sitePublicDns = stackCreatorService.getStackOutput(stack, STACK_OUTPUT_SITE_PUBLIC_DNS);
+        stackManagerService.createStack(stackName, ENTERPRISE_MODE_CF_TEMPLATE_CLASSPATH_LOCATION, parameters);
+        Stack stack = stackManagerService.waitForStackCreation(stackName, ENTERPRISE_MODE_FULL_STACK_CF_MAX_RETRIES);
+        String sitePublicDns = stackManagerService.getStackOutput(stack, STACK_OUTPUT_SITE_PUBLIC_DNS);
         DeployResponse deployResponse = new DeployResponse(sitePublicDns, null);
         return deployResponse;
     }
 
     @Override
-    public void destroyEnvironment(UndeployRequest undeployRequest) {
-
+    public void destroyEnvironment(UndeployEnterpriseModeRequest undeployEnterpriseModeRequest) {
+        String stackName = getStackName(undeployEnterpriseModeRequest.getEnvTag());
+        stackManagerService.deleteStack(stackName);
+        if(undeployEnterpriseModeRequest.isWaitForCompletion()) {
+            stackManagerService.waitForStackDeletion(stackName, ENTERPRISE_MODE_FULL_STACK_CF_MAX_RETRIES);
+        }
     }
 
-    private String getStackName(DeployEnterpriseModeRequest deployEnterpriseModeRequest){
-        return String.join("", deployEnterpriseModeRequest.getEnvTag(), "-", FULL_ENV_STACK_NAME);
+    private String getStackName(String envTag){
+        return String.join("", envTag, "-", FULL_ENV_STACK_NAME);
     }
 
     private List<Parameter> getStackParameters(DeployEnterpriseModeRequest deployEnterpriseModeRequest){

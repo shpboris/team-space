@@ -16,7 +16,7 @@ public class DeployResource {
 	@Autowired
 	private DeployService deployService;
 
-	@ApiOperation(value = "execute deploy", response = DeployResponse.class)
+	@ApiOperation(value = "execute enterprise mode deploy", response = DeployResponse.class)
 	@RequestMapping(value = "/deployEnterpriseMode", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<DeployResponse> deploy(@ApiParam(name = "deployEnterpriseModeRequest", required = true)
@@ -42,11 +42,23 @@ public class DeployResource {
 		return new ResponseEntity<>(deployResponse, httpHeaders, HttpStatus.CREATED);
 	}
 
+	@ApiOperation(value = "execute enterprise mode undeploy", response = HttpStatus.class)
+	@RequestMapping(value = "/undeployEnterpriseMode", method = RequestMethod.PUT, consumes = MediaType.APPLICATION_JSON_VALUE,
+			produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<HttpStatus> undeploy(@ApiParam(name = "undeployRequest", required = true)
+											   @RequestBody UndeployEnterpriseModeRequest undeployEnterpriseModeRequest) {
+		if(undeployEnterpriseModeRequest.getRegion() == null){
+			undeployEnterpriseModeRequest.setRegion(DeploymentConstants.DEFAULT_REGION_NAME);
+		}
+		deployService.undeploy(undeployEnterpriseModeRequest);
+		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+	}
+
 	@ApiOperation(value = "execute undeploy", response = HttpStatus.class)
 	@RequestMapping(value = "/undeploy", method = RequestMethod.PUT, consumes = MediaType.APPLICATION_JSON_VALUE,
 			produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<HttpStatus> undeploy(@ApiParam(name = "undeployRequest", required = true)
-												 @RequestBody UndeployRequest undeployRequest) {
+											   @RequestBody UndeployRequest undeployRequest) {
 		if(undeployRequest.getRegion() == null){
 			undeployRequest.setRegion(DeploymentConstants.DEFAULT_REGION_NAME);
 		}
