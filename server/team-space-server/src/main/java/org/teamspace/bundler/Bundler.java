@@ -6,6 +6,7 @@ import org.teamspace.auth.resources.TokenProviderResource;
 import org.teamspace.data_import.resources.DataImportResource;
 import org.teamspace.groups.resources.GroupsResource;
 import org.teamspace.membership.resources.MembershipsResource;
+import org.teamspace.server_details.resources.ServerResource;
 import org.teamspace.users.resources.UserResource;
 
 /**
@@ -23,6 +24,8 @@ public class Bundler {
     private GroupsResource groupsResource;
     @Autowired
     private MembershipsResource membershipsResource;
+    @Autowired
+    private ServerResource serverResource;
 
     public Object[] getAllResources() {
         return new Object[]{
@@ -30,7 +33,8 @@ public class Bundler {
                 userResource,
                 groupsResource,
                 membershipsResource,
-                dataImportResource
+                dataImportResource,
+                serverResource
         };
     }
 }

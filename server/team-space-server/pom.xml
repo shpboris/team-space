@@ -48,6 +48,7 @@
                                 <location>org.teamspace.membership.resources</location>
                                 <location>org.teamspace.auth.resources</location>
                                 <location>org.teamspace.data_import.resources</location>
+                                <location>org.teamspace.server_details.resources</location>
                             </locations>
                             <info>
                                 <title>Team Space Rest API Document</title>
