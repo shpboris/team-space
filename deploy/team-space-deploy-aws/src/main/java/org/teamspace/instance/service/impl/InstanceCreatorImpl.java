@@ -140,7 +140,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
         boolean isStackCreationCompleted = false;
         while (!isStackCreationCompleted && retriesCount < RDS_CF_MAX_RETRIES) {
             retriesCount++;
-            Thread.sleep(RDS_CF_WAIT_TIME_MILLISEC);
+            Thread.sleep(CF_STACK_CREATION_WAIT_TIME_MILLISEC);
             stack = AwsContext.getCloudFormationClient().
                     describeStacks(describeStacksRequest).getStacks().get(0);
             if (stack.getStackStatus().equals(StackStatus.CREATE_COMPLETE.toString()) ||

@@ -12,6 +12,7 @@ import org.teamspace.aws.client.context.AwsContext;
 import org.teamspace.commons.utils.AwsEntitiesHelperUtil;
 import org.teamspace.deploy.domain.*;
 import org.teamspace.deploy.service.DeployService;
+import org.teamspace.enterprise_setup.service.EnterpriseDeployManager;
 import org.teamspace.instance.domain.*;
 import org.teamspace.instance.service.InstanceManager;
 import org.teamspace.network.domain.*;
@@ -39,6 +40,9 @@ public class DeployServiceImpl implements DeployService{
     @Autowired
     private InstanceManager instanceManager;
 
+    @Autowired
+    private EnterpriseDeployManager enterpriseDeployManager;
+
 
     @Value("${artifactsDir}")
     private String artifactsDir;
@@ -46,11 +50,14 @@ public class DeployServiceImpl implements DeployService{
 
     @Override
     public DeployResponse deploy(DeployEnterpriseModeRequest deployEnterpriseModeRequest) {
-        log.info("Started deploy to region: {}, env tag: {}, instances count: {}",
+        log.info("Started enterprise mode deploy to region: {}, env tag: {}, instances count: {}",
                 deployEnterpriseModeRequest.getRegion(),
                     deployEnterpriseModeRequest.getEnvTag(), deployEnterpriseModeRequest.getInstancesCount());
-
-        log.info("Completed deploy to region: {}, env tag: {}, instances count: {}",
+        initAwsContext(deployEnterpriseModeRequest.getRegion());
+        uploadArtifact(deployEnterpriseModeRequest.getArtifactName(), deployEnterpriseModeRequest.getEnvTag());
+        enterpriseDeployManager.createEnvironment(deployEnterpriseModeRequest);
+        destroyAwsContext();
+        log.info("Completed enterprise mode deploy to region: {}, env tag: {}, instances count: {}",
                 deployEnterpriseModeRequest.getRegion(),
                 deployEnterpriseModeRequest.getEnvTag(), deployEnterpriseModeRequest.getInstancesCount());
 

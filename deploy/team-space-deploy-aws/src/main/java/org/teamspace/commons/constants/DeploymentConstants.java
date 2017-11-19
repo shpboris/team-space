@@ -29,7 +29,8 @@ public class DeploymentConstants {
     public static final int MAX_RETRIES = 12;
     public static final int WAIT_TIME_MILLISEC = 10000;
     public static final int RDS_CF_MAX_RETRIES = 30;
-    public static final int RDS_CF_WAIT_TIME_MILLISEC = 60000;
+    public static final int ENTERPRISE_MODE_FULL_STACK_CF_MAX_RETRIES = 30;
+    public static final int CF_STACK_CREATION_WAIT_TIME_MILLISEC = 60000;
     public static final int TIMEOUT_MILLISEC = 30000;
     public static final String INSTANCE_STATE_RUNNING = "running";
     public static final String INSTANCE_STATE_PENDING = "pending";
@@ -54,7 +55,7 @@ public class DeploymentConstants {
     public static final String DB_NAME = "$dbname$";
     public static final String DB_URL_TEMPLATE = "jdbc:mysql://$dbhost$:3306/$dbname$";
     public static final String DEFAULT_REGION_NAME = Regions.DEFAULT_REGION.toString();
-    public static final boolean OVERRIDE_EXISTING_ARTIFACT = true;
+    public static final boolean OVERRIDE_EXISTING_ARTIFACT = false;
     public static final String ARTIFACT_EXTENSION = ".tar.gz";
 
     public static final String STACK_PARAMS_SUBNETS_KEY = "Subnets";
@@ -65,6 +66,10 @@ public class DeploymentConstants {
     public static final String STACK_PARAMS_DB_CLASS_KEY = "DBClass";
     public static final String STACK_PARAMS_DB_ALLOCATED_STORAGE_KEY = "DBAllocatedStorage";
 
+    public static final String STACK_PARAMS_ENV_TAG_KEY = "EnvTag";
+    public static final String STACK_PARAMS_INSTANCE_TYPE_KEY = "InstanceType";
+    public static final String STACK_PARAMS_INSTANCE_COUNT_KEY = "InstanceCount";
+    public static final String STACK_PARAMS_USER_DATA_KEY = "UserData";
 
-
+    public static final String STACK_OUTPUT_SITE_PUBLIC_DNS = "SitePublicDNS";
 }

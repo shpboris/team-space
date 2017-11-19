@@ -71,7 +71,7 @@ public class InstanceDestroyerImpl implements InstanceDestroyer {
         boolean isStackDeletionCompleted = false;
         while (!isStackDeletionCompleted && retriesCount < RDS_CF_MAX_RETRIES) {
             retriesCount++;
-            Thread.sleep(RDS_CF_WAIT_TIME_MILLISEC);
+            Thread.sleep(CF_STACK_CREATION_WAIT_TIME_MILLISEC);
             try {
                 stacks = AwsContext.getCloudFormationClient().
                         describeStacks(describeStacksRequest).getStacks();
