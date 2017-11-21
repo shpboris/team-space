@@ -55,8 +55,12 @@ public class DeploymentConstants {
     public static final String DB_NAME = "$dbname$";
     public static final String DB_URL_TEMPLATE = "jdbc:mysql://$dbhost$:3306/$dbname$";
     public static final String DEFAULT_REGION_NAME = Regions.DEFAULT_REGION.toString();
-    public static final boolean OVERRIDE_EXISTING_ARTIFACT = true;
+    public static final boolean OVERRIDE_EXISTING_ARTIFACT = false;
     public static final String ARTIFACT_EXTENSION = ".tar.gz";
+
+    public static final String NETWORK_STACK_NAME = "NETWORK-STACK";
+    public static final String RDS_STACK_NAME = "RDS-STACK";
+    public static final String INSTANCES_STACK_NAME = "INSTANCES-STACK";
 
     public static final String STACK_PARAMS_SUBNETS_KEY = "Subnets";
     public static final String STACK_PARAMS_DB_SECURITY_GROUP_KEY = "DBSecurityGroup";
@@ -70,6 +74,16 @@ public class DeploymentConstants {
     public static final String STACK_PARAMS_INSTANCE_TYPE_KEY = "InstanceType";
     public static final String STACK_PARAMS_INSTANCE_COUNT_KEY = "InstanceCount";
     public static final String STACK_PARAMS_USER_DATA_KEY = "UserData";
+    public static final String STACK_PARAMS_VPC_ID_KEY = "VpcId";
+    public static final String STACK_PARAMS_PUBLIC_SUBNET_ID_KEY = "PublicSubnetId";
+    public static final String STACK_PARAMS_PRIVATE_SUBNET_AZ1_ID_KEY = "PrivateSubnetAz1Id";
+    public static final String STACK_PARAMS_PRIVATE_SUBNET_AZ2_ID_KEY = "PrivateSubnetAz2Id";
 
-    public static final String STACK_OUTPUT_SITE_PUBLIC_DNS = "SitePublicDNS";
+    public static final String STACK_OUTPUT_SITE_PUBLIC_DNS_KEY = "SitePublicDNS";
+    public static final String STACK_OUTPUT_VPC_ID_KEY = "VpcId";
+    public static final String STACK_OUTPUT_PUBLIC_SUBNET_ID_KEY = "PublicSubnetId";
+    public static final String STACK_OUTPUT_PRIVATE_SUBNET_AZ1_ID_KEY = "PrivateSubnetAz1Id";
+    public static final String STACK_OUTPUT_PRIVATE_SUBNET_AZ2_ID_KEY = "PrivateSubnetAz2Id";
+    public static final String STACK_OUTPUT_DB_PRIVATE_DNS_KEY = "DBPrivateDns";
+
 }

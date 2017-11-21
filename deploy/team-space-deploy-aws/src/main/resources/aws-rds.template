@@ -3,9 +3,9 @@
 
   "Parameters" : {
 
-    "DBSecurityGroup": {
+    "VpcId": {
         "Type": "String",
-        "Description": "Security Group id"
+        "Description": "The id of the VPC"
     },
 
     "Subnets" : {
@@ -68,6 +68,12 @@
       "MinValue": "5",
       "MaxValue": "1024",
       "ConstraintDescription" : "must be between 5 and 1024Gb."
+    },
+
+    "EnvTag" : {
+          "Description" : "Environment tag",
+          "Type" : "String",
+          "ConstraintDescription" : "Must logically represent an environment"
     }
   },
 
@@ -94,7 +100,21 @@
         "DBSubnetGroupName" : { "Ref" : "MyDBSubnetGroup" },
         "VPCSecurityGroups" : [ { "Ref" : "DBSecurityGroup" }  ]
       }
-    }
+    },
+
+    "DBSecurityGroup" : {
+        "Type" : "AWS::EC2::SecurityGroup",
+        "Properties" : {
+          "GroupDescription" : "Enable MySQL access on the configured ports",
+          "VpcId" : { "Ref" : "VpcId" },
+          "SecurityGroupIngress" : [
+              { "IpProtocol" : "tcp", "FromPort" : "3306", "ToPort" : "3306", "CidrIp" : "0.0.0.0/0" }
+          ],
+          "Tags" : [
+            {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "MYSQL_SECURITY_GROUP" ] ]} }
+          ]
+        }
+      }
   },
 
   "Outputs" : {
