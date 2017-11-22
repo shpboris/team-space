@@ -1,7 +1,6 @@
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
-
-  "Description" : "AWS CloudFormation for creation VPC and subnets",
+  "Description" : "AWS CloudFormation template VPC and subnets creation",
 
   "Parameters" : {
 

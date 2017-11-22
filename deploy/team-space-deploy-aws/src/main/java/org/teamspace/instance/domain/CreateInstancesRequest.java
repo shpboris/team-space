@@ -10,6 +10,7 @@ import lombok.Data;
 @AllArgsConstructor
 public class CreateInstancesRequest {
     private String envTag;
+    private String vpcId;
     private String publicSubnetId;
     private String privateSubnetIdFirstAz;
     private String privateSubnetIdSecondAz;

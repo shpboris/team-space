@@ -16,6 +16,7 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 import org.teamspace.aws.client.context.AwsContext;
 import org.teamspace.commons.components.TagCreator;
+import org.teamspace.commons.components.UserDataHelper;
 import org.teamspace.commons.utils.AwsEntitiesHelperUtil;
 import org.teamspace.instance.domain.CreateInstancesRequest;
 import org.teamspace.instance.domain.CreateInstancesResponse;
@@ -31,6 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.teamspace.commons.constants.DeploymentConstants.*;
+import static org.teamspace.commons.utils.DbHelperUtil.getDbNormalizedName;
 
 /**
  * Created by shpilb on 20/05/2017.
@@ -44,6 +46,9 @@ public class InstanceCreatorImpl implements InstanceCreator {
 
     @Autowired
     private ResourceLoader resourceLoader;
+
+    @Autowired
+    private UserDataHelper userDataHelper;
 
 
     @Override
@@ -118,7 +123,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
     private String createStack(CreateInstancesRequest createInstanceRequest) throws Exception{
         log.info("Started stack creation");
         CreateStackRequest createStackRequest = new CreateStackRequest();
-        String stackName = createInstanceRequest.getEnvTag() + "-" + "STACK";
+        String stackName = createInstanceRequest.getEnvTag() + "-" + RDS_STACK_NAME;
         log.debug("Stack names is {}", stackName);
         createStackRequest.setStackName(stackName);
         createStackRequest.setParameters(getStackParameters(createInstanceRequest));
@@ -166,10 +171,12 @@ public class InstanceCreatorImpl implements InstanceCreator {
     private List<Parameter> getStackParameters(CreateInstancesRequest createInstanceRequest){
         String subnetsList = String.join(",",createInstanceRequest.getPrivateSubnetIdFirstAz(),
                 createInstanceRequest.getPrivateSubnetIdSecondAz());
+        Parameter envTag = new Parameter()
+                .withParameterKey(STACK_PARAMS_ENV_TAG_KEY).withParameterValue(createInstanceRequest.getEnvTag());
+        Parameter vpcId = new Parameter()
+                .withParameterKey(STACK_PARAMS_VPC_ID_KEY).withParameterValue(createInstanceRequest.getVpcId());
         Parameter subnets = new Parameter()
                 .withParameterKey(STACK_PARAMS_SUBNETS_KEY).withParameterValue(subnetsList);
-        Parameter securityGroup = new Parameter()
-                .withParameterKey(STACK_PARAMS_DB_SECURITY_GROUP_KEY).withParameterValue(createInstanceRequest.getSecurityGroupId());
         String dbNormalizedName = getDbNormalizedName(createInstanceRequest.getArtifactName());
         Parameter dbName = new Parameter().withParameterKey(STACK_PARAMS_DB_NAME_KEY)
                 .withParameterValue(dbNormalizedName);
@@ -178,7 +185,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
         Parameter dbPassword = new Parameter().withParameterKey(STACK_PARAMS_DB_PASSWORD_KEY)
                 .withParameterValue(createInstanceRequest.getPassword());
 
-        return Arrays.asList(subnets, securityGroup, dbName, dbUsername, dbPassword);
+        return Arrays.asList(envTag, vpcId, subnets, dbName, dbUsername, dbPassword);
     }
 
     private CreateInstancesResponse createMySqlDbInstance(CreateInstancesRequest createInstanceRequest) {
@@ -208,7 +215,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
                 .withKeyName(keyPair.getKeyName())
                 .withSecurityGroupIds(securityGroupId)
                 .withSubnetId(subnetId)
-                .withUserData(getUserDataScript(tarName, regionName, bucketName, dbMode, dbInstancePrivateDns, user, password))
+                .withUserData(userDataHelper.getUserDataScript(tarName, regionName, bucketName, dbMode, dbInstancePrivateDns, user, password, true))
                 .withIamInstanceProfile(new IamInstanceProfileSpecification().withName(instanceProfileName))
                 .withMinCount(1)
                 .withBlockDeviceMappings(new BlockDeviceMapping().withDeviceName(BLOCK_DEVICE_NAME)
@@ -236,7 +243,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
                 .withKeyName(keyPair.getKeyName())
                 .withSecurityGroupIds(securityGroupId)
                 .withSubnetId(subnetId)
-                .withUserData(getDbUserDataScript(tarFileName, user, password))
+                .withUserData(userDataHelper.getDbUserDataScript(tarFileName, user, password))
                 .withMinCount(1)
                 .withBlockDeviceMappings(new BlockDeviceMapping().withDeviceName(BLOCK_DEVICE_NAME)
                         .withEbs(new EbsBlockDevice().withDeleteOnTermination(true)))
@@ -349,72 +356,6 @@ public class InstanceCreatorImpl implements InstanceCreator {
         String amiId = images.get(images.size() - 1).getImageId();
         log.info("AMI id: " + amiId);
         return amiId;
-    }
-
-
-    private String getUserDataScript(String tarFileName, String regionName, String bucketName, String dbMode, String dbInstancePrivateDns, String user, String password){
-        log.info("Getting user data script ...");
-        String userDataScript = null;
-        InputStream inputStream = null;
-        try {
-            Resource resource = resourceLoader.getResource("classpath:user_data.sh");
-            inputStream = resource.getInputStream();
-            userDataScript = IOUtils.toString(inputStream, "UTF-8");
-            userDataScript = userDataScript.replace(TAR_FILE_NAME, tarFileName);
-            userDataScript = userDataScript.replace(REGION_NAME, regionName);
-            userDataScript = userDataScript.replace(BUCKET_NAME, bucketName);
-            userDataScript = userDataScript.replace(USER, user);
-            userDataScript = userDataScript.replace(PASSWORD, password);
-            userDataScript = userDataScript.replace(DB_MODE, dbMode);
-            if(dbMode.equals(DB_MODE_MYSQL) || dbMode.equals(DB_MODE_RDS)) {
-                userDataScript = userDataScript.replace(DB_HOST, dbInstancePrivateDns);
-                String dbUrl = getDbUrl(dbInstancePrivateDns, tarFileName);
-                userDataScript = userDataScript.replace(DB_URL, dbUrl);
-            }
-        } catch (Exception e){
-            log.error("Unable to read user data", e);
-            throw new RuntimeException("Unable to read user data");
-        } finally {
-            IOUtils.closeQuietly(inputStream);
-        }
-        log.info("Got user data script");
-        log.debug("\n" + userDataScript);
-        userDataScript = new String(Base64.encodeBase64(userDataScript.getBytes()));
-        return userDataScript;
-    }
-
-    private String getDbUserDataScript(String tarFileName, String user, String password){
-        log.info("Getting DB user data script ...");
-        String userDataScript = null;
-        InputStream inputStream = null;
-        try {
-            Resource resource = resourceLoader.getResource("classpath:db_user_data.sh");
-            inputStream = resource.getInputStream();
-            userDataScript = IOUtils.toString(inputStream, "UTF-8");
-            userDataScript = userDataScript.replace(USER, user);
-            userDataScript = userDataScript.replace(PASSWORD, password);
-            userDataScript = userDataScript.replace(DB_NAME, getDbNormalizedName(tarFileName));
-        } catch (Exception e){
-            throw new RuntimeException("Unable to read user data");
-        } finally {
-            IOUtils.closeQuietly(inputStream);
-        }
-        log.info("Got DB user data script");
-        log.debug("\n" + userDataScript);
-        userDataScript = new String(Base64.encodeBase64(userDataScript.getBytes()));
-        return userDataScript;
-    }
-
-    private String getDbUrl(String dbInstancePrivateDns, String tarFileName){
-        String dbUrl = DB_URL_TEMPLATE.replace(DB_HOST, dbInstancePrivateDns);
-        String dbName = getDbNormalizedName(tarFileName);
-        dbUrl = dbUrl.replace(DB_NAME, dbName);
-        return dbUrl;
-    }
-
-    private String getDbNormalizedName(String tarFileName){
-        String dbName = tarFileName.replaceAll("[^a-zA-Z0-9]+","");
-        return  dbName;
     }
 
    private void createInstanceProfile(String name){

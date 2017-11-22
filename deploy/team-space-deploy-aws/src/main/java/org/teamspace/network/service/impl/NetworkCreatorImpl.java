@@ -61,7 +61,7 @@ public class NetworkCreatorImpl implements NetworkCreator{
         authorizeSecurityGroupIngress(securityGroupId, "tcp", HTTPS_PORT, "0.0.0.0/0");
         authorizeSecurityGroupIngress(securityGroupId, "tcp", MYSQL_PORT, "0.0.0.0/0");
         CreateNetworkResponse createNetworkResponse =
-                new CreateNetworkResponse(publicSubnet.getSubnetId(), privateSubnetFirstAz.getSubnetId(),
+                new CreateNetworkResponse(vpc.getVpcId(), publicSubnet.getSubnetId(), privateSubnetFirstAz.getSubnetId(),
                         privateSubnetSecondAz == null ? null : privateSubnetSecondAz.getSubnetId(), securityGroupId);
         log.info("Completed network creation");
         return createNetworkResponse;

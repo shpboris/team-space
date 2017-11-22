@@ -11,6 +11,7 @@ import lombok.experimental.Wither;
 @Wither
 @AllArgsConstructor
 public class CreateNetworkResponse {
+    private String vpcId;
     private String publicSubnetId;
     private String privateSubnetIdFirstAz;
     private String privateSubnetIdSecondAz;

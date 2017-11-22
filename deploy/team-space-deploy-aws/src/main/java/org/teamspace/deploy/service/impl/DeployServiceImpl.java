@@ -77,6 +77,7 @@ public class DeployServiceImpl implements DeployService{
         CreateNetworkResponse createNetworkResponse = networkManager.createNetwork(createNetworkRequest);
         CreateInstancesRequest createInstanceRequest =
                 new CreateInstancesRequest(deployRequest.getEnvTag(),
+                        createNetworkResponse.getVpcId(),
                         createNetworkResponse.getPublicSubnetId(),
                         createNetworkResponse.getPrivateSubnetIdFirstAz(),
                         createNetworkResponse.getPrivateSubnetIdSecondAz(),
