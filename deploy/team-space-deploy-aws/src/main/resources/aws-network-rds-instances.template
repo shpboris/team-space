@@ -1,0 +1,470 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "AWS CloudFormation Sample Template vpc_multiple_subnets.template: Sample template showing how to create a VPC with multiple subnets. The first subnet is public and contains the load balancer, the second subnet is private and contains an EC2 instance behind the load balancer. **WARNING** This template creates an Amazon EC2 instance. You will be billed for the AWS resources used if you create a stack from this template.",
+
+  "Parameters" : {
+
+    "InstanceType" : {
+      "Description" : "WebServer EC2 instance type",
+      "Type" : "String",
+      "Default" : "t2.micro",
+      "AllowedValues" : [ "t1.micro","t2.micro","m1.small","m1.medium","m1.large","m1.xlarge","m2.xlarge","m2.2xlarge","m2.4xlarge","m3.xlarge","m3.2xlarge","c1.medium","c1.xlarge","cc1.4xlarge","cc2.8xlarge","cg1.4xlarge"],
+      "ConstraintDescription" : "Must be a valid EC2 instance type."
+    },
+
+    "InstanceCount" : {
+      "Description" : "Number of EC2 instances to launch",
+      "Type" : "Number",
+      "Default" : "1"
+    },
+
+    "UserData" : {
+      "Description" : "User data script",
+      "Type" : "String",
+      "ConstraintDescription" : "Must be a valid bash script"
+    },
+
+    "EnvTag" : {
+      "Description" : "Environment tag",
+      "Type" : "String",
+      "ConstraintDescription" : "Must logically represent an environment"
+    },
+
+    "DBName": {
+      "Default": "MyDB",
+      "Description" : "The database name",
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "64",
+      "AllowedPattern" : "[a-zA-Z][a-zA-Z0-9]*",
+      "ConstraintDescription" : "Must begin with a letter and contain only alphanumeric characters."
+    },
+
+    "DBUsername": {
+      "Default": "admin",
+      "NoEcho": "true",
+      "Description" : "The database admin account username",
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "16",
+      "AllowedPattern" : "[a-zA-Z][a-zA-Z0-9]*",
+      "ConstraintDescription" : "Must begin with a letter and contain only alphanumeric characters."
+    },
+
+    "DBPassword": {
+      "Default": "admin",
+      "NoEcho": "true",
+      "Description" : "The database admin account password",
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "41",
+      "AllowedPattern" : "[a-zA-Z0-9]*",
+      "ConstraintDescription" : "Must contain only alphanumeric characters."
+    },
+
+    "DBClass" : {
+      "Default" : "db.t2.small",
+      "Description" : "Database instance class",
+      "Type" : "String",
+      "AllowedValues": [
+        "db.r3.large",
+        "db.r3.xlarge",
+        "db.r3.2xlarge",
+        "db.r3.4xlarge",
+        "db.r3.8xlarge",
+        "db.t2.medium",
+        "db.t2.small"
+      ],
+      "ConstraintDescription" : "Must select a valid database instance type."
+    },
+
+    "DBAllocatedStorage" : {
+      "Default": "5",
+      "Description" : "The size of the database (Gb)",
+      "Type": "Number",
+      "MinValue": "5",
+      "MaxValue": "1024",
+      "ConstraintDescription" : "must be between 5 and 1024Gb."
+    }
+  },
+
+  "Mappings" : {
+
+    "AWSRegion2AMI" : {
+          "us-east-1":{
+              "CentOS7x8664withUpdatesHVM":"ami-6d1c2007"
+          },
+          "us-west-2":{
+              "CentOS7x8664withUpdatesHVM":"ami-d2c924b2"
+          },
+          "us-west-1":{
+              "CentOS7x8664withUpdatesHVM":"ami-af4333cf"
+          },
+          "eu-central-1":{
+              "CentOS7x8664withUpdatesHVM":"ami-9bf712f4"
+          },
+          "eu-west-1":{
+              "CentOS7x8664withUpdatesHVM":"ami-7abd0209"
+          },
+          "ap-southeast-1":{
+              "CentOS7x8664withUpdatesHVM":"ami-f068a193"
+          },
+          "ap-southeast-2":{
+              "CentOS7x8664withUpdatesHVM":"ami-fedafc9d"
+          },
+          "ap-northeast-1":{
+              "CentOS7x8664withUpdatesHVM":"ami-eec1c380"
+          },
+          "ap-northeast-2":{
+              "CentOS7x8664withUpdatesHVM":"ami-c74789a9"
+          },
+          "sa-east-1":{
+              "CentOS7x8664withUpdatesHVM":"ami-26b93b4a"
+          }
+    }
+  },
+
+  "Resources" : {
+
+    "VPC" : {
+      "Type" : "AWS::EC2::VPC",
+      "Properties" : {
+        "CidrBlock" : "10.0.0.0/16",
+        "EnableDnsHostnames" : true,
+        "Tags" : [
+          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "VPC" ] ] }}
+        ]
+      }
+    },
+
+    "PublicSubnet" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : "10.0.0.0/24",
+        "AvailabilityZone": { "Fn::Select" : [ 0, { "Fn::GetAZs" : "" } ] },
+        "MapPublicIpOnLaunch" : true,
+        "Tags" : [
+          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "PUBLIC_SUBNET" ] ]} }
+        ]
+      }
+    },
+
+    "InternetGateway" : {
+      "Type" : "AWS::EC2::InternetGateway",
+      "Properties" : {
+        "Tags" : [
+          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "GATEWAY" ] ]} }
+        ]
+      }
+    },
+
+    "AttachGateway" : {
+       "Type" : "AWS::EC2::VPCGatewayAttachment",
+       "Properties" : {
+         "VpcId" : { "Ref" : "VPC" },
+         "InternetGatewayId" : { "Ref" : "InternetGateway" }
+       }
+    },
+
+    "NatGateway" : {
+      "DependsOn" : "AttachGateway",
+      "Type" : "AWS::EC2::NatGateway",
+      "Properties" : {
+        "AllocationId" : { "Fn::GetAtt" : ["EIP", "AllocationId"]},
+        "SubnetId" : { "Ref" : "PublicSubnet"},
+        "Tags" : [
+                  {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "NAT_GATEWAY" ] ]} }
+        ]
+      }
+    },
+    "EIP" : {
+      "Type" : "AWS::EC2::EIP",
+      "Properties" : {
+        "Domain" : "vpc"
+      }
+    },
+
+    "PublicRouteTable" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : {"Ref" : "VPC"},
+        "Tags" : [
+          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "PUBLIC_ROUTE_TABLE" ] ]} }
+        ]
+      }
+    },
+
+    "PublicRoute" : {
+      "Type" : "AWS::EC2::Route",
+      "DependsOn" : "AttachGateway",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "PublicRouteTable" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "GatewayId" : { "Ref" : "InternetGateway" }
+      }
+    },
+
+    "PublicSubnetRouteTableAssociation" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PublicSubnet" },
+        "RouteTableId" : { "Ref" : "PublicRouteTable" }
+      }
+    },
+
+    "PrivateSubnetAz1" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : "10.0.1.0/24",
+        "AvailabilityZone": { "Fn::Select" : [ 0, { "Fn::GetAZs" : "" } ] },
+        "Tags" : [
+          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "PRIVATE_SUBNET_AZ1" ] ]} }
+        ]
+      }
+    },
+
+    "PrivateRouteTableAz1" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : {"Ref" : "VPC"},
+        "Tags" : [
+          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "PRIVATE_ROUTE_TABLE_AZ1" ] ]} }
+        ]
+      }
+    },
+
+    "PrivateRouteToNatGateway" : {
+      "Type" : "AWS::EC2::Route",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "PrivateRouteTableAz1" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "NatGatewayId" : { "Ref" : "NatGateway" }
+      }
+    },
+
+    "PrivateSubnetAz1RouteTableAssociation" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PrivateSubnetAz1" },
+        "RouteTableId" : { "Ref" : "PrivateRouteTableAz1" }
+      }
+    },
+
+    "PrivateSubnetAz2" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : "10.0.2.0/24",
+        "AvailabilityZone": { "Fn::Select" : [ 1, { "Fn::GetAZs" : "" } ] },
+        "Tags" : [
+          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "PRIVATE_SUBNET_AZ2" ] ]} }
+        ]
+      }
+    },
+
+    "PrivateRouteTableAz2" : {
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : {"Ref" : "VPC"},
+        "Tags" : [
+          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "PRIVATE_ROUTE_TABLE_AZ2" ] ]} }
+        ]
+      }
+    },
+
+    "PrivateSubnetAz2RouteTableAssociation" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PrivateSubnetAz2" },
+        "RouteTableId" : { "Ref" : "PrivateRouteTableAz2" }
+      }
+    },
+
+    "ElasticLoadBalancer" : {
+      "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
+      "Properties" : {
+        "SecurityGroups" : [ { "Ref" : "LoadBalancerSecurityGroup" } ],
+        "Subnets" : [ { "Ref" : "PublicSubnet" } ],
+        "Listeners" : [ { "LoadBalancerPort" : "80", "InstancePort" : "80", "Protocol" : "HTTP" } ],
+        "HealthCheck" : {
+          "Target" : "HTTP:80/",
+          "HealthyThreshold" : "3",
+          "UnhealthyThreshold" : "5",
+          "Interval" : "90",
+          "Timeout" : "60"
+        },
+        "Tags" : [
+          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "LOAD_BALANCER" ] ]} }
+        ]
+      }
+    },
+
+    "LoadBalancerSecurityGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "GroupDescription" : "Enable HTTP access on port 80",
+        "VpcId" : { "Ref" : "VPC" },
+        "SecurityGroupIngress" : [ { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0" } ],
+        "SecurityGroupEgress" : [ { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0"} ],
+        "Tags" : [
+          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "LB_SECURITY_GROUP" ] ]} }
+        ]
+      }
+    },
+
+    "WebServerGroup" : {
+      "Type" : "AWS::AutoScaling::AutoScalingGroup",
+      "Properties" : {
+        "AvailabilityZones" : [{ "Fn::GetAtt" : [ "PrivateSubnetAz1", "AvailabilityZone" ] }],
+        "VPCZoneIdentifier" : [{ "Ref" : "PrivateSubnetAz1" }],
+        "LaunchConfigurationName" : { "Ref" : "LaunchConfig" },
+        "MinSize" : "1",
+        "MaxSize" : "3",
+        "DesiredCapacity" : { "Ref" : "InstanceCount" },
+        "LoadBalancerNames" : [ { "Ref" : "ElasticLoadBalancer" } ],
+        "Tags" : [ {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "APP_INSTANCE" ] ]}, "PropagateAtLaunch" : "true" } ]
+      }
+    },
+
+    "LaunchConfig" : {
+      "Type" : "AWS::AutoScaling::LaunchConfiguration",
+      "Properties" : {
+        "ImageId" : { "Fn::FindInMap" : [ "AWSRegion2AMI", { "Ref" : "AWS::Region" },"CentOS7x8664withUpdatesHVM" ] },
+        "UserData" : { "Fn::Base64" : {"Fn::Join" : [ "\n", [ "#! /bin/bash",
+        											{"Fn::Join" : [ "", [ "dbhost=", { "Fn::GetAtt":["MyDB","Endpoint.Address"] }] ]},
+        											{"Ref" : "UserData" } ] ]} },
+        "SecurityGroups" : [ { "Ref" : "InstanceSecurityGroup" } ],
+        "IamInstanceProfile" : { "Ref" : "InstanceProfile" },
+        "InstanceType" : { "Ref" : "InstanceType" }
+      },
+      "DependsOn" : "MyDB"
+    },
+
+    "InstanceSecurityGroup" : {
+      "Type" : "AWS::EC2::SecurityGroup",
+      "Properties" : {
+        "GroupDescription" : "Enable HTTP/SSH access on the configured ports",
+        "VpcId" : { "Ref" : "VPC" },
+        "SecurityGroupIngress" : [
+            { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0" } ,
+            { "IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : "0.0.0.0/0" }
+        ],
+        "Tags" : [
+          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "INSTANCE_SECURITY_GROUP" ] ]} }
+        ]
+      }
+    },
+
+    "InstanceRole": {
+         "Type": "AWS::IAM::Role",
+         "Properties": {
+            "RoleName": {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "ROLE" ] ]},
+            "AssumeRolePolicyDocument": {
+               "Version" : "2012-10-17",
+               "Statement": [ {
+                  "Effect": "Allow",
+                  "Principal": {
+                     "Service": [ "ec2.amazonaws.com" ]
+                  },
+                  "Action": [ "sts:AssumeRole" ]
+               } ]
+            },
+            "Path": "/"
+         }
+     },
+
+     "RolePolicies": {
+         "Type": "AWS::IAM::Policy",
+         "Properties": {
+            "PolicyName": {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "POLICY" ] ]},
+            "PolicyDocument": {
+               "Version" : "2012-10-17",
+               "Statement": [ {
+                  "Effect": "Allow",
+                  "Action": "*",
+                  "Resource": "*"
+               } ]
+            },
+            "Roles": [ {
+               "Ref": "InstanceRole"
+            } ]
+         }
+      },
+
+      "InstanceProfile": {
+         "Type": "AWS::IAM::InstanceProfile",
+         "Properties": {
+            "InstanceProfileName": {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "INSTANCE_PROFILE" ] ]},
+            "Path": "/",
+            "Roles": [ {
+               "Ref": "InstanceRole"
+            } ]
+         }
+      },
+
+      "MyDBSubnetGroup" : {
+        "Type" : "AWS::RDS::DBSubnetGroup",
+        "Properties" : {
+          "DBSubnetGroupDescription" : "Subnets available for the RDS DB Instance",
+          "SubnetIds" : [{ "Ref" : "PrivateSubnetAz1" }, { "Ref" : "PrivateSubnetAz2" } ]
+        }
+      },
+
+      "MyDB" : {
+        "Type" : "AWS::RDS::DBInstance",
+        "Properties" : {
+          "DBName" : { "Ref" : "DBName" },
+          "AllocatedStorage" : { "Ref" : "DBAllocatedStorage" },
+          "DBInstanceClass" : { "Ref" : "DBClass" },
+          "Engine" : "MySQL",
+          "EngineVersion" : "5.5",
+          "MasterUsername" : { "Ref" : "DBUsername" } ,
+          "MasterUserPassword" : { "Ref" : "DBPassword" },
+          "DBSubnetGroupName" : { "Ref" : "MyDBSubnetGroup" },
+          "VPCSecurityGroups" : [ { "Ref" : "DBSecurityGroup" }  ]
+        }
+      },
+
+      "DBSecurityGroup" : {
+        "Type" : "AWS::EC2::SecurityGroup",
+        "Properties" : {
+          "GroupDescription" : "Enable MySQL access on the configured ports",
+          "VpcId" : { "Ref" : "VPC" },
+          "SecurityGroupIngress" : [
+              { "IpProtocol" : "tcp", "FromPort" : "3306", "ToPort" : "3306", "CidrIp" : "0.0.0.0/0" }
+          ],
+          "Tags" : [
+            {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "MYSQL_SECURITY_GROUP" ] ]} }
+          ]
+        }
+      },
+
+      "TempInstance" : {
+         "Type" : "AWS::EC2::Instance",
+         "Properties" : {
+      		"AvailabilityZone" : { "Fn::GetAtt" : [ "PublicSubnet", "AvailabilityZone" ] },
+      		  "SubnetId" : { "Ref" : "PublicSubnet" },
+              "ImageId" : { "Fn::FindInMap" : [ "AWSRegion2AMI", { "Ref" : "AWS::Region" },"CentOS7x8664withUpdatesHVM" ] },
+              "UserData" : { "Fn::Base64" : {"Fn::Join" : [ "\n", [ "#! /bin/bash",
+                      											{"Fn::Join" : [ "", [ "dbhost=", { "Fn::GetAtt":["MyDB","Endpoint.Address"] }] ]},
+                      											{"Ref" : "UserData" } ] ]} },
+              "SecurityGroupIds" : [ { "Ref" : "InstanceSecurityGroup" } ],
+              "IamInstanceProfile" : { "Ref" : "InstanceProfile" },
+              "InstanceType" : { "Ref" : "InstanceType" },
+      		"Tags" : [
+                {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "TEMP_INSTANCE" ] ]} }
+              ]
+            }
+      }
+  },
+
+  "Outputs" : {
+    "SitePublicDNS" : {
+      "Description" : "Public DNS of the website",
+      "Value" :  { "Fn::GetAtt" : [ "ElasticLoadBalancer", "DNSName" ]}
+    }
+  }
+}

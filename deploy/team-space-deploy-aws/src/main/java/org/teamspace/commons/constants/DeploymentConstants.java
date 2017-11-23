@@ -58,6 +58,7 @@ public class DeploymentConstants {
     public static final boolean OVERRIDE_EXISTING_ARTIFACT = false;
     public static final String ARTIFACT_EXTENSION = ".tar.gz";
 
+    public static final String NETWORK_RDS_INSTANCES_STACK_NAME = "NETWORK-RDS-INSTANCES-STACK";
     public static final String NETWORK_STACK_NAME = "NETWORK-STACK";
     public static final String RDS_STACK_NAME = "RDS-STACK";
     public static final String INSTANCES_STACK_NAME = "INSTANCES-STACK";
@@ -85,5 +86,8 @@ public class DeploymentConstants {
     public static final String STACK_OUTPUT_PRIVATE_SUBNET_AZ1_ID_KEY = "PrivateSubnetAz1Id";
     public static final String STACK_OUTPUT_PRIVATE_SUBNET_AZ2_ID_KEY = "PrivateSubnetAz2Id";
     public static final String STACK_OUTPUT_DB_PRIVATE_DNS_KEY = "DBPrivateDns";
+
+    public static final String USER_DATA_CLASSPATH_LOCATION = "classpath:user_data.sh";
+    public static final String INITIAL_USER_DATA_CLASSPATH_LOCATION = "classpath:initial_user_data.sh";
 
 }

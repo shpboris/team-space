@@ -1,6 +1,4 @@
-#! /bin/bash
 
-dbhost=$dbhost$
 dburl=jdbc:mysql://$dbhost:3306/$dbname$
 mkdir /home/$user$
 useradd $user$

@@ -21,14 +21,14 @@ public class UserDataHelper {
     @Autowired
     private ResourceLoader resourceLoader;
 
-    public String getUserDataScript(String tarFileName, String regionName, String bucketName,
+    public String getUserDataScript(String userDataClasspathLocation, String tarFileName, String regionName, String bucketName,
                                      String dbMode, String dbInstancePrivateDns, String user,
                                      String password, boolean isEncodingRequired){
         log.info("Getting user data script ...");
         String userDataScript = null;
         InputStream inputStream = null;
         try {
-            Resource resource = resourceLoader.getResource("classpath:user_data.sh");
+            Resource resource = resourceLoader.getResource(userDataClasspathLocation);
             inputStream = resource.getInputStream();
             userDataScript = IOUtils.toString(inputStream, "UTF-8");
             userDataScript = userDataScript.replace(TAR_FILE_NAME, tarFileName);
@@ -37,10 +37,10 @@ public class UserDataHelper {
             userDataScript = userDataScript.replace(USER, user);
             userDataScript = userDataScript.replace(PASSWORD, password);
             userDataScript = userDataScript.replace(DB_MODE, dbMode);
+            userDataScript = userDataScript.replace(DB_NAME, getDbNormalizedName(tarFileName));
             if(dbMode.equals(DB_MODE_MYSQL) || dbMode.equals(DB_MODE_RDS)) {
+                userDataScript = userDataScript.replace(DB_NAME, getDbNormalizedName(tarFileName));
                 userDataScript = userDataScript.replace(DB_HOST, dbInstancePrivateDns);
-                String dbUrl = getDbUrl(dbInstancePrivateDns, tarFileName);
-                userDataScript = userDataScript.replace(DB_URL, dbUrl);
             }
         } catch (Exception e){
             log.error("Unable to read user data", e);

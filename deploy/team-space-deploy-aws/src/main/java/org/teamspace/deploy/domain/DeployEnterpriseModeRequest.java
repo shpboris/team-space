@@ -10,6 +10,7 @@ import lombok.Data;
 public class DeployEnterpriseModeRequest extends DeployRequest{
 
     private Integer instancesCount;
+    private boolean singleStackDeployment = true;
 
     @JsonIgnore
     public String getDbMode() {

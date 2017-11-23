@@ -215,7 +215,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
                 .withKeyName(keyPair.getKeyName())
                 .withSecurityGroupIds(securityGroupId)
                 .withSubnetId(subnetId)
-                .withUserData(userDataHelper.getUserDataScript(tarName, regionName, bucketName, dbMode, dbInstancePrivateDns, user, password, true))
+                .withUserData(userDataHelper.getUserDataScript(USER_DATA_CLASSPATH_LOCATION, tarName, regionName, bucketName, dbMode, dbInstancePrivateDns, user, password, true))
                 .withIamInstanceProfile(new IamInstanceProfileSpecification().withName(instanceProfileName))
                 .withMinCount(1)
                 .withBlockDeviceMappings(new BlockDeviceMapping().withDeviceName(BLOCK_DEVICE_NAME)
