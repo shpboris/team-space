@@ -1,0 +1,2 @@
+aws cloudformation create-stack --stack-name VPC-INSTANCE --template-body file://./public_instance.json --parameters file://./params.json --capabilities CAPABILITY_NAMED_IAM --region eu-central-1
+pause

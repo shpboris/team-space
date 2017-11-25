@@ -1,7 +1,7 @@
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
 
-  "Description" : "AWS CloudFormation Sample Template vpc_multiple_subnets.template: Sample template showing how to create a VPC with multiple subnets. The first subnet is public and contains the load balancer, the second subnet is private and contains an EC2 instance behind the load balancer. **WARNING** This template creates an Amazon EC2 instance. You will be billed for the AWS resources used if you create a stack from this template.",
+  "Description" : "AWS CloudFormation template for public and private instances creation",
 
   "Parameters" : {
 
@@ -11,12 +11,6 @@
       "Default" : "t2.micro",
       "AllowedValues" : [ "t1.micro","t2.micro","m1.small","m1.medium","m1.large","m1.xlarge","m2.xlarge","m2.2xlarge","m2.4xlarge","m3.xlarge","m3.2xlarge","c1.medium","c1.xlarge","cc1.4xlarge","cc2.8xlarge","cg1.4xlarge"],
       "ConstraintDescription" : "Must be a valid EC2 instance type."
-    },
-
-    "InstanceCount" : {
-      "Description" : "Number of EC2 instances to launch",
-      "Type" : "Number",
-      "Default" : "1"
     },
 
     "UserData" : {
@@ -226,63 +220,6 @@
       }
     },
 
-    "ElasticLoadBalancer" : {
-      "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
-      "Properties" : {
-        "SecurityGroups" : [ { "Ref" : "LoadBalancerSecurityGroup" } ],
-        "Subnets" : [ { "Ref" : "PublicSubnet" } ],
-        "Listeners" : [ { "LoadBalancerPort" : "80", "InstancePort" : "80", "Protocol" : "HTTP" } ],
-        "HealthCheck" : {
-          "Target" : "HTTP:80/",
-          "HealthyThreshold" : "3",
-          "UnhealthyThreshold" : "5",
-          "Interval" : "90",
-          "Timeout" : "60"
-        },
-        "Tags" : [
-          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "LOAD_BALANCER" ] ]} }
-        ]
-      }
-    },
-
-    "LoadBalancerSecurityGroup" : {
-      "Type" : "AWS::EC2::SecurityGroup",
-      "Properties" : {
-        "GroupDescription" : "Enable HTTP access on port 80",
-        "VpcId" : { "Ref" : "VPC" },
-        "SecurityGroupIngress" : [ { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0" } ],
-        "SecurityGroupEgress" : [ { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0"} ],
-        "Tags" : [
-          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "LB_SECURITY_GROUP" ] ]} }
-        ]
-      }
-    },
-
-    "WebServerGroup" : {
-      "Type" : "AWS::AutoScaling::AutoScalingGroup",
-      "Properties" : {
-        "AvailabilityZones" : [{ "Fn::GetAtt" : [ "PrivateSubnetAz1", "AvailabilityZone" ] }],
-        "VPCZoneIdentifier" : [{ "Ref" : "PrivateSubnetAz1" }],
-        "LaunchConfigurationName" : { "Ref" : "LaunchConfig" },
-        "MinSize" : "1",
-        "MaxSize" : "3",
-        "DesiredCapacity" : { "Ref" : "InstanceCount" },
-        "LoadBalancerNames" : [ { "Ref" : "ElasticLoadBalancer" } ],
-        "Tags" : [ {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "APP_INSTANCE" ] ]}, "PropagateAtLaunch" : "true" } ]
-      }
-    },
-
-    "LaunchConfig" : {
-      "Type" : "AWS::AutoScaling::LaunchConfiguration",
-      "Properties" : {
-        "ImageId" : { "Fn::FindInMap" : [ "AWSRegion2AMI", { "Ref" : "AWS::Region" },"CentOS7x8664withUpdatesHVM" ] },
-        "UserData" : { "Fn::Base64" : { "Ref" : "UserData" } },
-        "SecurityGroups" : [ { "Ref" : "InstanceSecurityGroup" } ],
-        "IamInstanceProfile" : { "Ref" : "InstanceProfile" },
-        "InstanceType" : { "Ref" : "InstanceType" }
-      }
-    },
-
     "InstanceSecurityGroup" : {
       "Type" : "AWS::EC2::SecurityGroup",
       "Properties" : {
@@ -345,27 +282,47 @@
          }
       },
 
-      "TempInstance" : {
+      "PublicInstance" : {
          "Type" : "AWS::EC2::Instance",
          "Properties" : {
       		"AvailabilityZone" : { "Fn::GetAtt" : [ "PublicSubnet", "AvailabilityZone" ] },
       		  "SubnetId" : { "Ref" : "PublicSubnet" },
               "ImageId" : { "Fn::FindInMap" : [ "AWSRegion2AMI", { "Ref" : "AWS::Region" },"CentOS7x8664withUpdatesHVM" ] },
-              "UserData" : { "Fn::Base64" : { "Ref" : "UserData" } },
+              "UserData" : { "Ref" : "UserData" },
               "SecurityGroupIds" : [ { "Ref" : "InstanceSecurityGroup" } ],
               "IamInstanceProfile" : { "Ref" : "InstanceProfile" },
               "InstanceType" : { "Ref" : "InstanceType" },
       		"Tags" : [
-                {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "TEMP_INSTANCE" ] ]} }
+                {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "PUBLIC_INSTANCE" ] ]} }
               ]
             }
-      }
+      },
+
+      "PrivateInstance" : {
+           "Type" : "AWS::EC2::Instance",
+           "Properties" : {
+                "AvailabilityZone" : { "Fn::GetAtt" : [ "PrivateSubnetAz1", "AvailabilityZone" ] },
+                "SubnetId" : { "Ref" : "PrivateSubnetAz1" },
+                "ImageId" : { "Fn::FindInMap" : [ "AWSRegion2AMI", { "Ref" : "AWS::Region" },"CentOS7x8664withUpdatesHVM" ] },
+                "UserData" : { "Ref" : "UserData" },
+                "SecurityGroupIds" : [ { "Ref" : "InstanceSecurityGroup" } ],
+                "IamInstanceProfile" : { "Ref" : "InstanceProfile" },
+                "InstanceType" : { "Ref" : "InstanceType" },
+                "Tags" : [
+                  {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "PRIVATE_INSTANCE" ] ]} }
+                ]
+              }
+        }
   },
 
   "Outputs" : {
-    "SitePublicDNS" : {
-      "Description" : "Public DNS of the website",
-      "Value" :  { "Fn::GetAtt" : [ "ElasticLoadBalancer", "DNSName" ]}
+    "PublicInstanceDNS" : {
+      "Description" : "Public instance DNS",
+      "Value" :  { "Fn::GetAtt" : [ "PublicInstance", "PublicDnsName" ]}
+    },
+    "PrivateInstanceDNS" : {
+      "Description" : "Private instance DNS",
+      "Value" :  { "Fn::GetAtt" : [ "PrivateInstance", "PrivateDnsName" ]}
     }
   }
 }

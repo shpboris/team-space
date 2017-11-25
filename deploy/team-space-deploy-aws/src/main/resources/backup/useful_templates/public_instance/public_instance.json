@@ -1,28 +1,9 @@
 {
   "AWSTemplateFormatVersion" : "2010-09-09",
-  "Description" : "AWS CloudFormation template for ELB, autoscale and instances creation",
+
+  "Description" : "AWS CloudFormation template for public instance creation",
 
   "Parameters" : {
-
-    "VpcId" : {
-      "Description" : "The id of the VPC",
-      "Type" : "String"
-    },
-
-    "PublicSubnetId" : {
-      "Description" : "Public subnet id",
-      "Type" : "String"
-    },
-
-    "PrivateSubnetAz1Id" : {
-      "Description" : "Private subnet AZ1 id",
-      "Type" : "String"
-    },
-
-    "PrivateSubnetAz2Id" : {
-      "Description" : "Private subnet AZ2 id",
-      "Type" : "String"
-    },
 
     "InstanceType" : {
       "Description" : "WebServer EC2 instance type",
@@ -30,12 +11,6 @@
       "Default" : "t2.micro",
       "AllowedValues" : [ "t1.micro","t2.micro","m1.small","m1.medium","m1.large","m1.xlarge","m2.xlarge","m2.2xlarge","m2.4xlarge","m3.xlarge","m3.2xlarge","c1.medium","c1.xlarge","cc1.4xlarge","cc2.8xlarge","cg1.4xlarge"],
       "ConstraintDescription" : "Must be a valid EC2 instance type."
-    },
-
-    "InstanceCount" : {
-      "Description" : "Number of EC2 instances to launch",
-      "Type" : "Number",
-      "Default" : "1"
     },
 
     "UserData" : {
@@ -89,59 +64,72 @@
 
   "Resources" : {
 
-    "ElasticLoadBalancer" : {
-      "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
+    "VPC" : {
+      "Type" : "AWS::EC2::VPC",
       "Properties" : {
-        "SecurityGroups" : [ { "Ref" : "LoadBalancerSecurityGroup" } ],
-        "Subnets" : [ { "Ref" : "PublicSubnetId" } ],
-        "Listeners" : [ { "LoadBalancerPort" : "80", "InstancePort" : "80", "Protocol" : "HTTP" } ],
-        "HealthCheck" : {
-          "Target" : "HTTP:80/",
-          "HealthyThreshold" : "3",
-          "UnhealthyThreshold" : "5",
-          "Interval" : "90",
-          "Timeout" : "60"
-        },
+        "CidrBlock" : "10.0.0.0/16",
+        "EnableDnsHostnames" : true,
         "Tags" : [
-          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "LOAD_BALANCER" ] ]} }
+          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "VPC" ] ] }}
         ]
       }
     },
 
-    "LoadBalancerSecurityGroup" : {
-      "Type" : "AWS::EC2::SecurityGroup",
+    "PublicSubnet" : {
+      "Type" : "AWS::EC2::Subnet",
       "Properties" : {
-        "GroupDescription" : "Enable HTTP access on port 80",
-        "VpcId" : { "Ref" : "VpcId" },
-        "SecurityGroupIngress" : [ { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0" } ],
-        "SecurityGroupEgress" : [ { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0"} ],
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : "10.0.0.0/24",
+        "AvailabilityZone": { "Fn::Select" : [ 0, { "Fn::GetAZs" : "" } ] },
+        "MapPublicIpOnLaunch" : true,
         "Tags" : [
-          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "LB_SECURITY_GROUP" ] ]} }
+          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "PUBLIC_SUBNET" ] ]} }
         ]
       }
     },
 
-    "WebServerGroup" : {
-      "Type" : "AWS::AutoScaling::AutoScalingGroup",
+    "InternetGateway" : {
+      "Type" : "AWS::EC2::InternetGateway",
       "Properties" : {
-        "VPCZoneIdentifier" : [{ "Ref" : "PrivateSubnetAz1Id" }],
-        "LaunchConfigurationName" : { "Ref" : "LaunchConfig" },
-        "MinSize" : "1",
-        "MaxSize" : "3",
-        "DesiredCapacity" : { "Ref" : "InstanceCount" },
-        "LoadBalancerNames" : [ { "Ref" : "ElasticLoadBalancer" } ],
-        "Tags" : [ {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "APP_INSTANCE" ] ]}, "PropagateAtLaunch" : "true" } ]
+        "Tags" : [
+          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "GATEWAY" ] ]} }
+        ]
       }
     },
 
-    "LaunchConfig" : {
-      "Type" : "AWS::AutoScaling::LaunchConfiguration",
+    "AttachGateway" : {
+       "Type" : "AWS::EC2::VPCGatewayAttachment",
+       "Properties" : {
+         "VpcId" : { "Ref" : "VPC" },
+         "InternetGatewayId" : { "Ref" : "InternetGateway" }
+       }
+    },
+
+    "PublicRouteTable" : {
+      "Type" : "AWS::EC2::RouteTable",
       "Properties" : {
-        "ImageId" : { "Fn::FindInMap" : [ "AWSRegion2AMI", { "Ref" : "AWS::Region" },"CentOS7x8664withUpdatesHVM" ] },
-        "UserData" : { "Fn::Base64" : { "Ref" : "UserData" } },
-        "SecurityGroups" : [ { "Ref" : "InstanceSecurityGroup" } ],
-        "IamInstanceProfile" : { "Ref" : "InstanceProfile" },
-        "InstanceType" : { "Ref" : "InstanceType" }
+        "VpcId" : {"Ref" : "VPC"},
+        "Tags" : [
+          {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "PUBLIC_ROUTE_TABLE" ] ]} }
+        ]
+      }
+    },
+
+    "PublicRoute" : {
+      "Type" : "AWS::EC2::Route",
+      "DependsOn" : "AttachGateway",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "PublicRouteTable" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "GatewayId" : { "Ref" : "InternetGateway" }
+      }
+    },
+
+    "PublicSubnetRouteTableAssociation" : {
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PublicSubnet" },
+        "RouteTableId" : { "Ref" : "PublicRouteTable" }
       }
     },
 
@@ -149,7 +137,7 @@
       "Type" : "AWS::EC2::SecurityGroup",
       "Properties" : {
         "GroupDescription" : "Enable HTTP/SSH access on the configured ports",
-        "VpcId" : { "Ref" : "VpcId" },
+        "VpcId" : { "Ref" : "VPC" },
         "SecurityGroupIngress" : [
             { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0" } ,
             { "IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : "0.0.0.0/0" }
@@ -207,26 +195,27 @@
          }
       },
 
-      "TempInstance" : {
+      "PublicInstance" : {
          "Type" : "AWS::EC2::Instance",
          "Properties" : {
-      		  "SubnetId" : { "Ref" : "PublicSubnetId" },
+      		"AvailabilityZone" : { "Fn::GetAtt" : [ "PublicSubnet", "AvailabilityZone" ] },
+      		  "SubnetId" : { "Ref" : "PublicSubnet" },
               "ImageId" : { "Fn::FindInMap" : [ "AWSRegion2AMI", { "Ref" : "AWS::Region" },"CentOS7x8664withUpdatesHVM" ] },
-              "UserData" : { "Fn::Base64" : { "Ref" : "UserData" } },
+              "UserData" : { "Ref" : "UserData" },
               "SecurityGroupIds" : [ { "Ref" : "InstanceSecurityGroup" } ],
               "IamInstanceProfile" : { "Ref" : "InstanceProfile" },
               "InstanceType" : { "Ref" : "InstanceType" },
       		"Tags" : [
-                {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "TEMP_INSTANCE" ] ]} }
+                {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "PUBLIC_INSTANCE" ] ]} }
               ]
             }
       }
   },
 
   "Outputs" : {
-    "SitePublicDNS" : {
-      "Description" : "Public DNS of the website",
-      "Value" :  { "Fn::GetAtt" : [ "ElasticLoadBalancer", "DNSName" ]}
+    "PublicInstanceDNS" : {
+      "Description" : "Public instance DNS",
+      "Value" :  { "Fn::GetAtt" : [ "PublicInstance", "PublicDnsName" ]}
     }
   }
 }
