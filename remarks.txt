@@ -41,6 +41,15 @@ Database name (teamspace) just follows the host without any special option.
 1.7)
 Swagger UI can be accessed at http://localhost:80/api-doc or https://localhost:443/api-doc
 
+1.8)
+The TeamSpace PKCS keystore configuration for HTTPS doesn't work with Java that is configured
+with security enhancements (that are required for CDRA). So application startup fails. In order to overcome this, edit
+C:\Program Files\Java\jdk1.8.0_151\jre\lib\security\java.security file and return it to its
+unchanged original (pre extra-secured) version. Both original java.security file and its enhanced version
+java.security-enhanced can be found in current project at
+C:\team-space\server\team-space-server\src\main\resources
+
+
 
 2.
 Automation
