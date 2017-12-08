@@ -22,9 +22,11 @@ import static javax.ws.rs.core.Response.status;
 /**
  * Created by shpilb on 21/01/2017.
  */
-@Api(value = "User")
+@Api(value = "User",
+        authorizations = {@Authorization("team_space_auth")})
 @Path("/users")
 @Produces(MediaType.APPLICATION_JSON)
+@PermitAll
 @Component
 @Slf4j
 public class UserResource {

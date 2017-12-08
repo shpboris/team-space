@@ -77,13 +77,13 @@ Deploy request body examples
 Oregon enterprise mode
 
 {
+  "singleStackDeployment": true,
   "instancesCount": 2,
   "artifactName": "team-space",
   "envTag": "TS1",
   "region": "us-west-2",
   "user" : "ts",
   "password" : "ts111222"
-
 }
 
 3.3.1
@@ -122,7 +122,7 @@ Ohio
 "dbMode" : "H2"
 }
 
-4.
+3.4.
 The deployable artifact team-space.tar.gz will be created by Maven assembly plugin
 when Maven "package" goal is performed on team-space-server project.
 The location of the resulting artifact will
@@ -138,5 +138,35 @@ The content of team-space.tar.gz should be:
     -team-space                                 -- systemd env vars
     -team-space.service                         -- systemd unit
     -team-space-server-1.0-SNAPSHOT.jar         -- JAR file
+
+
+3.5
+CR/CRLF issue with user data scripts
+
+When passing user data scripts to Cloud Formation, in my case CF eventually
+executes them on Linux. So line endings should be Unix style - not Windows style.
+Meaning, LF instead of CRLF. Otherwise script will fail.
+
+Few scenarios around this issue:
+
+1)
+When running deploy in RDS mode, user_data.sh and db_user_data_.sh scripts run just fine
+without any issues (despite having CRLF line endings on my local Windows).
+Probably, CF makes optimization and converts CRLF to LF
+
+2)
+When running deploy in enterprise mode (singleStackDeployment = true flavour) the script is constructed on the fly from initial_user_data.sh
+and few other bash instructions (see aws-network-rds-instances). In such scenario, optimization from 1)
+above doesn't happen so script fails ! in order to fix it, always change line endings of
+initial_user_data.sh file to LF in intellij/eclipse.
+
+When enterprise mode is used with singleStackDeployment = false, full user_data.sh is used
+so optimization explained in 1) happens and all works fine. I.e no need to change any line endings.
+
+3)
+When trying to invoke any CF template from AWS UI, line endings AND other special characters in user data scripts
+are not handled correctly by either browser or HTTP layer. So the way to resolve the problem is to change
+the user data line ending to LF AND do base 64 encoding in Notepad++. Then use the resulting string as
+user data in CF template as now it doesn't include any problematic characters.
 
 
