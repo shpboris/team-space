@@ -1,9 +1,8 @@
 package org.teamspace.enterprise_setup.service;
 
-import org.teamspace.deploy.domain.DeployEnterpriseModeRequest;
-import org.teamspace.deploy.domain.DeployResponse;
-import org.teamspace.deploy.domain.UndeployEnterpriseModeRequest;
-import org.teamspace.deploy.domain.UndeployRequest;
+import org.teamspace.deploy_common.domain.DeployEnterpriseModeRequest;
+import org.teamspace.deploy_common.domain.DeployResponse;
+import org.teamspace.deploy_common.domain.UndeployEnterpriseModeRequest;
 
 public interface EnterpriseDeployManager {
     DeployResponse createEnvironment(DeployEnterpriseModeRequest deployEnterpriseModeRequest);

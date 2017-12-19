@@ -1,4 +1,4 @@
-package org.teamspace.deploy.domain;
+package org.teamspace.deploy_common.domain;
 
 import lombok.Data;
 

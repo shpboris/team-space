@@ -1,4 +1,4 @@
-package org.teamspace.deploy.domain;
+package org.teamspace.deploy_common.domain;
 
 import lombok.Data;
 
@@ -7,6 +7,7 @@ import lombok.Data;
  */
 @Data
 public class DeployRequest {
+    private String cloudType;
     private String region;
     private String envTag;
     private String artifactName;

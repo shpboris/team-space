@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service;
 import org.teamspace.cloud_formation.service.StackManagerService;
 import org.teamspace.commons.components.UserDataHelper;
 import org.teamspace.commons.utils.AwsEntitiesHelperUtil;
-import org.teamspace.deploy.domain.DeployEnterpriseModeRequest;
-import org.teamspace.deploy.domain.DeployResponse;
-import org.teamspace.deploy.domain.UndeployEnterpriseModeRequest;
+import org.teamspace.deploy_common.domain.DeployEnterpriseModeRequest;
+import org.teamspace.deploy_common.domain.DeployResponse;
+import org.teamspace.deploy_common.domain.UndeployEnterpriseModeRequest;
 import org.teamspace.enterprise_setup.service.EnterpriseDeployManager;
 
 import java.util.Arrays;

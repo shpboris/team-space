@@ -1,6 +1,6 @@
 package org.teamspace.deploy.service;
 
-import org.teamspace.deploy.domain.*;
+import org.teamspace.deploy_common.domain.*;
 
 /**
  * Created by shpilb on 06/05/2017.

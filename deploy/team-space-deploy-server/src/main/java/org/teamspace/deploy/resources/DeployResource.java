@@ -6,8 +6,12 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.teamspace.commons.constants.DeploymentConstants;
-import org.teamspace.deploy.domain.*;
 import org.teamspace.deploy.service.DeployService;
+import org.teamspace.deploy_azure.service.AzureDeployService;
+import org.teamspace.deploy_common.domain.*;
+
+import static org.teamspace.deploy_common.constants.DeployCommonConstants.AWS_CLOUD_TYPE;
+import static org.teamspace.deploy_common.constants.DeployCommonConstants.AZURE_CLOUD_TYPE;
 
 @Api(value = "Deploy", tags = "Deploy", description = "The API for deployment")
 @Controller
@@ -15,6 +19,9 @@ public class DeployResource {
 
 	@Autowired
 	private DeployService deployService;
+
+	@Autowired
+	private AzureDeployService azureDeployService;
 
 	@ApiOperation(value = "execute enterprise mode deploy", response = DeployResponse.class)
 	@RequestMapping(value = "/deployEnterpriseMode", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE,
@@ -34,10 +41,12 @@ public class DeployResource {
 			produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<DeployResponse> deploy(@ApiParam(name = "deployRequest", required = true)
 													 @RequestBody DeployRequest deployRequest) {
-		if(deployRequest.getRegion() == null){
-			deployRequest.setRegion(DeploymentConstants.DEFAULT_REGION_NAME);
+		DeployResponse deployResponse = null;
+		if(deployRequest.getCloudType().equals(AWS_CLOUD_TYPE)) {
+			deployResponse = deployService.deploy(deployRequest);
+		} else if(deployRequest.getCloudType().equals(AZURE_CLOUD_TYPE)) {
+			deployResponse = azureDeployService.deploy(deployRequest);
 		}
-		DeployResponse deployResponse = deployService.deploy(deployRequest);
 		HttpHeaders httpHeaders = new HttpHeaders();
 		return new ResponseEntity<>(deployResponse, httpHeaders, HttpStatus.CREATED);
 	}

@@ -14,7 +14,7 @@
     <modules>
         <module>team-space-deploy-server</module>
         <module>team-space-deploy-aws</module>
+        <module>team-space-deploy-azure</module>
+        <module>team-space-deploy-common</module>
     </modules>
-
-
 </project>

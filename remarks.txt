@@ -82,6 +82,19 @@ Swagger UI can be accessed on http://localhost:9999/rest/swagger-ui.html
 3.3
 Deploy request body examples
 
+This is temp for Azure ................
+
+{
+"cloudType" : "AZURE_CLOUD_TYPE",
+  "artifactName": "team-space",
+  "envTag": "TS1",
+  "region": "us-west-2",
+"user" : "ts",
+"password" : "ts111222",
+"dbMode" : "RDS"
+}
+
+
 3.3.0
 Oregon enterprise mode
 
