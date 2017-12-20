@@ -7,6 +7,7 @@ import com.microsoft.azure.management.resources.Deployment;
 import com.microsoft.azure.management.resources.ResourceGroup;
 import com.microsoft.azure.management.resources.fluentcore.arm.Region;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.teamspace.deploy_azure.arm.service.DeploymentManagerService;
@@ -38,15 +39,15 @@ public class AzureDeployServiceImpl implements AzureDeployService {
                 "8XRXXPfnep04YSJmtPEFsLUCI69pV3nHvu4UJZoS3mw=", AzureEnvironment.AZURE);
         Azure azure = Azure.authenticate(credentials).withSubscription("a5490867-d17a-4fa2-9f81-1e1bcb2d4a2d");
 
-        String deploymentName = "borissDeploymentName3";
-        String rgName = "boriss-rg-3";
-        Map<String, ParameterValue> params = new HashMap<String, ParameterValue>();
-        params.put("storageNamePrefix", new ParameterValue("borisstore3"));
-        String storageAccountOutputKey = "storageAccountName";
+        String deploymentName = getDeploymentName(deployRequest);
+        String rgName = getResourceGroupName(deployRequest);
+        Map<String, ParameterValue> params = getParameters(deployRequest);
+        String outputKey = "sshCommand";
 
-        createResourceGroup(azure, Region.US_EAST, rgName);
+        deleteResourceGroup(azure, Region.fromName(deployRequest.getRegion()), rgName);
+        createResourceGroup(azure, Region.fromName(deployRequest.getRegion()), rgName);
 
-        deploymentManagerService.deleteDeployment(azure, rgName, deploymentName);
+        //deploymentManagerService.deleteDeployment(azure, rgName, deploymentName);
 
         deploymentManagerService.createDeployment(azure, rgName, deploymentName,
                 AZURE_DEPLOY_TEMPLATE_CLASSPATH_LOCATION, params);
@@ -54,9 +55,9 @@ public class AzureDeployServiceImpl implements AzureDeployService {
         Deployment deployment = deploymentManagerService.waitForDeploymentCreation(azure,
                 rgName, deploymentName, 20);
 
-        String storageAccountOutputValue = deploymentManagerService.getDeploymentOutput(azure,
-                deployment, storageAccountOutputKey);
-        log.info("Storage account name is: {}", storageAccountOutputValue);
+        String outputKeyValue = deploymentManagerService.getDeploymentOutput(azure,
+                deployment, outputKey);
+        log.info("Output is: {}", outputKeyValue);
 
         log.info("Completed deployment to Azure");
 
@@ -70,7 +71,27 @@ public class AzureDeployServiceImpl implements AzureDeployService {
     }
 
     public void deleteResourceGroup(Azure azure, Region region, String rgName) {
-        azure.resourceGroups().deleteByName(rgName);
+        if(azure.resourceGroups().getByName(rgName) != null) {
+            azure.resourceGroups().deleteByName(rgName);
+        }
         return;
+    }
+
+    private String getDeploymentName(DeployRequest deployRequest){
+        String resourceGroupName = deployRequest.getEnvTag() + "-" + "DEPLOYMENT";
+        return resourceGroupName;
+    }
+
+    private String getResourceGroupName(DeployRequest deployRequest){
+        String resourceGroupName = deployRequest.getEnvTag() + "-" + "RESOURCE_GROUP";
+        return resourceGroupName;
+    }
+
+    private Map<String, ParameterValue> getParameters(DeployRequest deployRequest){
+        Map<String, ParameterValue> params = new HashMap<String, ParameterValue>();
+        params.put("adminUsername", new ParameterValue(deployRequest.getUser()));
+        params.put("adminPassword", new ParameterValue(deployRequest.getPassword()));
+        params.put("envTag", new ParameterValue(deployRequest.getEnvTag()));
+        return params;
     }
 }
