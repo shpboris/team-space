@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 User=ts
-EnvironmentFile=/etc/sysconfig/team-space
+EnvironmentFile=/etc/team-space/team-space
 WorkingDirectory=/home/ts/team-space
 ExecStart=/bin/sh -c 'authbind java $JKS_KEYSTORE $P12_KEYSTORE $DB_DRIVER $DB_URL $DB_USER $DB_PASSWORD $DATA_IMPORT_DIR -jar $TS_JAR server config.yml>/dev/null 2>&1'
 KillMode=control-group

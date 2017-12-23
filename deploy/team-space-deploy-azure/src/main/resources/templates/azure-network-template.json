@@ -15,6 +15,12 @@
         "description": "Password for the Virtual Machine"
       }
     },
+    "customData": {
+      "type": "string",
+      "metadata": {
+        "description": "Custom data passed to the Virtual Machine."
+      }
+    },
     "envTag": {
       "type": "string",
       "metadata": {
@@ -26,7 +32,7 @@
     "vmSize": "Standard_DS2_v2",
     "vmName": "[concat(parameters('envTag'), '-', 'APP-INSTANCE')]",
     "ubuntuOSVersion": "16.04-LTS",
-    "uniqueDnsLabelPrefix": "[concat('store', uniquestring(resourceGroup().id))]",
+    "uniqueDnsLabelPrefix": "[concat('vm', uniquestring(resourceGroup().id))]",
     "location": "[resourceGroup().location]",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
@@ -61,6 +67,34 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 123,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "http_rule",
+            "properties": {
+              "description": "Locks inbound down to ssh default port 22.",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 124,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "https_rule",
+            "properties": {
+              "description": "Locks inbound down to ssh default port 22.",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 125,
               "direction": "Inbound"
             }
           }
@@ -147,7 +181,8 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPassword')]",
+          "customData": "[base64(parameters('customData'))]"
         },
         "storageProfile": {
           "imageReference": {

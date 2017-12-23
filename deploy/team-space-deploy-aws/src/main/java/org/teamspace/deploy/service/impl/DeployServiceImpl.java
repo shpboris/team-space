@@ -20,9 +20,9 @@ import org.teamspace.network.service.NetworkManager;
 
 import java.io.File;
 
-import static org.teamspace.commons.constants.DeploymentConstants.ARTIFACT_EXTENSION;
+import static org.teamspace.deploy_common.constants.DeployCommonConstants.ARTIFACT_EXTENSION;
 import static org.teamspace.commons.constants.DeploymentConstants.BUCKET_ENTITY_TYPE;
-import static org.teamspace.commons.constants.DeploymentConstants.OVERRIDE_EXISTING_ARTIFACT;
+import static org.teamspace.deploy_common.constants.DeployCommonConstants.OVERRIDE_EXISTING_ARTIFACT;
 
 /**
  * Created by shpilb on 06/05/2017.
