@@ -10,13 +10,13 @@ import java.util.List;
 import java.util.Map;
 
 public interface DeploymentManagerService {
-    void createDeployment(Azure azure, String resourceGroup,
+    void createDeployment(String resourceGroup,
                           String deploymentName,
                           String templateClassPathLocation, Map<String, ParameterValue> params);
-    Deployment waitForDeploymentCreation(Azure azure, String resourceGroup,
+    Deployment waitForDeploymentCreation(String resourceGroup,
                                          String deploymentName, int maxRetriesCount);
-    String getDeploymentOutput(Azure azure, Deployment deployment, String outputKey);
-    void deleteDeployment(Azure azure, String resourceGroup,
+    String getDeploymentOutput(Deployment deployment, String outputKey);
+    void deleteDeployment(String resourceGroup,
                                  String deploymentName);
 
 /*    ResourceGroup createResourceGroup(Azure azure, Region region, String resourceGroup);

@@ -19,6 +19,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.teamspace.deploy_azure.arm.service.DeploymentManagerService;
+import org.teamspace.deploy_azure.client.AzureClientFactory;
+import org.teamspace.deploy_azure.client.context.AzureContext;
 import org.teamspace.deploy_azure.service.AzureDeployService;
 import org.teamspace.deploy_common.domain.DeployRequest;
 import org.teamspace.deploy_common.domain.DeployResponse;
@@ -51,6 +53,9 @@ public class AzureDeployServiceImpl implements AzureDeployService {
     private DeploymentManagerService deploymentManagerService;
 
     @Autowired
+    private AzureClientFactory azureClientFactory;
+
+    @Autowired
     private ResourceLoader resourceLoader;
 
     @Value("${artifactsDir}")
@@ -59,52 +64,41 @@ public class AzureDeployServiceImpl implements AzureDeployService {
     @Override
     public DeployResponse deploy(DeployRequest deployRequest) {
         try {
-
             log.info("Started deployment to Azure");
-
-            String domain = "945c199a-83a2-4e80-9f8c-5a91be5752dd";
-            String subscription = "a5490867-d17a-4fa2-9f81-1e1bcb2d4a2d";
-            String client = "96f38b30-1a9e-471f-b208-3a5126f58264";
-            String secret = "8XRXXPfnep04YSJmtPEFsLUCI69pV3nHvu4UJZoS3mw=";
+            initAzureContext(deployRequest);
 
             String deploymentName = getDeploymentName(deployRequest);
             String rgName = getResourceGroupName(deployRequest);
             String storageRgName = getStorageResourceGroupName(deployRequest);
             String storageAccountName = getStorageAccountName(deployRequest);
-            Region region = Region.fromName(deployRequest.getRegion());
             String containerName = getContainerName(deployRequest);
             String outputKey = "sshCommand";
 
-            ApplicationTokenCredentials credentials = new ApplicationTokenCredentials(
-                    client,
-                    domain,
-                    secret, AzureEnvironment.AZURE);
-            Azure azure = Azure.authenticate(credentials).withSubscription(subscription);
-
             if(OVERRIDE_EXISTING_ARTIFACT){
-                deleteResourceGroup(azure, region, storageRgName);
-                createResourceGroup(azure, region, storageRgName);
-                StorageAccount storageAccount = createStorageAccount(azure, region, storageRgName, storageAccountName);
+                deleteResourceGroup(storageRgName);
+                createResourceGroup(storageRgName);
+                StorageAccount storageAccount = createStorageAccount(storageRgName, storageAccountName);
                 uploadArtifact(deployRequest, storageAccount);
             }
 
-            deleteResourceGroup(azure, region, rgName);
-            createResourceGroup(azure, region, rgName);
-            StorageAccount storageAccount = findStorageAccount(azure, storageRgName, storageAccountName);
+            deleteResourceGroup(rgName);
+            createResourceGroup(rgName);
+            StorageAccount storageAccount = findStorageAccount(storageRgName, storageAccountName);
             String customData = getCustomDataScript(deployRequest.getArtifactName(), deployRequest.getUser(),
-                    domain, subscription, client, secret, storageAccount, containerName);
+                    AzureContext.getDomain(), AzureContext.getSubscription(), AzureContext.getClient(),
+                    AzureContext.getSecret(), storageAccount, containerName);
             Map<String, ParameterValue> params = getParameters(deployRequest, customData);
-            deploymentManagerService.createDeployment(azure, rgName, deploymentName,
+            deploymentManagerService.createDeployment(rgName, deploymentName,
                     AZURE_DEPLOY_TEMPLATE_CLASSPATH_LOCATION, params);
 
-            Deployment deployment = deploymentManagerService.waitForDeploymentCreation(azure,
-                    rgName, deploymentName, 20);
+            Deployment deployment = deploymentManagerService.waitForDeploymentCreation(rgName,
+                    deploymentName, 20);
 
-            String outputKeyValue = deploymentManagerService.getDeploymentOutput(azure,
-                    deployment, outputKey);
+            String outputKeyValue = deploymentManagerService.getDeploymentOutput(deployment, outputKey);
             log.info("Output is: {}", outputKeyValue);
 
             log.info("Completed deployment to Azure");
+            destroyAzureContext();
         } catch (Exception e){
             throw new RuntimeException("Deployment to Azure failed", e);
         }
@@ -134,45 +128,50 @@ public class AzureDeployServiceImpl implements AzureDeployService {
         log.info("Completed artifact upload to storage account {}", storageAccount.name());
     }
 
-    public StorageAccount findStorageAccount(Azure azure,
-                                               String rgName, String storageAccountName){
+    public StorageAccount findStorageAccount(String rgName, String storageAccountName){
         log.info("Started to search for storage account: {} in resource group: {}",
                 storageAccountName, rgName);
-        StorageAccount storageAccount = azure.storageAccounts().getByResourceGroup(rgName, storageAccountName);
+        StorageAccount storageAccount = AzureContext.getAzureClient().storageAccounts()
+                .getByResourceGroup(rgName, storageAccountName);
         log.info("Completed to search for storage account: {} in resource group: {}",
                 storageAccountName, rgName);
         log.info("Storage account existence flag is: {}", storageAccount != null ? true : false);
         return storageAccount;
     }
 
-    public StorageAccount createStorageAccount(Azure azure, Region region,
-                                               String rgName, String storageAccountName){
+    public StorageAccount createStorageAccount(String rgName, String storageAccountName){
         log.info("Started create of storage account: {} in region: {}",
-                storageAccountName, region.name());
-        StorageAccount storageAccount = azure.storageAccounts().define(storageAccountName)
-                .withRegion(region)
+                storageAccountName, AzureContext.getRegion().name());
+        StorageAccount storageAccount = AzureContext.getAzureClient()
+                .storageAccounts().define(storageAccountName)
+                .withRegion(AzureContext.getRegion())
                 .withNewResourceGroup(rgName)
                 .create();
         log.info("Completed create of storage account: {} in region: {}",
-                storageAccountName, region.name());
+                storageAccountName, AzureContext.getRegion().name());
         return storageAccount;
     }
 
-    public ResourceGroup createResourceGroup(Azure azure, Region region, String rgName) {
-        log.info("Started create of resource group: {} in region: {}", rgName, region.name());
-        ResourceGroup resourceGroup = azure.resourceGroups().define(rgName)
-                .withRegion(region)
+    public ResourceGroup createResourceGroup(String rgName) {
+        log.info("Started create of resource group: {} in region: {}", rgName,
+                AzureContext.getRegion().name());
+        ResourceGroup resourceGroup = AzureContext.getAzureClient()
+                .resourceGroups().define(rgName)
+                .withRegion(AzureContext.getRegion())
                 .create();
-        log.info("Completed create of resource group: {} in region: {}", rgName, region.name());
+        log.info("Completed create of resource group: {} in region: {}", rgName,
+                AzureContext.getRegion().name());
         return resourceGroup;
     }
 
-    public void deleteResourceGroup(Azure azure, Region region, String rgName) {
-        log.info("Started delete of resource group: {} from region: {}", rgName, region.name());
-        if(azure.resourceGroups().getByName(rgName) != null) {
-            azure.resourceGroups().deleteByName(rgName);
+    public void deleteResourceGroup(String rgName) {
+        log.info("Started delete of resource group: {} from region: {}", rgName,
+                AzureContext.getRegion().name());
+        if(AzureContext.getAzureClient().resourceGroups().getByName(rgName) != null) {
+            AzureContext.getAzureClient().resourceGroups().deleteByName(rgName);
         }
-        log.info("Completed delete of resource group: {} from region: {}", rgName, region.name());
+        log.info("Completed delete of resource group: {} from region: {}", rgName,
+                AzureContext.getRegion().name());
         return;
     }
 
@@ -251,5 +250,13 @@ public class AzureDeployServiceImpl implements AzureDeployService {
         params.put("customData", new ParameterValue(customData));
         params.put("envTag", new ParameterValue(deployRequest.getEnvTag()));
         return params;
+    }
+
+    private void initAzureContext(DeployRequest deployRequest){
+        AzureContext.init(deployRequest, azureClientFactory);
+    }
+
+    private void destroyAzureContext(){
+        AzureContext.destroy();
     }
 }
