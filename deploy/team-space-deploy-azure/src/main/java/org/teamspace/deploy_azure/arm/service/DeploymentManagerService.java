@@ -1,12 +1,8 @@
 package org.teamspace.deploy_azure.arm.service;
 
-import com.microsoft.azure.management.Azure;
 import com.microsoft.azure.management.resources.Deployment;
-import com.microsoft.azure.management.resources.ResourceGroup;
-import com.microsoft.azure.management.resources.fluentcore.arm.Region;
-import org.teamspace.deploy_azure.service.impl.ParameterValue;
+import org.teamspace.deploy_azure.commons.params.ParameterValue;
 
-import java.util.List;
 import java.util.Map;
 
 public interface DeploymentManagerService {
@@ -18,7 +14,4 @@ public interface DeploymentManagerService {
     String getDeploymentOutput(Deployment deployment, String outputKey);
     void deleteDeployment(String resourceGroup,
                                  String deploymentName);
-
-/*    ResourceGroup createResourceGroup(Azure azure, Region region, String resourceGroup);
-    ResourceGroup deleteResourceGroup(Azure azure, Region region, String resourceGroup);*/
 }

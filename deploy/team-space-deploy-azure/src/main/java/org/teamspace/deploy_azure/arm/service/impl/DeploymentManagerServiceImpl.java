@@ -11,10 +11,9 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.teamspace.deploy_azure.arm.service.DeploymentManagerService;
 import org.teamspace.deploy_azure.client.context.AzureContext;
-import org.teamspace.deploy_azure.service.impl.ParameterValue;
+import org.teamspace.deploy_azure.commons.params.ParameterValue;
 
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j

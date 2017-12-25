@@ -126,7 +126,7 @@ public class DeployServiceImpl implements DeployService{
             String bucketName = AwsEntitiesHelperUtil.getEntityName(envTag, BUCKET_ENTITY_TYPE).toLowerCase();
             AmazonS3 s3Client = AwsContext.getS3Client();
             if (!s3Client.doesBucketExist(bucketName)) {
-                log.debug("Creating bucket: " + bucketName);
+                log.debug("Bucket doesn't exist, creating bucket: " + bucketName);
                 CreateBucketRequest createBucketRequest = new CreateBucketRequest(bucketName, AwsContext.getRegion().getName());
                 s3Client.createBucket(createBucketRequest);
             } else {
@@ -141,10 +141,11 @@ public class DeployServiceImpl implements DeployService{
                     s3Client.deleteObject(deleteObjectRequest);
                 }
             }
+            log.debug("Started uploading artifact: " + fullArtifactName + " to bucket: " + bucketName);
             File file = new File(artifactsDir + "/" + fullArtifactName);
             s3Client.putObject(new PutObjectRequest(
                     bucketName, fullArtifactName, file));
-            log.debug("Uploaded artifact: " + fullArtifactName + "to bucket: " + bucketName);
+            log.debug("Uploaded artifact: " + fullArtifactName + " to bucket: " + bucketName);
         }
         log.info("Finished artifact upload for artifact: " + artifactName);
     }

@@ -41,7 +41,6 @@ public class DeploymentConstants {
     public static final int SSH_PORT = 22;
     public static final String BLOCK_DEVICE_NAME = "/dev/sda1";
 
-    public static final String TAR_FILE_NAME = "$tarFileName$";
     public static final String REGION_NAME = "$regionName$";
     public static final String BUCKET_NAME = "$bucketName$";
     public static final String USER = "$user$";

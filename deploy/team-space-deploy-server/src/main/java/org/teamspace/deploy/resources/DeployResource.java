@@ -68,10 +68,11 @@ public class DeployResource {
 			produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<HttpStatus> undeploy(@ApiParam(name = "undeployRequest", required = true)
 											   @RequestBody UndeployRequest undeployRequest) {
-		if(undeployRequest.getRegion() == null){
-			undeployRequest.setRegion(DeploymentConstants.DEFAULT_REGION_NAME);
+		if(undeployRequest.getCloudType().equals(AWS_CLOUD_TYPE)) {
+			deployService.undeploy(undeployRequest);
+		} else if(undeployRequest.getCloudType().equals(AZURE_CLOUD_TYPE)) {
+			azureDeployService.undeploy(undeployRequest);
 		}
-		deployService.undeploy(undeployRequest);
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 	}
 }

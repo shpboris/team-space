@@ -7,12 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
+import org.teamspace.deploy_common.constants.DeployCommonConstants;
 
 import java.io.InputStream;
 
 import static org.teamspace.commons.constants.DeploymentConstants.*;
 import static org.teamspace.commons.utils.DbHelperUtil.getDbNormalizedName;
-import static org.teamspace.commons.utils.DbHelperUtil.getDbUrl;
 
 @Component
 @Slf4j
@@ -31,7 +31,7 @@ public class UserDataHelper {
             Resource resource = resourceLoader.getResource(userDataClasspathLocation);
             inputStream = resource.getInputStream();
             userDataScript = IOUtils.toString(inputStream, "UTF-8");
-            userDataScript = userDataScript.replace(TAR_FILE_NAME, tarFileName);
+            userDataScript = userDataScript.replace(DeployCommonConstants.TAR_FILE_NAME, tarFileName);
             userDataScript = userDataScript.replace(REGION_NAME, regionName);
             userDataScript = userDataScript.replace(BUCKET_NAME, bucketName);
             userDataScript = userDataScript.replace(USER, user);

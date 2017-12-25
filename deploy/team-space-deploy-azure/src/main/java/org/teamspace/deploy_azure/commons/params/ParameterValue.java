@@ -1,4 +1,4 @@
-package org.teamspace.deploy_azure.service.impl;
+package org.teamspace.deploy_azure.commons.params;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

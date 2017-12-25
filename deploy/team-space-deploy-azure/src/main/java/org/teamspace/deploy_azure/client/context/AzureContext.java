@@ -19,13 +19,13 @@ public class AzureContext {
 
     private static final ThreadLocal<Region> region = new ThreadLocal<Region>();
 
-    public static void init(DeployRequest deployRequest, AzureClientFactory azureClientFactory){
+    public static void init(String regionStr, AzureClientFactory azureClientFactory){
         domain = azureClientFactory.getDomain();
         subscription = azureClientFactory.getSubscription();
         client = azureClientFactory.getClient();
         secret = azureClientFactory.getSecret();
         azureClient = azureClientFactory.getAzureClient();
-        region.set(Region.fromName(deployRequest.getRegion()));
+        region.set(Region.fromName(regionStr));
     }
 
     public static void destroy(){

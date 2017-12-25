@@ -7,6 +7,8 @@ import lombok.Data;
  */
 @Data
 public class UndeployRequest {
+    private String cloudType;
     private String region;
     private String envTag;
+    private boolean deleteArtifact;
 }

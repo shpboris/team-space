@@ -209,6 +209,11 @@
     "sshCommand": {
       "type": "string",
       "value": "[concat('ssh ', parameters('adminUsername'), '@', variables('uniqueDnsLabelPrefix'), '.', resourceGroup().location, '.cloudapp.azure.com')]"
+    },
+    "publicDns": {
+      "type": "string",
+      "value": "[concat(variables('uniqueDnsLabelPrefix'), '.', resourceGroup().location, '.cloudapp.azure.com')]"
     }
   }
 }
+
