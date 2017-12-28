@@ -1,7 +1,7 @@
 package org.teamspace.commons.utils;
 
-import static org.teamspace.commons.constants.DeploymentConstants.DB_HOST;
-import static org.teamspace.commons.constants.DeploymentConstants.DB_NAME;
+import static org.teamspace.deploy_common.constants.DeployCommonConstants.DB_HOST;
+import static org.teamspace.deploy_common.constants.DeployCommonConstants.DB_NAME;
 import static org.teamspace.commons.constants.DeploymentConstants.DB_URL_TEMPLATE;
 
 public class DbHelperUtil {

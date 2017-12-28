@@ -8,7 +8,6 @@ import com.amazonaws.services.cloudformation.model.*;
 import com.amazonaws.services.ec2.model.*;
 import com.amazonaws.services.identitymanagement.model.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -18,6 +17,7 @@ import org.teamspace.aws.client.context.AwsContext;
 import org.teamspace.commons.components.TagCreator;
 import org.teamspace.commons.components.UserDataHelper;
 import org.teamspace.commons.utils.AwsEntitiesHelperUtil;
+import org.teamspace.deploy_common.constants.DeployCommonConstants;
 import org.teamspace.instance.domain.CreateInstancesRequest;
 import org.teamspace.instance.domain.CreateInstancesResponse;
 import org.teamspace.instance.service.InstanceCreator;
@@ -55,7 +55,7 @@ public class InstanceCreatorImpl implements InstanceCreator {
     public CreateInstancesResponse createInstances(CreateInstancesRequest createInstanceRequest) {
         log.info("Started instances creation");
         CreateInstancesResponse createDbInstanceResponse = null;
-        if(createInstanceRequest.getDbMode().equals(DB_MODE_MYSQL)) {
+        if(createInstanceRequest.getDbMode().equals(DeployCommonConstants.DB_MODE_MYSQL)) {
             createDbInstanceResponse = createMySqlDbInstance(createInstanceRequest);
         } else if(createInstanceRequest.getDbMode().equals(DB_MODE_RDS)){
             createDbInstanceResponse = createRdsDbInstance(createInstanceRequest);

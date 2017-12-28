@@ -25,6 +25,7 @@ import java.util.Map;
 
 import static org.teamspace.deploy_azure.commons.constants.DeploymentConstants.*;
 import static org.teamspace.deploy_azure.commons.utils.AzureEntitiesHelperUtil.*;
+import static org.teamspace.deploy_common.constants.DeployCommonConstants.DB_MODE_H2;
 import static org.teamspace.deploy_common.constants.DeployCommonConstants.OVERRIDE_EXISTING_ARTIFACT;
 
 
@@ -112,9 +113,14 @@ public class AzureDeployServiceImpl implements AzureDeployService {
         String deploymentName = getDeploymentName(deployRequest.getEnvTag());
         String resourceGroupName = getResourceGroupName(deployRequest.getEnvTag());
         Map<String, ParameterValue> params = getDeploymentParameters(deployRequest);
-
+        String templateClasspathLocation = null;
+        if(deployRequest.getDbMode().equals(DB_MODE_AZ_MYSQL)){
+            templateClasspathLocation = AZ_MYSQL_MODE_DEPLOY_TEMPLATE_CLASSPATH_LOCATION;
+        } else if (deployRequest.getDbMode().equals(DB_MODE_H2)){
+            templateClasspathLocation = H2_MODE_DEPLOY_TEMPLATE_CLASSPATH_LOCATION;
+        }
         deploymentManagerService.createDeployment(resourceGroupName, deploymentName,
-                AZURE_DEPLOY_TEMPLATE_CLASSPATH_LOCATION, params);
+                templateClasspathLocation, params);
 
         Deployment deployment = deploymentManagerService.waitForDeploymentCreation(resourceGroupName,
                 deploymentName, ARM_DEPLOYMENT_MAX_RETRIES);
@@ -129,8 +135,9 @@ public class AzureDeployServiceImpl implements AzureDeployService {
                 findStorageAccount(storageResourceGroupName, storageAccountName);
         String storageConnectionStr = AzureHelperUtil.getStorageConnectionString(storageAccount);
         String customData = customDataHelper.
-                getCustomDataScript(deployRequest.getArtifactName(), deployRequest.getUser(),
-                        AzureContext.getDomain(), AzureContext.getSubscription(), AzureContext.getClient(),
+                getCustomDataScript(deployRequest.getEnvTag(),deployRequest.getArtifactName(), deployRequest.getUser(),
+                        deployRequest.getPassword(), deployRequest.getDbMode(), AzureContext.getDomain(),
+                        AzureContext.getSubscription(), AzureContext.getClient(),
                         AzureContext.getSecret(), storageConnectionStr, containerName);
         return customData;
     }

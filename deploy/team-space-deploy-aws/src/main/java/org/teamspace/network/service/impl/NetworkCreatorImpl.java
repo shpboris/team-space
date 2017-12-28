@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.teamspace.aws.client.context.AwsContext;
 import org.teamspace.commons.components.TagCreator;
+import org.teamspace.deploy_common.constants.DeployCommonConstants;
 import org.teamspace.network.domain.CreateNetworkRequest;
 import org.teamspace.network.domain.CreateNetworkResponse;
 import org.teamspace.network.service.NetworkCreator;
@@ -48,7 +49,7 @@ public class NetworkCreatorImpl implements NetworkCreator{
         associateRouteTableWithSubnet(routeTable, publicSubnet);
         mapPublicIpOnLaunch(publicSubnet);
 
-        if(createNetworkRequest.getDbMode().equals(DB_MODE_MYSQL)) {
+        if(createNetworkRequest.getDbMode().equals(DeployCommonConstants.DB_MODE_MYSQL)) {
             NatGateway natGateway = createNatGateway(publicSubnet, envTag);
             RouteTable routeTableForPrivateSubnet = createRouteTable(vpc, envTag, PRIVATE_ROUTE_TABLE_ENTITY_TYPE);
             createRouteToNatGateway(natGateway, routeTableForPrivateSubnet);

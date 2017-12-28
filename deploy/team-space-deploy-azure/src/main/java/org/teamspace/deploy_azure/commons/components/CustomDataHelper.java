@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import java.io.InputStream;
 
 import static org.teamspace.deploy_azure.commons.constants.DeploymentConstants.*;
-import static org.teamspace.deploy_common.constants.DeployCommonConstants.TAR_FILE_NAME;
+import static org.teamspace.deploy_common.constants.DeployCommonConstants.*;
 
 @Component
 @Slf4j
@@ -19,8 +19,8 @@ public class CustomDataHelper {
     @Autowired
     private ResourceLoader resourceLoader;
 
-    public String getCustomDataScript(String artifactName, String user,
-                                      String domain, String subscription,
+    public String getCustomDataScript(String envTag, String artifactName, String user, String password,
+                                      String dbMode, String domain, String subscription,
                                       String client, String secret, String storageConnectionStr,
                                       String containerName){
         log.info("Getting custom data script ...");
@@ -38,6 +38,13 @@ public class CustomDataHelper {
             customDataScript = customDataScript.replace(SECRET, secret);
             customDataScript = customDataScript.replace(CONTAINER_NAME, containerName);
             customDataScript = customDataScript.replace(STORAGE_CONNECTION_STRING, storageConnectionStr);
+            customDataScript = customDataScript.replace(DB_MODE, dbMode);
+            if(dbMode.equals(DB_MODE_AZ_MYSQL)) {
+                customDataScript = customDataScript.replace(DB_HOST, getAzMySqlHost(envTag));
+                customDataScript = customDataScript.replace(DB_NAME, getAzMySqlDbName(envTag));
+                customDataScript = customDataScript.replace(DB_USER, getAzMySqlUser(user, envTag));
+                customDataScript = customDataScript.replace(PASSWORD, password);
+            }
         } catch (Exception e){
             throw new RuntimeException("Unable to read custom data", e);
         } finally {
@@ -48,6 +55,17 @@ public class CustomDataHelper {
         return customDataScript;
     }
 
+    private String getAzMySqlHost(String envTag){
+        return envTag.toLowerCase() + AZ_MYSQL_SERVER_SUFFIX + AZ_MYSQL_DOMAIN_SUFFIX;
+    }
+
+    private String getAzMySqlDbName(String envTag){
+        return envTag.toLowerCase() + AZ_MYSQL_DB_SUFFIX;
+    }
+
+    private String getAzMySqlUser(String user, String envTag){
+        return user + "@" + envTag.toLowerCase() + AZ_MYSQL_SERVER_SUFFIX;
+    }
 
 
 }

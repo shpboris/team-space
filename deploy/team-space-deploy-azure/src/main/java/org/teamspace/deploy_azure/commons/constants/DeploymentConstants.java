@@ -4,7 +4,8 @@ package org.teamspace.deploy_azure.commons.constants;
  * Created by shpilb on 20/05/2017.
  */
 public class DeploymentConstants {
-    public static final String AZURE_DEPLOY_TEMPLATE_CLASSPATH_LOCATION = "classpath:templates/azure-network-template.json";
+    public static final String AZ_MYSQL_MODE_DEPLOY_TEMPLATE_CLASSPATH_LOCATION = "classpath:templates/azure-network-az-mysql-instance.json";
+    public static final String H2_MODE_DEPLOY_TEMPLATE_CLASSPATH_LOCATION = "classpath:templates/azure-network-instance.json";
     public static final String AZURE_CUSTOM_DATA_CLASSPATH_LOCATION = "classpath:scripts/custom_data.sh";
     public static final String USER = "$user$";
     public static final String DOMAIN = "$domain$";
@@ -19,5 +20,9 @@ public class DeploymentConstants {
     public static final String ADMIN_PASSWORD_KEY = "adminPassword";
     public static final String CUSTOM_DATA_KEY = "customData";
     public static final String ENV_TAG_KEY = "envTag";
+    public static final String DB_MODE_AZ_MYSQL = "AZ_MYSQL";
+    public static final String AZ_MYSQL_SERVER_SUFFIX = "sqlserver";
+    public static final String AZ_MYSQL_DB_SUFFIX = "database";
+    public static final String AZ_MYSQL_DOMAIN_SUFFIX = ".mysql.database.azure.com";
 
 }

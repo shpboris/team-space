@@ -35,12 +35,12 @@ public class UserDataHelper {
             userDataScript = userDataScript.replace(REGION_NAME, regionName);
             userDataScript = userDataScript.replace(BUCKET_NAME, bucketName);
             userDataScript = userDataScript.replace(USER, user);
-            userDataScript = userDataScript.replace(PASSWORD, password);
-            userDataScript = userDataScript.replace(DB_MODE, dbMode);
-            userDataScript = userDataScript.replace(DB_NAME, getDbNormalizedName(tarFileName));
-            if(dbMode.equals(DB_MODE_MYSQL) || dbMode.equals(DB_MODE_RDS)) {
-                userDataScript = userDataScript.replace(DB_NAME, getDbNormalizedName(tarFileName));
-                userDataScript = userDataScript.replace(DB_HOST, dbInstancePrivateDns);
+            userDataScript = userDataScript.replace(DeployCommonConstants.PASSWORD, password);
+            userDataScript = userDataScript.replace(DeployCommonConstants.DB_MODE, dbMode);
+            userDataScript = userDataScript.replace(DeployCommonConstants.DB_NAME, getDbNormalizedName(tarFileName));
+            if(dbMode.equals(DeployCommonConstants.DB_MODE_MYSQL) || dbMode.equals(DB_MODE_RDS)) {
+                userDataScript = userDataScript.replace(DeployCommonConstants.DB_NAME, getDbNormalizedName(tarFileName));
+                userDataScript = userDataScript.replace(DeployCommonConstants.DB_HOST, dbInstancePrivateDns);
             }
         } catch (Exception e){
             log.error("Unable to read user data", e);
@@ -65,8 +65,8 @@ public class UserDataHelper {
             inputStream = resource.getInputStream();
             userDataScript = IOUtils.toString(inputStream, "UTF-8");
             userDataScript = userDataScript.replace(USER, user);
-            userDataScript = userDataScript.replace(PASSWORD, password);
-            userDataScript = userDataScript.replace(DB_NAME, getDbNormalizedName(tarFileName));
+            userDataScript = userDataScript.replace(DeployCommonConstants.PASSWORD, password);
+            userDataScript = userDataScript.replace(DeployCommonConstants.DB_NAME, getDbNormalizedName(tarFileName));
         } catch (Exception e){
             throw new RuntimeException("Unable to read user data");
         } finally {
