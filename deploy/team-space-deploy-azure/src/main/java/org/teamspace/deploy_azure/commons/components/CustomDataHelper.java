@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
+import org.teamspace.deploy_common.constants.DeployCommonConstants;
 
 import java.io.InputStream;
 
@@ -44,6 +45,11 @@ public class CustomDataHelper {
                 customDataScript = customDataScript.replace(DB_NAME, getAzMySqlDbName(envTag));
                 customDataScript = customDataScript.replace(DB_USER, getAzMySqlUser(user, envTag));
                 customDataScript = customDataScript.replace(PASSWORD, password);
+            } else if(dbMode.equals(DB_MODE_MYSQL)){
+                customDataScript = customDataScript.replace(DB_HOST, DB_INSTANCE_PRIVATE_IP);
+                customDataScript = customDataScript.replace(DB_NAME, getMySqlDbNormalizedName(artifactName));
+                customDataScript = customDataScript.replace(DB_USER, user);
+                customDataScript = customDataScript.replace(PASSWORD, password);
             }
         } catch (Exception e){
             throw new RuntimeException("Unable to read custom data", e);
@@ -53,6 +59,27 @@ public class CustomDataHelper {
         log.info("Got custom data script");
         log.debug("\n" + customDataScript);
         return customDataScript;
+    }
+
+    public String getDbCustomDataScript(String artifactName, String user, String password){
+        log.info("Getting DB custom data script ...");
+        String dbCustomDataScript = null;
+        InputStream inputStream = null;
+        try {
+            Resource resource = resourceLoader.getResource(AZURE_DB_CUSTOM_DATA_CLASSPATH_LOCATION);
+            inputStream = resource.getInputStream();
+            dbCustomDataScript = IOUtils.toString(inputStream, "UTF-8");
+            dbCustomDataScript = dbCustomDataScript.replace(USER, user);
+            dbCustomDataScript = dbCustomDataScript.replace(DeployCommonConstants.PASSWORD, password);
+            dbCustomDataScript = dbCustomDataScript.replace(DeployCommonConstants.DB_NAME, getMySqlDbNormalizedName(artifactName));
+        } catch (Exception e){
+            throw new RuntimeException("Unable to read user data", e);
+        } finally {
+            IOUtils.closeQuietly(inputStream);
+        }
+        log.info("Got DB custom data script");
+        log.debug("\n" + dbCustomDataScript);
+        return dbCustomDataScript;
     }
 
     private String getAzMySqlHost(String envTag){
@@ -65,6 +92,11 @@ public class CustomDataHelper {
 
     private String getAzMySqlUser(String user, String envTag){
         return user + "@" + envTag.toLowerCase() + AZ_MYSQL_SERVER_SUFFIX;
+    }
+
+    public static String getMySqlDbNormalizedName(String tarFileName){
+        String dbName = tarFileName.replaceAll("[^a-zA-Z0-9]+","");
+        return  dbName;
     }
 
 

@@ -26,6 +26,7 @@ import java.util.Map;
 import static org.teamspace.deploy_azure.commons.constants.DeploymentConstants.*;
 import static org.teamspace.deploy_azure.commons.utils.AzureEntitiesHelperUtil.*;
 import static org.teamspace.deploy_common.constants.DeployCommonConstants.DB_MODE_H2;
+import static org.teamspace.deploy_common.constants.DeployCommonConstants.DB_MODE_MYSQL;
 import static org.teamspace.deploy_common.constants.DeployCommonConstants.OVERRIDE_EXISTING_ARTIFACT;
 
 
@@ -116,7 +117,9 @@ public class AzureDeployServiceImpl implements AzureDeployService {
         String templateClasspathLocation = null;
         if(deployRequest.getDbMode().equals(DB_MODE_AZ_MYSQL)){
             templateClasspathLocation = AZ_MYSQL_MODE_DEPLOY_TEMPLATE_CLASSPATH_LOCATION;
-        } else if (deployRequest.getDbMode().equals(DB_MODE_H2)){
+        } else if (deployRequest.getDbMode().equals(DB_MODE_MYSQL)){
+            templateClasspathLocation = MYSQL_MODE_DEPLOY_TEMPLATE_CLASSPATH_LOCATION;
+        }else if (deployRequest.getDbMode().equals(DB_MODE_H2)){
             templateClasspathLocation = H2_MODE_DEPLOY_TEMPLATE_CLASSPATH_LOCATION;
         }
         deploymentManagerService.createDeployment(resourceGroupName, deploymentName,
@@ -142,12 +145,24 @@ public class AzureDeployServiceImpl implements AzureDeployService {
         return customData;
     }
 
+    private String getDbCustomData(DeployRequest deployRequest){
+        String dbCustomData = customDataHelper.
+                getDbCustomDataScript(deployRequest.getArtifactName(), deployRequest.getUser(),
+                        deployRequest.getPassword());
+        return dbCustomData;
+    }
+
     private Map<String, ParameterValue> getDeploymentParameters(DeployRequest deployRequest){
         Map<String, ParameterValue> params = new HashMap<String, ParameterValue>();
         String customData = getCustomData(deployRequest);
         params.put(ADMIN_USERNAME_KEY, new ParameterValue(deployRequest.getUser()));
         params.put(ADMIN_PASSWORD_KEY, new ParameterValue(deployRequest.getPassword()));
         params.put(CUSTOM_DATA_KEY, new ParameterValue(customData));
+        if(deployRequest.getDbMode().equals(DB_MODE_MYSQL)){
+            String dbCustomData = getDbCustomData(deployRequest);
+            params.put(DB_CUSTOM_DATA_KEY, new ParameterValue(dbCustomData));
+            params.put(DB_INSTANCE_PRIVATE_IP_KEY, new ParameterValue(DB_INSTANCE_PRIVATE_IP));
+        }
         params.put(ENV_TAG_KEY, new ParameterValue(deployRequest.getEnvTag()));
         return params;
     }

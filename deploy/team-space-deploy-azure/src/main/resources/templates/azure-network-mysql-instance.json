@@ -21,6 +21,18 @@
         "description": "Custom data passed to the Virtual Machine."
       }
     },
+    "dbCustomData": {
+      "type": "string",
+      "metadata": {
+        "description": "Custom data passed to the Virtual Machine."
+      }
+    },
+    "dbInstancePrivateIp": {
+      "type": "string",
+      "metadata": {
+        "description": "Private IP of DB instance."
+      }
+    },
     "envTag": {
       "type": "string",
       "metadata": {
@@ -44,7 +56,6 @@
     "subnet2Prefix": "10.0.1.0/24",
     "nic1Name": "[concat(parameters('envTag'), '-', 'NIC1')]",
     "nic2Name": "[concat(parameters('envTag'), '-', 'NIC2')]",
-    "nic3Name": "[concat(parameters('envTag'), '-', 'NIC3')]",
     "publicIPAddressName": "[concat(parameters('envTag'), '-', 'PUBLIC_IP')]",
     "publicIPAddressType": "Dynamic",
     "virtualNetworkName": "[concat(parameters('envTag'), '-', 'VIRTUAL_NETWORK')]",
@@ -79,7 +90,7 @@
           {
             "name": "http_rule",
             "properties": {
-              "description": "Locks inbound down to ssh default port 22.",
+              "description": "Locks inbound down to http default port 80.",
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "80",
@@ -93,7 +104,7 @@
           {
             "name": "https_rule",
             "properties": {
-              "description": "Locks inbound down to ssh default port 22.",
+              "description": "Locks inbound down to https default port 443.",
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "443",
@@ -101,6 +112,20 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 125,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "mysql_rule",
+            "properties": {
+              "description": "Locks inbound down to mysql default port 3306.",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3306",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 126,
               "direction": "Inbound"
             }
           }
@@ -194,29 +219,8 @@
           {
             "name": "ipconfig2",
             "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "subnet": {
-                "id": "[variables('subnet2Ref')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('nic3Name')]",
-      "location": "[variables('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-      ],
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig3",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('dbInstancePrivateIp')]",
               "subnet": {
                 "id": "[variables('subnet2Ref')]"
               }
@@ -272,7 +276,7 @@
       "name": "[variables('vm2Name')]",
       "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nic3Name'))]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nic2Name'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -282,7 +286,7 @@
           "computerName": "[variables('vm2Name')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
-          "customData": "[base64(parameters('customData'))]"
+          "customData": "[base64(parameters('dbCustomData'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -301,7 +305,7 @@
               "properties": {
                 "primary": true
               },
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nic3Name'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nic2Name'))]"
             }
           ]
         }

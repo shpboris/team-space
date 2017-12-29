@@ -4,8 +4,15 @@ DB_USER=user
 DB_PASS=pass
 
 
-#https://dba.stackexchange.com/questions/62521/why-cant-i-find-my-databases-from-mysql-on-linuxhttps://stackoverflow.com/questions/5016505/mysql-grant-all-privileges-on-database
+#https://dba.stackexchange.com/questions/62521/why-cant-i-find-my-databases-from-mysql-on-linux
 #mysql -u USERNAME -pPASSWORD -h REMOTE_SERVER_IP DB_NAME
+
+#read this to understand why you need to create 2 users to allow connect from both local and remote host !!!!!
+#https://stackoverflow.com/questions/10236000/allow-all-remote-connections-mysql
+#Also you have to comment out this setting in order to connect remotely
+#---- bind-address = 127.0.0.1 inside /etc/mysql/mysql.conf.d/mysqld.cnf
+
+
 
 
 
