@@ -6,10 +6,10 @@
       "value": "ts"
     },
     "adminPassword": {
-      "value": "Password01!"
+      "value": "Password02!"
     },
     "envTag": {
-      "value": "ts1"
+      "value": "ts2"
     }
   }
 }

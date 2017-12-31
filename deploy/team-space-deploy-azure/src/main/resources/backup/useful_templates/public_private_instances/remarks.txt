@@ -1,0 +1,3 @@
+To ssh to vm use:
+
+ssh ts@vmwlwtnl7n4dfsu.eastus.cloudapp.azure.com
