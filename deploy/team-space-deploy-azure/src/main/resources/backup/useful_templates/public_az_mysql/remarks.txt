@@ -1,0 +1,8 @@
+To connect to DB from MySql client use:
+
+1.
+Connect instruction -
+mysql -u ts@ts1sqlserver -h ts1sqlserver.mysql.database.azure.com ts1database -p
+2.
+Password -
+Password01!

@@ -202,7 +202,37 @@
             }
           ]
         }
-      }
+      },
+      "resources": [
+        {
+          "name": "configvm",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', concat(variables('vmName')))]"
+          ],
+          "tags": {
+            "displayName": "config-app"
+          },
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "https://ts1storage.blob.core.windows.net/ts1container/custom_data_centos.sh"
+              ],
+              "commandToExecute": "/bin/bash custom_data_centos.sh"
+            },
+            "protectedSettings": {
+              "storageAccountName": "ts1storage",
+              "storageAccountKey": "ir/ssV8xPO5RqDHLpJ8zgr0BxSqJ8RwFwf5LmlS0tFllCplET31rBD4+9kPL7xaDgZ4keIpUw7wfBW4IVi32ZA=="
+            }
+          }
+        }
+      ]
     }
   ],
   "outputs": {
