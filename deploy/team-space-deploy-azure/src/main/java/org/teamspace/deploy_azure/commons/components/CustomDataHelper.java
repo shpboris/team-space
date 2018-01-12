@@ -1,6 +1,7 @@
 package org.teamspace.deploy_azure.commons.components;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -57,6 +58,32 @@ public class CustomDataHelper {
             IOUtils.closeQuietly(inputStream);
         }
         log.info("Got custom data script");
+        log.debug("\n" + customDataScript);
+        return customDataScript;
+    }
+
+    public String getCustomDataCentOsScript(String tarFileName,
+                                    String dbMode, String user,
+                                    String password, String sasUri){
+        log.info("Getting custom data script ...");
+        String customDataScript = null;
+        InputStream inputStream = null;
+        try {
+            Resource resource = resourceLoader.getResource(AZURE_CENTOS_CUSTOM_DATA_CLASSPATH_LOCATION);
+            inputStream = resource.getInputStream();
+            customDataScript = IOUtils.toString(inputStream, "UTF-8");
+            customDataScript = customDataScript.replace(DeployCommonConstants.TAR_FILE_NAME, tarFileName);
+            customDataScript = customDataScript.replace(USER, user);
+            customDataScript = customDataScript.replace(DeployCommonConstants.PASSWORD, password);
+            customDataScript = customDataScript.replace(DeployCommonConstants.DB_MODE, dbMode);
+            customDataScript = customDataScript.replace(SAS_URI_KEY, sasUri);
+        } catch (Exception e){
+            log.error("Unable to read custom data", e);
+            throw new RuntimeException("Unable to read custom data");
+        } finally {
+            IOUtils.closeQuietly(inputStream);
+        }
+        log.info("Got user data script");
         log.debug("\n" + customDataScript);
         return customDataScript;
     }

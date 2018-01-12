@@ -25,9 +25,7 @@ import java.util.Map;
 
 import static org.teamspace.deploy_azure.commons.constants.DeploymentConstants.*;
 import static org.teamspace.deploy_azure.commons.utils.AzureEntitiesHelperUtil.*;
-import static org.teamspace.deploy_common.constants.DeployCommonConstants.DB_MODE_H2;
-import static org.teamspace.deploy_common.constants.DeployCommonConstants.DB_MODE_MYSQL;
-import static org.teamspace.deploy_common.constants.DeployCommonConstants.OVERRIDE_EXISTING_ARTIFACT;
+import static org.teamspace.deploy_common.constants.DeployCommonConstants.*;
 
 
 @Service
@@ -106,7 +104,13 @@ public class AzureDeployServiceImpl implements AzureDeployService {
                 createStorageAccount(storageResourceGroupName, storageAccountName);
         CloudBlobContainer cloudBlobContainer = storageHandlerService.
                 createBlobContainer(storageAccount, blobContainerName);
-        storageHandlerService.uploadArtifact(cloudBlobContainer, fullArtifactName);
+        storageHandlerService.uploadArtifactFile(cloudBlobContainer, fullArtifactName);
+
+        if (deployRequest.getDbMode().equals(DB_MODE_H2_CENTOS)){
+            String centOsCustomData = getCentOsCustomData(deployRequest);
+            storageHandlerService.uploadArtifactData(cloudBlobContainer,
+                    "custom_data_centos.sh", centOsCustomData);
+        }
     }
 
     private Deployment createDeployment(DeployRequest deployRequest){
@@ -121,6 +125,8 @@ public class AzureDeployServiceImpl implements AzureDeployService {
             templateClasspathLocation = MYSQL_MODE_DEPLOY_TEMPLATE_CLASSPATH_LOCATION;
         }else if (deployRequest.getDbMode().equals(DB_MODE_H2)){
             templateClasspathLocation = H2_MODE_DEPLOY_TEMPLATE_CLASSPATH_LOCATION;
+        }else if (deployRequest.getDbMode().equals(DB_MODE_H2_CENTOS)){
+            templateClasspathLocation = H2_CENTOS_MODE_DEPLOY_TEMPLATE_CLASSPATH_LOCATION;
         }
         deploymentManagerService.createDeployment(resourceGroupName, deploymentName,
                 templateClasspathLocation, params);
@@ -145,6 +151,25 @@ public class AzureDeployServiceImpl implements AzureDeployService {
         return customData;
     }
 
+    private String getCentOsCustomData(DeployRequest deployRequest) throws Exception {
+        String storageResourceGroupName = getStorageResourceGroupName(deployRequest.getEnvTag());
+        String storageAccountName = getStorageAccountName(deployRequest.getEnvTag());
+        String containerName = getContainerName(deployRequest.getEnvTag());
+        String fullArtifactName = getFullArtifactName(deployRequest);
+        String sasUri = storageHandlerService.locateArtifact(storageResourceGroupName, storageAccountName,
+                containerName, fullArtifactName);
+        String customData = customDataHelper.
+                getCustomDataCentOsScript(deployRequest.getArtifactName(), deployRequest.getDbMode(), deployRequest.getUser(),
+                        deployRequest.getPassword(), sasUri);
+        return customData;
+    }
+
+    private String getCmdLine(){
+        return AzureHelperUtil.getCmdLine(AzureContext.getDomain(),
+                AzureContext.getSubscription(), AzureContext.getClient(),
+                AzureContext.getSecret());
+    }
+
     private String getDbCustomData(DeployRequest deployRequest){
         String dbCustomData = customDataHelper.
                 getDbCustomDataScript(deployRequest.getArtifactName(), deployRequest.getUser(),
@@ -154,14 +179,25 @@ public class AzureDeployServiceImpl implements AzureDeployService {
 
     private Map<String, ParameterValue> getDeploymentParameters(DeployRequest deployRequest){
         Map<String, ParameterValue> params = new HashMap<String, ParameterValue>();
-        String customData = getCustomData(deployRequest);
         params.put(ADMIN_USERNAME_KEY, new ParameterValue(deployRequest.getUser()));
         params.put(ADMIN_PASSWORD_KEY, new ParameterValue(deployRequest.getPassword()));
-        params.put(CUSTOM_DATA_KEY, new ParameterValue(customData));
+        if (!deployRequest.getDbMode().equals(DB_MODE_H2_CENTOS)){
+            String customData = getCustomData(deployRequest);
+            params.put(CUSTOM_DATA_KEY, new ParameterValue(customData));
+        }
         if(deployRequest.getDbMode().equals(DB_MODE_MYSQL)){
             String dbCustomData = getDbCustomData(deployRequest);
             params.put(DB_CUSTOM_DATA_KEY, new ParameterValue(dbCustomData));
             params.put(DB_INSTANCE_PRIVATE_IP_KEY, new ParameterValue(DB_INSTANCE_PRIVATE_IP));
+        }
+        if(deployRequest.getDbMode().equals(DB_MODE_H2_CENTOS)){
+            String storageResourceGroupName = getStorageResourceGroupName(deployRequest.getEnvTag());
+            String storageAccountName = getStorageAccountName(deployRequest.getEnvTag());
+            String containerName = getContainerName(deployRequest.getEnvTag());
+            String sasUri = storageHandlerService.locateArtifact(storageResourceGroupName, storageAccountName,
+                    containerName, "custom_data_centos.sh");
+            params.put(CUSTOM_DATA_SCRIPT_CMD_LINE_KEY, new ParameterValue(getCmdLine()));
+            params.put(CUSTOM_DATA_SCRIPT_LOCATION, new ParameterValue(sasUri));
         }
         params.put(ENV_TAG_KEY, new ParameterValue(deployRequest.getEnvTag()));
         return params;
