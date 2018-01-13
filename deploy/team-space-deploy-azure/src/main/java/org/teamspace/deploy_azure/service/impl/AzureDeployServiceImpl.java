@@ -109,7 +109,7 @@ public class AzureDeployServiceImpl implements AzureDeployService {
         if (deployRequest.getDbMode().equals(DB_MODE_H2_CENTOS)){
             String centOsCustomData = getCentOsCustomData(deployRequest);
             storageHandlerService.uploadArtifactData(cloudBlobContainer,
-                    "custom_data_centos.sh", centOsCustomData);
+                    CENTOS_CUSTOM_DATA_SCRIPT_NAME, centOsCustomData);
         }
     }
 
@@ -152,15 +152,9 @@ public class AzureDeployServiceImpl implements AzureDeployService {
     }
 
     private String getCentOsCustomData(DeployRequest deployRequest) throws Exception {
-        String storageResourceGroupName = getStorageResourceGroupName(deployRequest.getEnvTag());
-        String storageAccountName = getStorageAccountName(deployRequest.getEnvTag());
-        String containerName = getContainerName(deployRequest.getEnvTag());
-        String fullArtifactName = getFullArtifactName(deployRequest);
-        String sasUri = storageHandlerService.locateArtifact(storageResourceGroupName, storageAccountName,
-                containerName, fullArtifactName);
         String customData = customDataHelper.
                 getCustomDataCentOsScript(deployRequest.getArtifactName(), deployRequest.getDbMode(), deployRequest.getUser(),
-                        deployRequest.getPassword(), sasUri);
+                        deployRequest.getPassword());
         return customData;
     }
 
@@ -194,10 +188,18 @@ public class AzureDeployServiceImpl implements AzureDeployService {
             String storageResourceGroupName = getStorageResourceGroupName(deployRequest.getEnvTag());
             String storageAccountName = getStorageAccountName(deployRequest.getEnvTag());
             String containerName = getContainerName(deployRequest.getEnvTag());
-            String sasUri = storageHandlerService.locateArtifact(storageResourceGroupName, storageAccountName,
-                    containerName, "custom_data_centos.sh");
+            String artifactUri = storageHandlerService.locateArtifactUri(storageResourceGroupName, storageAccountName,
+                    containerName, getFullArtifactName(deployRequest));
+            String scriptUri = storageHandlerService.locateArtifactUri(storageResourceGroupName, storageAccountName,
+                    containerName, CENTOS_CUSTOM_DATA_SCRIPT_NAME);
+            StorageAccount storageAccount = storageHandlerService.
+                    findStorageAccount(storageResourceGroupName, storageAccountName);
+            String storageAccountKey = AzureHelperUtil.getStorageAccountKey(storageAccount);
+            params.put(STORAGE_ACCOUNT_NAME, new ParameterValue(storageAccountName));
+            params.put(STORAGE_ACCOUNT_KEY, new ParameterValue(storageAccountKey));
+            params.put(ARTIFACT_LOCATION_KEY, new ParameterValue(artifactUri));
+            params.put(CUSTOM_DATA_SCRIPT_LOCATION_KEY, new ParameterValue(scriptUri));
             params.put(CUSTOM_DATA_SCRIPT_CMD_LINE_KEY, new ParameterValue(getCmdLine()));
-            params.put(CUSTOM_DATA_SCRIPT_LOCATION, new ParameterValue(sasUri));
         }
         params.put(ENV_TAG_KEY, new ParameterValue(deployRequest.getEnvTag()));
         return params;

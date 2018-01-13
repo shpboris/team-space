@@ -63,9 +63,7 @@ yum -y check-update
 yum -y install azure-cli
 echo "Completed Azure CLI install at: "$(date +"%T") >> $log
 
-
-wget -O $tarFileName$.tar.gz "$sas_uri$"
-echo "Completed app download from Azure storage at: "$(date +"%T") >> $log
+cp /var/lib/waagent/custom-script/download/0/$tarFileName$.tar.gz /home/$user$/
 tar -zxvf $tarFileName$.tar.gz
 cd $tarFileName$
 

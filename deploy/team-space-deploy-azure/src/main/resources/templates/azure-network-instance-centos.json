@@ -15,6 +15,24 @@
         "description": "Password for the Virtual Machine"
       }
     },
+    "storageAccountName": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Storage account name."
+      }
+    },
+    "storageAccountKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Storage account key."
+      }
+    },
+    "artifactLocation": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Artifact location."
+      }
+    },
     "customDataScriptLocation": {
       "type": "securestring",
       "metadata": {
@@ -227,10 +245,13 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[parameters('customDataScriptLocation')]"
+                "[parameters('customDataScriptLocation')]",
+                "[parameters('artifactLocation')]"
               ]
             },
             "protectedSettings": {
+              "storageAccountName": "[parameters('storageAccountName')]",
+              "storageAccountKey": "[parameters('storageAccountKey')]",
               "commandToExecute": "[parameters('customDataScriptCmdLine')]"
             }
           }
@@ -239,10 +260,6 @@
     }
   ],
   "outputs": {
-    "sshCommand": {
-      "type": "string",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', variables('uniqueDnsLabelPrefix'), '.', resourceGroup().location, '.cloudapp.azure.com')]"
-    },
     "publicDns": {
       "type": "string",
       "value": "[concat(variables('uniqueDnsLabelPrefix'), '.', resourceGroup().location, '.cloudapp.azure.com')]"

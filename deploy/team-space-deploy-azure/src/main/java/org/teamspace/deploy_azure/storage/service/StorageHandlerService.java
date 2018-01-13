@@ -9,9 +9,15 @@ public interface StorageHandlerService {
     CloudBlobContainer createBlobContainer(StorageAccount storageAccount,
                                            String blobContainerName) throws Exception;
     String uploadArtifactFile(CloudBlobContainer cloudBlobContainer,
-                              String fullArtifactName) throws Exception;
+                                          String fullArtifactName) throws Exception;
     String uploadArtifactData(CloudBlobContainer cloudBlobContainer,
-                              String fullArtifactName, String artifactData) throws Exception;
-    String locateArtifact(String resourceGroupName, String storageAccountName,
-                          String blobContainerName, String artifactName);
+                                          String fullArtifactName, String artifactData) throws Exception;
+    String locateArtifactUri(String resourceGroupName, String storageAccountName,
+                                String blobContainerName, String artifactName);
+    String uploadArtifactFileWithSasToken(CloudBlobContainer cloudBlobContainer,
+                                          String fullArtifactName) throws Exception;
+    String uploadArtifactDataWithSasToken(CloudBlobContainer cloudBlobContainer,
+                                          String fullArtifactName, String artifactData) throws Exception;
+    String locateArtifactSasUri(String resourceGroupName, String storageAccountName,
+                                String blobContainerName, String artifactName);
 }

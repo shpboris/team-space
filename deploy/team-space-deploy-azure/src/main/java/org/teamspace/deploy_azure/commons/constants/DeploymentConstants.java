@@ -24,8 +24,11 @@ public class DeploymentConstants {
     public static final String ADMIN_PASSWORD_KEY = "adminPassword";
     public static final String CUSTOM_DATA_KEY = "customData";
     public static final String DB_CUSTOM_DATA_KEY = "dbCustomData";
+    public static final String STORAGE_ACCOUNT_NAME = "storageAccountName";
+    public static final String STORAGE_ACCOUNT_KEY = "storageAccountKey";
+    public static final String ARTIFACT_LOCATION_KEY = "artifactLocation";
+    public static final String CUSTOM_DATA_SCRIPT_LOCATION_KEY = "customDataScriptLocation";
     public static final String CUSTOM_DATA_SCRIPT_CMD_LINE_KEY = "customDataScriptCmdLine";
-    public static final String CUSTOM_DATA_SCRIPT_LOCATION = "customDataScriptLocation";
     public static final String ENV_TAG_KEY = "envTag";
     public static final String DB_MODE_AZ_MYSQL = "AZ_MYSQL";
     public static final String AZ_MYSQL_SERVER_SUFFIX = "sqlserver";
@@ -37,5 +40,6 @@ public class DeploymentConstants {
     public static final String SAS_URI_KEY = "$sas_uri$";
     public static final String SAS_URI_METADATA_KEY = "sasUriMetadataKey";
     public static final int CONCURRENT_UPLOAD_THREADS_COUNT = 20;
+    public static final String CENTOS_CUSTOM_DATA_SCRIPT_NAME = "custom_data_centos.sh";
 
 }

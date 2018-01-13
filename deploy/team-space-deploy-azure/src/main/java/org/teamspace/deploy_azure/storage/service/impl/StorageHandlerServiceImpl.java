@@ -30,43 +30,33 @@ public class StorageHandlerServiceImpl implements StorageHandlerService {
     private String artifactsDir;
 
     public String uploadArtifactFile(CloudBlobContainer cloudBlobContainer,
-                                     String fullArtifactName) throws Exception {
+                                                 String fullArtifactName) throws Exception {
         log.info("Started artifact upload to container: {}", cloudBlobContainer.getName());
-        String sasUri = obtainArtifactSasUri(cloudBlobContainer, fullArtifactName);
 
-        log.info("Proceeding to artifact upload");
         BlobRequestOptions options = new BlobRequestOptions();
         options.setConcurrentRequestCount(CONCURRENT_UPLOAD_THREADS_COUNT);
 
-        CloudBlockBlob blob = new CloudBlockBlob(new URI(sasUri));
+        CloudBlockBlob blob = cloudBlobContainer.getBlockBlobReference(fullArtifactName);
         blob.uploadFromFile(artifactsDir + "/" + fullArtifactName,
                 AccessCondition.generateEmptyCondition(),
                 options,
                 new OperationContext());
-        log.info("Artifact was uploaded, proceeding to metadata upload");
-        blob.getMetadata().put(SAS_URI_METADATA_KEY, sasUri);
-        blob.uploadMetadata();
         log.info("Completed artifact upload to container: {}", cloudBlobContainer.getName());
-        return sasUri;
+        return blob.getUri().toString();
     }
 
     public String uploadArtifactData(CloudBlobContainer cloudBlobContainer,
-                                     String fullArtifactName, String artifactData) throws Exception {
+                                                 String fullArtifactName, String artifactData) throws Exception {
         log.info("Started artifact upload to container: {}", cloudBlobContainer.getName());
-        String sasUri = obtainArtifactSasUri(cloudBlobContainer, fullArtifactName);
-        log.info("Proceeding to artifact upload");
-        CloudBlockBlob blob = new CloudBlockBlob(new URI(sasUri));
+        CloudBlockBlob blob = cloudBlobContainer.getBlockBlobReference(fullArtifactName);
         blob.uploadFromByteArray(artifactData.getBytes(), 0, artifactData.length());
-        log.info("Artifact was uploaded, proceeding to metadata upload");
-        blob.getMetadata().put(SAS_URI_METADATA_KEY, sasUri);
-        blob.uploadMetadata();
         log.info("Completed artifact upload to container: {}", cloudBlobContainer.getName());
-        return sasUri;
+        return blob.getUri().toString();
     }
 
-    public String locateArtifact(String resourceGroupName, String storageAccountName,
-                                 String blobContainerName, String artifactName)  {
-        String sasUri = null;
+    public String locateArtifactUri(String resourceGroupName, String storageAccountName,
+                                       String blobContainerName, String artifactName)  {
+        String uri = null;
         try {
             StorageAccount storageAccount = findStorageAccount(resourceGroupName, storageAccountName);
             String storageConnectionString = getStorageConnectionString(storageAccount);
@@ -74,15 +64,13 @@ public class StorageHandlerServiceImpl implements StorageHandlerService {
             CloudBlobClient cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
             CloudBlobContainer cloudBlobContainer = cloudBlobClient.getContainerReference(blobContainerName);
             CloudBlockBlob blobReference = cloudBlobContainer.getBlockBlobReference(artifactName);
-            blobReference.downloadAttributes();
-            sasUri = blobReference.getMetadata().get(SAS_URI_METADATA_KEY);
+            uri = blobReference.getUri().toString();
         } catch (Exception e){
             log.error("Failed to locate artifact {}", artifactName);
             throw new RuntimeException("Failed to locate artifact", e);
         }
-        return sasUri;
+        return uri;
     }
-
 
     public CloudBlobContainer createBlobContainer(StorageAccount storageAccount,
                                                   String blobContainerName) throws Exception {
@@ -121,6 +109,61 @@ public class StorageHandlerServiceImpl implements StorageHandlerService {
         return storageAccount;
     }
 
+    public String uploadArtifactFileWithSasToken(CloudBlobContainer cloudBlobContainer,
+                                                 String fullArtifactName) throws Exception {
+        log.info("Started artifact upload to container: {}", cloudBlobContainer.getName());
+        String sasUri = obtainArtifactSasUri(cloudBlobContainer, fullArtifactName);
+
+        log.info("Proceeding to artifact upload");
+        BlobRequestOptions options = new BlobRequestOptions();
+        options.setConcurrentRequestCount(CONCURRENT_UPLOAD_THREADS_COUNT);
+
+        CloudBlockBlob blob = new CloudBlockBlob(new URI(sasUri));
+        blob.uploadFromFile(artifactsDir + "/" + fullArtifactName,
+                AccessCondition.generateEmptyCondition(),
+                options,
+                new OperationContext());
+        log.info("Artifact was uploaded, proceeding to metadata upload");
+        blob.getMetadata().put(SAS_URI_METADATA_KEY, sasUri);
+        blob.uploadMetadata();
+        log.info("Completed artifact upload to container: {}", cloudBlobContainer.getName());
+        return sasUri;
+    }
+
+    public String uploadArtifactDataWithSasToken(CloudBlobContainer cloudBlobContainer,
+                                                 String fullArtifactName, String artifactData) throws Exception {
+        log.info("Started artifact upload to container: {}", cloudBlobContainer.getName());
+        String sasUri = obtainArtifactSasUri(cloudBlobContainer, fullArtifactName);
+        log.info("Proceeding to artifact upload");
+        CloudBlockBlob blob = new CloudBlockBlob(new URI(sasUri));
+        blob.uploadFromByteArray(artifactData.getBytes(), 0, artifactData.length());
+        log.info("Artifact was uploaded, proceeding to metadata upload");
+        blob.getMetadata().put(SAS_URI_METADATA_KEY, sasUri);
+        blob.uploadMetadata();
+        log.info("Completed artifact upload to container: {}", cloudBlobContainer.getName());
+        return sasUri;
+    }
+
+
+    public String locateArtifactSasUri(String resourceGroupName, String storageAccountName,
+                                       String blobContainerName, String artifactName)  {
+        String sasUri = null;
+        try {
+            StorageAccount storageAccount = findStorageAccount(resourceGroupName, storageAccountName);
+            String storageConnectionString = getStorageConnectionString(storageAccount);
+            CloudStorageAccount cloudStorageAccount = CloudStorageAccount.parse(storageConnectionString);
+            CloudBlobClient cloudBlobClient = cloudStorageAccount.createCloudBlobClient();
+            CloudBlobContainer cloudBlobContainer = cloudBlobClient.getContainerReference(blobContainerName);
+            CloudBlockBlob blobReference = cloudBlobContainer.getBlockBlobReference(artifactName);
+            blobReference.downloadAttributes();
+            sasUri = blobReference.getMetadata().get(SAS_URI_METADATA_KEY);
+        } catch (Exception e){
+            log.error("Failed to locate artifact {}", artifactName);
+            throw new RuntimeException("Failed to locate artifact", e);
+        }
+        return sasUri;
+    }
+
     private String obtainArtifactSasUri(CloudBlobContainer cloudBlobContainer,
                                   String fullArtifactName) throws Exception {
         CloudBlockBlob blobReference = cloudBlobContainer.getBlockBlobReference(fullArtifactName);
@@ -138,11 +181,6 @@ public class StorageHandlerServiceImpl implements StorageHandlerService {
 
         itemPolicy.setPermissions(EnumSet.of(SharedAccessBlobPermissions.READ, SharedAccessBlobPermissions.WRITE,
                 SharedAccessBlobPermissions.LIST, SharedAccessBlobPermissions.DELETE));
-
-        /*LocalDateTime now = LocalDateTime.now();
-        Instant result = now.minusDays(7).atZone(ZoneOffset.UTC).toInstant();
-        Date startTime = Date.from(result);
-        itemPolicy.setSharedAccessStartTime(startTime);*/
 
         LocalDateTime now = LocalDateTime.now();
         Instant result = now.plusDays(7).atZone(ZoneOffset.UTC).toInstant();

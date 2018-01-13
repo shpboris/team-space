@@ -17,6 +17,10 @@ public class AzureHelperUtil {
         return storageConnectionString;
     }
 
+    public static String getStorageAccountKey(StorageAccount storageAccount){
+        return storageAccount.getKeys().get(0).value();
+    }
+
     public static final String getCmdLine(String domain, String subscription, String client, String secret){
         String cmdLine = String.format(CENTOS_CUSTOM_DATA_CMD_LINE_TEMPLATE, domain, subscription, client, secret);
         return cmdLine;

@@ -62,10 +62,9 @@ public class CustomDataHelper {
         return customDataScript;
     }
 
-    //test #1
     public String getCustomDataCentOsScript(String tarFileName,
                                     String dbMode, String user,
-                                    String password, String sasUri){
+                                    String password){
         log.info("Getting custom data script ...");
         String customDataScript = null;
         InputStream inputStream = null;
@@ -77,7 +76,6 @@ public class CustomDataHelper {
             customDataScript = customDataScript.replace(USER, user);
             customDataScript = customDataScript.replace(DeployCommonConstants.PASSWORD, password);
             customDataScript = customDataScript.replace(DeployCommonConstants.DB_MODE, dbMode);
-            customDataScript = customDataScript.replace(SAS_URI_KEY, sasUri);
         } catch (Exception e){
             log.error("Unable to read custom data", e);
             throw new RuntimeException("Unable to read custom data");
