@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="TeamSpaceDeployApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="org.teamspace.TeamSpaceDeployApplication" />
+    <option name="VM_PARAMETERS" value="-Ddomain=az-domain -Dsubscription=az-subscription -Dclient=az-client -Dsecret=az-secret -DaccessKey=aws-access-key -DsecretKey=aws-secret-key -DartifactsDir=C:\team-space\server\team-space-server\target" />
+    <option name="ALTERNATIVE_JRE_PATH" />
+    <module name="team-space-deploy-server" />
+    <envs />
+    <method />
+  </configuration>
+</component>

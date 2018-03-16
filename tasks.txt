@@ -14,6 +14,12 @@ Spring batch -
 add more validations for advanced scenarios (like restart/stop not existing job ...)
 20.
 Configure Mybatis with XML instead of annotations
+21.
+Use SES
+22.
+Use Lambda
+23.
+Use SQS
 
 *********** deployer app *************
 
