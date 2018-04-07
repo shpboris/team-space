@@ -405,7 +405,7 @@
             "AutoScalingGroupName" : { "Ref" : "WebServerGroup" },
             "AdjustmentType" : "ChangeInCapacity",
             "ScalingAdjustment" : -1,
-            "Cooldown" : 120
+            "Cooldown" : 300
           }
      },
 
