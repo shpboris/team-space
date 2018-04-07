@@ -28,6 +28,8 @@ public class DeploymentConstants {
     public static final String INSTANCE_TYPE = "t2.micro";
     public static final int MAX_RETRIES = 12;
     public static final int WAIT_TIME_MILLISEC = 10000;
+    public static final int AUTO_SCALE_MAX_RETRIES = 20;
+    public static final int AUTO_SCALE_WAIT_TIME_MILLISEC = 60000;
     public static final int RDS_CF_MAX_RETRIES = 30;
     public static final int ENTERPRISE_MODE_FULL_STACK_CF_MAX_RETRIES = 30;
     public static final int CF_STACK_CREATION_WAIT_TIME_MILLISEC = 60000;

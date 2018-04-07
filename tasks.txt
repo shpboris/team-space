@@ -20,6 +20,8 @@ Use SES
 Use Lambda
 23.
 Use SQS
+24.
+Use VPN
 
 *********** deployer app *************
 

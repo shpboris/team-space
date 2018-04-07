@@ -12,6 +12,8 @@ import com.amazonaws.services.identitymanagement.AmazonIdentityManagement;
 import com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.sqs.AmazonSQS;
+import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.teamspace.aws.client.AwsClientFactory;
@@ -38,6 +40,7 @@ public class AwsClientFactoryImpl implements AwsClientFactory {
     private Map<Regions, AmazonS3> regionsToS3ClientMap = new EnumMap<>(Regions.class);
     private Map<Regions, AmazonCloudFormation> regionsToCloudFormationClientMap = new EnumMap<>(Regions.class);
     private Map<Regions, AmazonIdentityManagement> regionsIamClientMap = new EnumMap<>(Regions.class);
+    private Map<Regions, AmazonSQS> regionsSqsClientMap = new EnumMap<>(Regions.class);
 
     @PostConstruct
     private void init(){
@@ -119,5 +122,24 @@ public class AwsClientFactoryImpl implements AwsClientFactory {
             }
         }
         return amazonIdentityManagementClient;
+    }
+
+    @Override
+    public AmazonSQS getSqsClient(Regions region) {
+        AmazonSQS amazonSqsClient;
+        if(regionsSqsClientMap.get(region) != null){
+            amazonSqsClient = regionsSqsClientMap.get(region);
+        } else {
+            if (awsCredentials != null) {
+                amazonSqsClient = AmazonSQSClientBuilder.standard()
+                        .withRegion(region)
+                        .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
+                        .build();
+                regionsSqsClientMap.put(region, amazonSqsClient);
+            } else {
+                throw new RuntimeException("Unable to obtain SQS client");
+            }
+        }
+        return amazonSqsClient;
     }
 }

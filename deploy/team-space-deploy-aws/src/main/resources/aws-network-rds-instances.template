@@ -322,12 +322,92 @@
         "VPCZoneIdentifier" : [{ "Ref" : "PrivateSubnetAz1" }],
         "LaunchConfigurationName" : { "Ref" : "LaunchConfig" },
         "MinSize" : "1",
-        "MaxSize" : "3",
+        "MaxSize" : "5",
         "DesiredCapacity" : { "Ref" : "InstanceCount" },
         "LoadBalancerNames" : [ { "Ref" : "ElasticLoadBalancer" } ],
         "Tags" : [ {"Key" : "Name", "Value" : {"Fn::Join" : [ "", [ { "Ref" : "EnvTag"}, "-", "APP_INSTANCE" ] ]}, "PropagateAtLaunch" : "true" } ]
       }
     },
+
+    "CreateInstanceRequestsQueue" : {
+       "Type" : "AWS::SQS::Queue",
+       "Properties" : {
+          "QueueName": "CreateInstanceRequestsQueue",
+          "ReceiveMessageWaitTimeSeconds": 20,
+          "VisibilityTimeout": 600
+       }
+    },
+
+    "RemoveInstanceRequestsQueue" : {
+           "Type" : "AWS::SQS::Queue",
+           "Properties" : {
+              "QueueName": "RemoveInstanceRequestsQueue",
+              "ReceiveMessageWaitTimeSeconds": 20,
+              "VisibilityTimeout": 1200
+           }
+    },
+
+    "CreateInstanceRequestsQueueNotEmpty": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmDescription": "Create instance requests queue is not empty",
+        "Namespace": "AWS/SQS",
+        "MetricName": "ApproximateNumberOfMessagesVisible",
+        "Dimensions": [{
+          "Name": "QueueName",
+          "Value" : { "Fn::GetAtt":["CreateInstanceRequestsQueue","QueueName"] }
+        }],
+        "Statistic": "Maximum",
+        "Period": "60",
+        "EvaluationPeriods": "1",
+        "Threshold": 1,
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "AlarmActions": [{
+          "Ref": "ScaleOutPolicy"
+        }]
+      }
+    },
+
+    "RemoveInstanceRequestsQueueNotEmpty": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmDescription": "Remove instance requests queue is not empty",
+        "Namespace": "AWS/SQS",
+        "MetricName": "ApproximateNumberOfMessagesVisible",
+        "Dimensions": [{
+          "Name": "QueueName",
+          "Value" : { "Fn::GetAtt":["RemoveInstanceRequestsQueue","QueueName"] }
+        }],
+        "Statistic": "Maximum",
+        "Period": "60",
+        "EvaluationPeriods": "1",
+        "Threshold": 1,
+        "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+        "AlarmActions": [{
+          "Ref": "ScaleInPolicy"
+        }]
+      }
+     },
+
+    "ScaleOutPolicy" : {
+      "Type" : "AWS::AutoScaling::ScalingPolicy",
+      "Properties" : {
+        "AutoScalingGroupName" : { "Ref" : "WebServerGroup" },
+        "AdjustmentType" : "ChangeInCapacity",
+        "ScalingAdjustment" : 1,
+        "Cooldown" : 300
+      }
+    },
+
+    "ScaleInPolicy" : {
+          "Type" : "AWS::AutoScaling::ScalingPolicy",
+          "Properties" : {
+            "AutoScalingGroupName" : { "Ref" : "WebServerGroup" },
+            "AdjustmentType" : "ChangeInCapacity",
+            "ScalingAdjustment" : -1,
+            "Cooldown" : 120
+          }
+     },
 
     "LaunchConfig" : {
       "Type" : "AWS::AutoScaling::LaunchConfiguration",

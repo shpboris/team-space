@@ -118,7 +118,42 @@ public class DeployServiceImpl implements DeployService{
                 .getRegion() + " , env tag: " + undeployRequest.getEnvTag());
     }
 
-    public void uploadArtifact(String artifactName, String envTag){
+
+    @Override
+    public void addInstance(AddInstanceEnterpriseModeRequest addInstanceEnterpriseModeRequest) {
+        log.info("Started adding instance in region: " + addInstanceEnterpriseModeRequest
+                .getRegion() + " , env tag: " + addInstanceEnterpriseModeRequest.getEnvTag());
+        initAwsContext(addInstanceEnterpriseModeRequest.getRegion());
+        instanceManager.addInstance(addInstanceEnterpriseModeRequest);
+        destroyAwsContext();
+        log.info("Completed adding instance in region: " + addInstanceEnterpriseModeRequest
+                .getRegion() + " , env tag: " + addInstanceEnterpriseModeRequest.getEnvTag());
+    }
+
+    @Override
+    public void removeInstance(RemoveInstanceEnterpriseModeRequest removeInstanceEnterpriseModeRequest) {
+        log.info("Started removing instance in region: " + removeInstanceEnterpriseModeRequest
+                .getRegion() + " , env tag: " + removeInstanceEnterpriseModeRequest.getEnvTag());
+        initAwsContext(removeInstanceEnterpriseModeRequest.getRegion());
+        instanceManager.removeInstance(removeInstanceEnterpriseModeRequest);
+        destroyAwsContext();
+        log.info("Completed removing instance in region: " + removeInstanceEnterpriseModeRequest
+                .getRegion() + " , env tag: " + removeInstanceEnterpriseModeRequest.getEnvTag());
+    }
+
+    @Override
+    public InstancesDetailsEnterpriseModeResponse getInstancesDetails(InstancesDetailsEnterpriseModeRequest instancesDetailsEnterpriseModeRequest){
+        log.info("Started getting instance details in region: " + instancesDetailsEnterpriseModeRequest
+                .getRegion() + " , env tag: " + instancesDetailsEnterpriseModeRequest.getEnvTag());
+        initAwsContext(instancesDetailsEnterpriseModeRequest.getRegion());
+        int instancesCount = instanceManager.getRunningInstancesCount(instancesDetailsEnterpriseModeRequest.getEnvTag());
+        destroyAwsContext();
+        log.info("Completed getting instance details in region: " + instancesDetailsEnterpriseModeRequest
+                .getRegion() + " , env tag: " + instancesDetailsEnterpriseModeRequest.getEnvTag());
+        return new InstancesDetailsEnterpriseModeResponse(instancesCount);
+    }
+
+    private void uploadArtifact(String artifactName, String envTag){
         log.info("Started artifact upload for artifact: " + artifactName);
         log.debug("Override flag is: " + OVERRIDE_EXISTING_ARTIFACT);
         if(OVERRIDE_EXISTING_ARTIFACT) {
@@ -150,11 +185,15 @@ public class DeployServiceImpl implements DeployService{
         log.info("Finished artifact upload for artifact: " + artifactName);
     }
 
+
+
     private void initAwsContext(String region){
         Regions regions = Regions.fromName(region);
         AwsContext.init(regions, awsClientFactory.getEc2Client(regions),
                 awsClientFactory.getS3Client(regions),
-                awsClientFactory.getIAMClient(regions), awsClientFactory.getCloudFormationClient(regions));
+                awsClientFactory.getIAMClient(regions),
+                awsClientFactory.getCloudFormationClient(regions),
+                awsClientFactory.getSqsClient(regions));
     }
 
     private void destroyAwsContext(){

@@ -75,4 +75,44 @@ public class DeployResource {
 		}
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 	}
+
+	@ApiOperation(value = "add instance to deployment", response = HttpStatus.class)
+	@RequestMapping(value = "/deployEnterpriseMode/instances", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE,
+			produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<HttpStatus> addInstance(@ApiParam(name = "addInstanceEnterpriseModeRequest", required = true)
+												 @RequestBody AddInstanceEnterpriseModeRequest addInstanceEnterpriseModeRequest) {
+		if(addInstanceEnterpriseModeRequest.getCloudType().equals(AWS_CLOUD_TYPE)) {
+			deployService.addInstance(addInstanceEnterpriseModeRequest);
+		} else {
+			throw new RuntimeException("The operation is only supported for AWS");
+		}
+		return new ResponseEntity<>(HttpStatus.CREATED);
+	}
+
+	@ApiOperation(value = "remove instance from deployment", response = HttpStatus.class)
+	@RequestMapping(value = "/deployEnterpriseMode/instances", method = RequestMethod.DELETE, consumes = MediaType.APPLICATION_JSON_VALUE,
+			produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<HttpStatus> removeInstance(@ApiParam(name = "removeInstanceEnterpriseModeRequest", required = true)
+												  @RequestBody RemoveInstanceEnterpriseModeRequest removeInstanceEnterpriseModeRequest) {
+		if(removeInstanceEnterpriseModeRequest.getCloudType().equals(AWS_CLOUD_TYPE)) {
+			deployService.removeInstance(removeInstanceEnterpriseModeRequest);
+		} else {
+			throw new RuntimeException("The operation is only supported for AWS");
+		}
+		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+	}
+
+	@ApiOperation(value = "get deployed instances details", response = InstancesDetailsEnterpriseModeResponse.class)
+	@RequestMapping(value = "/deployEnterpriseMode/instances/details", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE,
+			produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<InstancesDetailsEnterpriseModeResponse> getInstancesDetails(@ApiParam(name = "instancesDetailsEnterpriseModeRequest", required = true)
+												  @RequestBody InstancesDetailsEnterpriseModeRequest instancesDetailsEnterpriseModeRequest) {
+		InstancesDetailsEnterpriseModeResponse instancesDetailsEnterpriseModeResponse;
+		if(instancesDetailsEnterpriseModeRequest.getCloudType().equals(AWS_CLOUD_TYPE)) {
+			instancesDetailsEnterpriseModeResponse = deployService.getInstancesDetails(instancesDetailsEnterpriseModeRequest);
+		} else {
+			throw new RuntimeException("The operation is only supported for AWS");
+		}
+		return new ResponseEntity<>(instancesDetailsEnterpriseModeResponse, HttpStatus.OK);
+	}
 }
